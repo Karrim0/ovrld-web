@@ -9,8 +9,9 @@ import type {
   WorkoutSet,
 } from "@/types";
 import { getOfflineDatabase } from "./database";
+import { STORAGE_KEYS } from "@/config/storage";
 
-export const SYNC_QUEUE_CHANGED_EVENT = "gym-crew:sync-queue-changed";
+export const SYNC_QUEUE_CHANGED_EVENT = STORAGE_KEYS.syncQueueChangedEvent;
 
 function getMutationEntityId(mutation: OfflineMutation): UUID {
   return mutation.payload.id;
@@ -19,6 +20,7 @@ function getMutationEntityId(mutation: OfflineMutation): UUID {
 function notifyQueueChanged(): void {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent(SYNC_QUEUE_CHANGED_EVENT));
+    window.dispatchEvent(new CustomEvent(STORAGE_KEYS.legacySyncQueueChangedEvent));
   }
 }
 

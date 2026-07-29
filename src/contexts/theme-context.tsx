@@ -1,5 +1,6 @@
 "use client";
 
+import { STORAGE_KEYS, readCompatibleStorage } from "@/config/storage";
 import {
   createContext,
   useCallback,
@@ -12,7 +13,7 @@ import {
 
 export type AppTheme = "light" | "dark";
 
-const THEME_STORAGE_KEY = "gym-crew:theme";
+const THEME_STORAGE_KEY = STORAGE_KEYS.theme;
 
 interface ThemeContextValue {
   theme: AppTheme;
@@ -26,7 +27,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 function getPreferredTheme(): AppTheme {
   if (typeof window === "undefined") return "light";
 
-  const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+  const stored = readCompatibleStorage(THEME_STORAGE_KEY, STORAGE_KEYS.legacyTheme);
   if (stored === "light" || stored === "dark") return stored;
 
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";

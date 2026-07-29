@@ -222,7 +222,7 @@ export function SplitImportWizard({ onClose, onImported }: SplitImportWizardProp
             <div className="py-12 text-center">
               <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-300/12 text-emerald-300"><CheckCircle2 className="h-8 w-8" /></span>
               <h3 className="mt-4 text-2xl font-bold">جدولك جاهز</h3>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">الجدول اللي دخلته تقدر تعدّله زي أي جدول على Gym Crew.</p>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">الجدول اللي دخلته تقدر تعدّله زي أي جدول على OVRLD.</p>
               <button type="button" onClick={onClose} className="gc-primary-button mt-6">راجع جدولي</button>
             </div>
           ) : null}

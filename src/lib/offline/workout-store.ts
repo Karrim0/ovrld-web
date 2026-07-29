@@ -8,6 +8,7 @@ import type {
   UserProfile,
 } from "@/types";
 import { getOfflineDatabase } from "./database";
+import { clearOvrldClientStorage } from "@/config/storage";
 import type { CachedExerciseRow, CachedSplitRow } from "./schema";
 
 export interface HydratedLocalWorkoutExercise extends WorkoutExercise {
@@ -294,8 +295,5 @@ export async function clearAllLocalPrivateData(): Promise<void> {
     },
   );
 
-  for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
-    const key = window.localStorage.key(index);
-    if (key?.startsWith("gym-crew:")) window.localStorage.removeItem(key);
-  }
+  clearOvrldClientStorage();
 }

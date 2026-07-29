@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
+import { STORAGE_KEYS, readCompatibleStorage } from "@/config/storage";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-const DISMISSED_KEY = "gym-crew-install-dismissed";
+const DISMISSED_KEY = STORAGE_KEYS.installDismissed;
 
 export function PwaInstallPrompt() {
   const [event, setEvent] = useState<BeforeInstallPromptEvent | null>(null);
@@ -16,7 +17,7 @@ export function PwaInstallPrompt() {
 
   useEffect(() => {
     if (window.matchMedia("(display-mode: standalone)").matches) return;
-    if (window.localStorage.getItem(DISMISSED_KEY) === "1") return;
+    if (readCompatibleStorage(DISMISSED_KEY, STORAGE_KEYS.legacyInstallDismissed) === "1") return;
 
     const onPrompt = (nextEvent: Event) => {
       nextEvent.preventDefault();
@@ -51,7 +52,7 @@ export function PwaInstallPrompt() {
           <Download className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-bold">نزّل Gym Crew</p>
+          <p className="font-bold">نزّل OVRLD</p>
           <p className="gc-muted text-xs">افتحه أسرع وخلي أدوات التمرين دايمًا معاك.</p>
         </div>
         <button type="button" onClick={dismiss} className="gc-icon-button rounded-full" aria-label="اقفل اقتراح التثبيت">

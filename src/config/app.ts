@@ -1,9 +1,10 @@
 /**
- * App-wide metadata, referenced by `src/app/layout.tsx` and
- * `src/app/manifest.ts` so the app name/description only need to change in
- * one place.
+ * Product metadata shared by the web shell, PWA manifest, and repository docs.
  */
 export const APP_CONFIG = {
-  name: "Gym Crew",
-  description: "سجّل تمرينك وتابع تقدمك واتمرّن مع صحابك من مكان واحد.",
+  name: "OVRLD",
+  fullName: "OVRLD Web",
+  description: "نظّم تمرينك، سجّل السِتات، وتابع تقدمك من أي جهاز.",
+  englishDescription:
+    "Offline-first workout planning, set logging, and progress tracking for serious training.",
 } as const;

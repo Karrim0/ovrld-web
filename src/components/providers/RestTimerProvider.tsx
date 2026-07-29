@@ -3,16 +3,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { RestTimerContext, type RestTimerContextValue } from "@/contexts/rest-timer-context";
+import { STORAGE_KEYS, readCompatibleStorage } from "@/config/storage";
 
 interface RestTimerProviderProps { children: ReactNode }
 interface PersistedTimer { durationSeconds: number; remainingSeconds: number; isRunning: boolean; endsAt: number | null; completedAt: string | null }
 
-const STORAGE_PREFIX = "gym-crew:rest-timer";
-const SOUND_STORAGE_KEY = "gym-crew:rest-timer:sound";
+const STORAGE_PREFIX = STORAGE_KEYS.restTimerPrefix;
+const LEGACY_STORAGE_PREFIX = STORAGE_KEYS.legacyRestTimerPrefix;
+const SOUND_STORAGE_KEY = `${STORAGE_PREFIX}:sound`;
+const LEGACY_SOUND_STORAGE_KEY = `${LEGACY_STORAGE_PREFIX}:sound`;
 const DEFAULT_DURATION = 90;
 
 function clampDuration(seconds: number) { return Math.min(15 * 60, Math.max(15, Math.floor(seconds))); }
 function storageKey(scopeId: string) { return `${STORAGE_PREFIX}:${scopeId}`; }
+function legacyStorageKey(scopeId: string) { return `${LEGACY_STORAGE_PREFIX}:${scopeId}`; }
 
 export function RestTimerProvider({ children }: RestTimerProviderProps) {
   const [scopeId, setScopeId] = useState<string | null>(null);
@@ -69,13 +73,13 @@ export function RestTimerProvider({ children }: RestTimerProviderProps) {
   }, []);
 
   useEffect(() => {
-    setSoundEnabledState(window.localStorage.getItem(SOUND_STORAGE_KEY) !== "off");
+    setSoundEnabledState(readCompatibleStorage(SOUND_STORAGE_KEY, LEGACY_SOUND_STORAGE_KEY) !== "off");
   }, []);
 
   useEffect(() => {
     setHydrated(false);
     if (!scopeId) { resetState(); setHydrated(true); return; }
-    const raw = window.localStorage.getItem(storageKey(scopeId));
+    const raw = readCompatibleStorage(storageKey(scopeId), legacyStorageKey(scopeId));
     if (!raw) { resetState(); setHydrated(true); return; }
     try {
       const stored = JSON.parse(raw) as PersistedTimer;

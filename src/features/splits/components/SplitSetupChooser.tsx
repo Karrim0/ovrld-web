@@ -49,7 +49,7 @@ export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
         <div className="relative">
           <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-indigo-200" /><p className="gc-eyebrow">اعمل جدولك أو غيّره</p></div>
           <h2 className="mt-2 text-xl font-bold">عايز تعمل جدولك إزاي؟</h2>
-          <p className="mt-1 text-sm leading-6 text-neutral-500">ابدأ من الصفر، اختار نظام جاهز، أو خلّي Gym Crew يقرا الجدول اللي بتتمرّن عليه.</p>
+          <p className="mt-1 text-sm leading-6 text-neutral-500">ابدأ من الصفر، اختار نظام جاهز، أو خلّي OVRLD يقرا الجدول اللي بتتمرّن عليه.</p>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-3">
             <button type="button" disabled={Boolean(busyKey)} onClick={() => void apply("manual")} className="group rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4 text-start transition hover:border-indigo-300/30 hover:bg-indigo-300/[0.07]">

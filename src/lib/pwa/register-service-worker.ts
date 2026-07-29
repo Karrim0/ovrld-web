@@ -8,7 +8,7 @@ async function clearDevelopmentServiceWorkers(): Promise<void> {
     const keys = await caches.keys();
     await Promise.all(
       keys
-        .filter((key) => key.startsWith("gym-crew-"))
+        .filter((key) => key.startsWith("ovrld-") || key.startsWith("gym-crew-"))
         .map((key) => caches.delete(key)),
     );
   }

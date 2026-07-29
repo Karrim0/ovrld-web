@@ -1,7 +1,7 @@
-const CACHE_VERSION = "v5";
-const STATIC_CACHE = `gym-crew-static-${CACHE_VERSION}`;
-const PAGE_CACHE = `gym-crew-pages-${CACHE_VERSION}`;
-const APP_CACHE_PREFIX = "gym-crew-";
+const CACHE_VERSION = "v6";
+const STATIC_CACHE = `ovrld-static-${CACHE_VERSION}`;
+const PAGE_CACHE = `ovrld-pages-${CACHE_VERSION}`;
+const APP_CACHE_PREFIXES = ["ovrld-", "gym-crew-"];
 const OFFLINE_ROUTES = new Set([
   "/dashboard",
   "/workout",
@@ -29,7 +29,7 @@ self.addEventListener("activate", (event) => {
     Promise.all([
       caches.keys().then((keys) => Promise.all(
         keys
-          .filter((key) => key.startsWith(APP_CACHE_PREFIX) && ![STATIC_CACHE, PAGE_CACHE].includes(key))
+          .filter((key) => APP_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix)) && ![STATIC_CACHE, PAGE_CACHE].includes(key))
           .map((key) => caches.delete(key)),
       )),
       self.clients.claim(),
@@ -79,7 +79,7 @@ async function networkFirstNavigation(request) {
     if (cached) return cached;
 
     return new Response(
-      "Gym Crew is offline. Reconnect once to cache this page, then try again.",
+      "OVRLD is offline. Reconnect once to cache this page, then try again.",
       { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
     );
   }

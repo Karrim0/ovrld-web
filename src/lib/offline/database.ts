@@ -11,7 +11,7 @@ import type {
   WorkoutSetRow,
 } from "./schema";
 
-class GymCrewDatabase extends Dexie {
+class OvrldDatabase extends Dexie {
   workoutSessions!: EntityTable<WorkoutSessionRow, "id">;
   workoutExercises!: EntityTable<WorkoutExerciseRow, "id">;
   workoutSets!: EntityTable<WorkoutSetRow, "id">;
@@ -56,14 +56,14 @@ class GymCrewDatabase extends Dexie {
   }
 }
 
-let dbInstance: GymCrewDatabase | null = null;
+let dbInstance: OvrldDatabase | null = null;
 
-export function getOfflineDatabase(): GymCrewDatabase {
+export function getOfflineDatabase(): OvrldDatabase {
   if (typeof window === "undefined") {
     throw new Error("getOfflineDatabase() can only be called in the browser.");
   }
   if (!dbInstance) {
-    dbInstance = new GymCrewDatabase();
+    dbInstance = new OvrldDatabase();
   }
   return dbInstance;
 }

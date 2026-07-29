@@ -135,7 +135,7 @@ async function readWithOptionalAi(file: File, bytes: Buffer) {
   }
 
   const instructions = [
-    "Convert the uploaded gym plan into Gym Crew's weekly split format.",
+    "Convert the uploaded gym plan into OVRLD's weekly split format.",
     "Read Arabic and English. Never invent a value when the source is clear.",
     "Return every weekday exactly once, Saturday through Friday.",
     "Use recovery for unlisted dates and never create three consecutive recovery days.",
@@ -156,7 +156,7 @@ async function readWithOptionalAi(file: File, bytes: Buffer) {
     body: JSON.stringify({
       model: process.env.OPENAI_PLAN_IMPORT_MODEL ?? "gpt-4.1-mini",
       input: [{ role: "user", content }],
-      text: { format: { type: "json_schema", name: "gym_crew_imported_plan", strict: true, schema: PLAN_JSON_SCHEMA } },
+      text: { format: { type: "json_schema", name: "ovrld_imported_plan", strict: true, schema: PLAN_JSON_SCHEMA } },
     }),
   });
 

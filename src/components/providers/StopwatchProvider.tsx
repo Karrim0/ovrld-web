@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { StopwatchContext, type StopwatchContextValue } from "@/contexts/stopwatch-context";
+import { STORAGE_KEYS, readCompatibleStorage } from "@/config/storage";
 import type { StopwatchState, UUID } from "@/types";
 
 interface StopwatchProviderProps {
@@ -19,7 +20,11 @@ const INITIAL_STATE: StopwatchState = {
 };
 
 function storageKey(sessionId: UUID) {
-  return `gym-crew:stopwatch:${sessionId}`;
+  return `${STORAGE_KEYS.stopwatchPrefix}:${sessionId}`;
+}
+
+function legacyStorageKey(sessionId: UUID) {
+  return `${STORAGE_KEYS.legacyStopwatchPrefix}:${sessionId}`;
 }
 
 export function StopwatchProvider({ children }: StopwatchProviderProps) {
@@ -59,7 +64,7 @@ export function StopwatchProvider({ children }: StopwatchProviderProps) {
 
   const hydrate = useCallback((nextSessionId: UUID, startedAt: string, elapsedSeconds?: number) => {
     setSessionId(nextSessionId);
-    const raw = window.localStorage.getItem(storageKey(nextSessionId));
+    const raw = readCompatibleStorage(storageKey(nextSessionId), legacyStorageKey(nextSessionId));
     if (raw) {
       try {
         const stored = JSON.parse(raw) as PersistedStopwatch;
