@@ -1,0 +1,32 @@
+name: OVRLD Web CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - phase/ovrld-web-final-alignment
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ovrld-web-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: test-public-anon-key-for-build-only
+      NEXT_PUBLIC_APP_URL: https://example.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run phase3:check

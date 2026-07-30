@@ -24,7 +24,8 @@ const migrationHashes = {
 };
 
 function sha256(buffer) {
-  return createHash("sha256").update(buffer).digest("hex");
+  const normalizedText = buffer.toString("utf8").replace(/\r\n/g, "\n");
+  return createHash("sha256").update(normalizedText).digest("hex");
 }
 
 async function read(relativePath) {

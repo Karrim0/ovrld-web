@@ -1,7 +1,10 @@
 {
   "name": "ovrld-web",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "private": true,
+  "engines": {
+    "node": ">=22 <23"
+  },
   "scripts": {
     "dev": "next dev --webpack",
     "dev:turbo": "next dev",
@@ -9,11 +12,16 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run lint && npm run build",
+    "check": "npm run phase3:check",
     "verify:phase1": "node scripts/verify-ovrld-web-phase1.mjs",
     "phase1:check": "npm run verify:phase1 && npm run typecheck && npm run lint && npm run build",
     "verify:phase2": "node scripts/verify-ovrld-web-phase2.mjs",
-    "phase2:check": "npm run verify:phase2 && npm run typecheck && npm run lint && npm run build"
+    "phase2:check": "npm run verify:phase2 && npm run typecheck && npm run lint && npm run build",
+    "verify:phase3": "node scripts/verify-ovrld-web-phase3.mjs",
+    "phase3:check": "npm run verify:phase1 && npm run verify:phase2 && npm run verify:phase3 && npm run typecheck && npm run lint && npm run build",
+    "verify:production-env": "node scripts/verify-production-env.mjs",
+    "security:audit:production": "npm audit --omit=dev --audit-level=high",
+    "security:audit:all": "npm audit --audit-level=high"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

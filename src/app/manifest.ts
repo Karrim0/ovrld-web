@@ -4,7 +4,7 @@ import { APP_CONFIG } from "@/config/app";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: APP_CONFIG.fullName,
-    short_name: APP_CONFIG.fullName,
+    short_name: APP_CONFIG.name,
     description: APP_CONFIG.description,
     start_url: "/dashboard",
     display: "standalone",
