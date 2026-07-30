@@ -90,13 +90,13 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
           <div>
             <h2 className="text-lg font-bold">أكد إيميلك</h2>
             <p className="mt-1 text-sm leading-6 text-neutral-400">
-              عملنالك حساب على <strong className="text-white">{createdEmail}</strong>. افتح الإيميل اللي جالك من Gym Crew، وبعدها ارجع وسجّل دخول.
+              عملنالك حساب على <strong className="text-white">{createdEmail}</strong>. افتح الإيميل اللي جالك من OVRLD، وبعدها ارجع وسجّل دخول.
             </p>
           </div>
         </div>
 
         <div className="rounded-xl border border-indigo-300/15 bg-indigo-300/[0.06] p-3 text-sm text-neutral-300">
-          <p className="flex items-center gap-2 font-semibold"><CheckCircle2 className="h-4 w-4 text-indigo-200" /> لينك التأكيد لازم يرجّعك لـGym Crew، مش localhost.</p>
+          <p className="flex items-center gap-2 font-semibold"><CheckCircle2 className="h-4 w-4 text-indigo-200" /> لينك التأكيد لازم يرجّعك لـOVRLD، مش localhost.</p>
         </div>
 
         <AuthSubmitMessage message={submitError} />

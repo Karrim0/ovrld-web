@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { APP_CONFIG } from "@/config/app";
+import { STORAGE_KEYS } from "@/config/storage";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,6 +11,14 @@ export const metadata: Metadata = {
   },
   description: APP_CONFIG.description,
   applicationName: APP_CONFIG.name,
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black",
@@ -32,17 +41,19 @@ const appBootstrap = `
   try {
     var root = document.documentElement;
 
-    var language = localStorage.getItem("gym-crew:language");
+    var language = localStorage.getItem("${STORAGE_KEYS.language}") || localStorage.getItem("${STORAGE_KEYS.legacyLanguage}");
     if (language !== "ar" && language !== "en") language = "ar";
+    localStorage.setItem("${STORAGE_KEYS.language}", language);
     root.lang = language === "ar" ? "ar-EG" : "en";
     root.dir = language === "ar" ? "rtl" : "ltr";
     root.dataset.gcLanguage = language;
     if (language === "en") root.dataset.gcI18nPending = "true";
 
-    var theme = localStorage.getItem("gym-crew:theme");
+    var theme = localStorage.getItem("${STORAGE_KEYS.theme}") || localStorage.getItem("${STORAGE_KEYS.legacyTheme}");
     if (theme !== "light" && theme !== "dark") {
       theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
+    localStorage.setItem("${STORAGE_KEYS.theme}", theme);
     root.classList.remove("light", "dark");
     root.classList.add(theme);
     root.dataset.gcTheme = theme;

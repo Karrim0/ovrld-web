@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { registerServiceWorker } from "@/lib/pwa/register-service-worker";
+import { migrateLegacyClientStorage } from "@/config/storage";
 import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
 import { LanguageProvider } from "@/contexts/language-context";
 import { ThemeProvider } from "@/contexts/theme-context";
@@ -15,7 +16,10 @@ interface AppProvidersProps {
 }
 
 export function AppProviders({ children }: AppProvidersProps) {
-  useEffect(() => registerServiceWorker(), []);
+  useEffect(() => {
+    migrateLegacyClientStorage();
+    return registerServiceWorker();
+  }, []);
 
   return (
     <ThemeProvider>

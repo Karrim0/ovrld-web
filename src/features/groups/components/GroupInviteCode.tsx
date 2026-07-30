@@ -17,9 +17,9 @@ export function GroupInviteCode({ inviteCode }: GroupInviteCodeProps) {
   }
 
   async function share() {
-    const text = `ادخل جروب Gym Crew بالكود ${inviteCode}`;
+    const text = `ادخل جروب OVRLD بالكود ${inviteCode}`;
     try {
-      if (navigator.share) await navigator.share({ title: "دعوة Gym Crew", text });
+      if (navigator.share) await navigator.share({ title: "دعوة OVRLD", text });
       else await copy();
     } catch {
       // A cancelled native share sheet is not an application error.

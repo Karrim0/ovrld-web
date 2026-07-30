@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { APP_CONFIG } from "@/config/app";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Gym Crew",
-    short_name: "Gym Crew",
-    description: "تسجيل تمرينك الشخصي وتمرين الجروب بشكل عملي جوه الجيم.",
+    name: APP_CONFIG.fullName,
+    short_name: APP_CONFIG.name,
+    description: APP_CONFIG.description,
     start_url: "/dashboard",
     display: "standalone",
     orientation: "portrait",

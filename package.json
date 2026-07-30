@@ -1,7 +1,10 @@
 {
-  "name": "gym-crew",
-  "version": "1.7.0",
+  "name": "ovrld-web",
+  "version": "1.8.0",
   "private": true,
+  "engines": {
+    "node": ">=22 <23"
+  },
   "scripts": {
     "dev": "next dev --webpack",
     "dev:turbo": "next dev",
@@ -9,7 +12,16 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run lint && npm run build"
+    "check": "npm run phase3:check",
+    "verify:phase1": "node scripts/verify-ovrld-web-phase1.mjs",
+    "phase1:check": "npm run verify:phase1 && npm run typecheck && npm run lint && npm run build",
+    "verify:phase2": "node scripts/verify-ovrld-web-phase2.mjs",
+    "phase2:check": "npm run verify:phase2 && npm run typecheck && npm run lint && npm run build",
+    "verify:phase3": "node scripts/verify-ovrld-web-phase3.mjs",
+    "phase3:check": "npm run verify:phase1 && npm run verify:phase2 && npm run verify:phase3 && npm run typecheck && npm run lint && npm run build",
+    "verify:production-env": "node scripts/verify-production-env.mjs",
+    "security:audit:production": "npm audit --omit=dev --audit-level=high",
+    "security:audit:all": "npm audit --audit-level=high"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -19,12 +31,13 @@
     "date-fns": "^4.4.0",
     "dexie": "^4.4.4",
     "lucide-react": "^1.24.0",
-    "next": "16.2.10",
+    "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.81.0",
     "read-excel-file": "^9.3.1",
     "server-only": "^0.0.1",
+    "sharp": "0.35.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -33,9 +46,15 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.2.12",
     "supabase": "^2.109.1",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.10"
+    },
+    "sharp": "$sharp"
   }
 }

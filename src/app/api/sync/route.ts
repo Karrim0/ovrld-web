@@ -26,6 +26,8 @@ function exerciseRow(exercise: WorkoutExercise) {
     exercise_id: exercise.exerciseId,
     position: exercise.order,
     is_session_only_addition: exercise.isSessionOnlyAddition,
+    target_reps_min: exercise.targetRepsMin,
+    target_reps_max: exercise.targetRepsMax,
     notes: exercise.notes,
   };
 }
@@ -39,6 +41,8 @@ function setRow(set: WorkoutSet) {
     reps: set.reps,
     is_warmup: set.isWarmup,
     is_completed: set.isCompleted,
+    notes: set.notes,
+    created_at: set.createdAt,
     updated_at: set.updatedAt,
   };
 }

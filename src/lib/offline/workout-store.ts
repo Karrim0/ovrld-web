@@ -8,6 +8,7 @@ import type {
   UserProfile,
 } from "@/types";
 import { getOfflineDatabase } from "./database";
+import { clearOvrldClientStorage } from "@/config/storage";
 import type { CachedExerciseRow, CachedSplitRow } from "./schema";
 
 export interface HydratedLocalWorkoutExercise extends WorkoutExercise {
@@ -73,6 +74,8 @@ export async function saveWorkoutLocally<T extends WorkoutSession>(session: T): 
           exerciseId: workoutExercise.exerciseId,
           order: workoutExercise.order,
           isSessionOnlyAddition: workoutExercise.isSessionOnlyAddition,
+          targetRepsMin: workoutExercise.targetRepsMin,
+          targetRepsMax: workoutExercise.targetRepsMax,
           notes: workoutExercise.notes,
         };
         await db.workoutExercises.put(exerciseRow);
@@ -118,7 +121,9 @@ export async function getLocalWorkoutSession(
     ]);
     exercises.push({
       ...row,
-      sets,
+      targetRepsMin: row.targetRepsMin ?? 1,
+      targetRepsMax: row.targetRepsMax ?? 12,
+      sets: sets.map((set) => ({ ...set, notes: set.notes ?? "" })),
       exercise: exercise ? stripCachedAt(exercise) : { ...FALLBACK_EXERCISE, id: row.exerciseId },
     });
   }
@@ -294,8 +299,5 @@ export async function clearAllLocalPrivateData(): Promise<void> {
     },
   );
 
-  for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
-    const key = window.localStorage.key(index);
-    if (key?.startsWith("gym-crew:")) window.localStorage.removeItem(key);
-  }
+  clearOvrldClientStorage();
 }

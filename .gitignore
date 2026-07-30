@@ -44,3 +44,7 @@ Thumbs.db
 # Local delivery files
 *.patch
 *.zip
+
+# Local security audit reports
+/npm-audit*.json
+/reports/

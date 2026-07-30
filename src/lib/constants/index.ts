@@ -8,6 +8,11 @@
  * product manager, it belongs in `src/constants` instead.
  */
 
+/**
+ * Kept on the legacy IndexedDB name intentionally. Renaming a Dexie database
+ * creates a new empty database, so this stable physical name protects existing
+ * offline workouts during the Gym Crew -> OVRLD product rename.
+ */
 export const OFFLINE_DATABASE_NAME = "gym-crew";
 
 /** How often the app attempts to drain the sync queue while online. */

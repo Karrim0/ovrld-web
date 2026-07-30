@@ -1,0 +1,107 @@
+Connecting to remote database...
+Linting schema: extensions
+Linting schema: public
+[
+  {
+    "function": "public.apply_split_template",
+    "issues": [
+      {
+        "level": "warning extra",
+        "message": "never read variable \"fri\"",
+        "sqlState": "00000"
+      }
+    ]
+  },
+  {
+    "function": "public.apply_imported_split",
+    "issues": [
+      {
+        "level": "warning",
+        "message": "target type is different type than source type",
+        "statement": {
+          "lineNumber": "13",
+          "text": "statement block"
+        },
+        "hint": "The input expression type does not have an assignment cast to the target type.",
+        "detail": "cast \"text\" value to \"weekday[]\" type",
+        "context": "during statement block local variable \"imported_weekdays\" initialization on line 12",
+        "sqlState": "42804"
+      }
+    ]
+  },
+  {
+    "function": "public.assert_base_schedule_has_no_three_rest_days",
+    "issues": [
+      {
+        "level": "warning extra",
+        "message": "auto variable \"window_start\" shadows a previously defined variable",
+        "statement": {
+          "lineNumber": "9",
+          "text": "FOR with integer loop variable"
+        },
+        "hint": "SET plpgsql.extra_warnings TO 'shadowed_variables'",
+        "sqlState": "00000"
+      },
+      {
+        "level": "warning extra",
+        "message": "auto variable \"window_step\" shadows a previously defined variable",
+        "statement": {
+          "lineNumber": "11",
+          "text": "FOR with integer loop variable"
+        },
+        "hint": "SET plpgsql.extra_warnings TO 'shadowed_variables'",
+        "sqlState": "00000"
+      },
+      {
+        "level": "warning",
+        "message": "unused variable \"window_start\"",
+        "sqlState": "00000"
+      },
+      {
+        "level": "warning",
+        "message": "unused variable \"window_step\"",
+        "sqlState": "00000"
+      }
+    ]
+  },
+  {
+    "function": "public.assert_week_schedule_has_no_three_rest_days",
+    "issues": [
+      {
+        "level": "warning extra",
+        "message": "auto variable \"window_step\" shadows a previously defined variable",
+        "statement": {
+          "lineNumber": "10",
+          "text": "FOR with integer loop variable"
+        },
+        "hint": "SET plpgsql.extra_warnings TO 'shadowed_variables'",
+        "sqlState": "00000"
+      },
+      {
+        "level": "warning",
+        "message": "unused variable \"window_step\"",
+        "sqlState": "00000"
+      }
+    ]
+  },
+  {
+    "function": "public.reorder_personal_split_days",
+    "issues": [
+      {
+        "level": "warning extra",
+        "message": "auto variable \"index_value\" shadows a previously defined variable",
+        "statement": {
+          "lineNumber": "83",
+          "text": "FOR with integer loop variable"
+        },
+        "hint": "SET plpgsql.extra_warnings TO 'shadowed_variables'",
+        "sqlState": "00000"
+      },
+      {
+        "level": "warning",
+        "message": "unused variable \"index_value\"",
+        "sqlState": "00000"
+      }
+    ]
+  }
+]

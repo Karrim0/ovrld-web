@@ -44,7 +44,7 @@ export function addDaysToDate(date: Date, amount: number): Date {
   return next;
 }
 
-/** Saturday is day zero for Gym Crew's training week. */
+/** Saturday is day zero for OVRLD's training week. */
 export function getTrainingWeekStart(date: Date): Date {
   const dayOffsetFromSaturday = (date.getDay() + 1) % 7;
   const start = addDaysToDate(date, -dayOffsetFromSaturday);

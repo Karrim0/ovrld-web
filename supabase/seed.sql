@@ -1,0 +1,62 @@
+-- Gym Crew — canonical public exercise catalog
+-- 40 non-custom exercises captured from production on 2026-07-23.
+-- Recovery/CI seed only until the migration histories are reconciled.
+
+insert into public.exercises (
+  id,
+  name,
+  primary_muscle,
+  secondary_muscles,
+  workout_type,
+  is_custom,
+  created_by
+)
+values
+  ('cf62646b-7bed-4202-b954-954ccaa95631'::uuid, 'Back Squat', 'quads'::public.muscle_group, ARRAY['glutes'::public.muscle_group, 'hamstrings'::public.muscle_group], 'legs'::public.workout_type, false, null::uuid),
+  ('aad81258-5c16-4f42-b472-d10fb6199b37'::uuid, 'Barbell Curl', 'biceps'::public.muscle_group, ARRAY[]::public.muscle_group[], 'pull'::public.workout_type, false, null::uuid),
+  ('0be2211a-389e-47ad-9d98-4dd35d97e6a5'::uuid, 'Barbell Row', 'back'::public.muscle_group, ARRAY['biceps'::public.muscle_group, 'shoulders'::public.muscle_group], 'pull'::public.workout_type, false, null::uuid),
+  ('dba00c1a-1c49-47f7-ad11-2a54acc7d142'::uuid, 'Bench Press', 'chest'::public.muscle_group, ARRAY['shoulders'::public.muscle_group, 'triceps'::public.muscle_group], 'push'::public.workout_type, false, null::uuid),
+  ('42058be2-bdaf-4f54-96b0-c23016bf44fd'::uuid, 'Cable Crunch', 'core'::public.muscle_group, ARRAY[]::public.muscle_group[], 'custom'::public.workout_type, false, null::uuid),
+  ('5553bfa6-a0a9-49c1-a7a7-483f6bd45579'::uuid, 'Chest Fly', 'chest'::public.muscle_group, ARRAY['shoulders'::public.muscle_group], 'push'::public.workout_type, false, null::uuid),
+  ('11841ebe-de93-4227-8134-397d6fd2ba59'::uuid, 'Chest Press Machine', 'chest'::public.muscle_group, ARRAY['triceps'::public.muscle_group, 'shoulders'::public.muscle_group], 'push'::public.workout_type, false, null::uuid),
+  ('03ee058a-4577-42f3-98f3-d8a488a10f93'::uuid, 'Contralateral Split Squat', 'quads'::public.muscle_group, ARRAY['glutes'::public.muscle_group], 'legs'::public.workout_type, false, null::uuid),
+  ('a6c812ee-44f9-4b01-aece-5397ca3da93f'::uuid, 'Dips', 'triceps'::public.muscle_group, ARRAY['chest'::public.muscle_group, 'shoulders'::public.muscle_group], 'push'::public.workout_type, false, null::uuid),
+  ('a9254dd9-d808-4767-98b5-751cc7c98777'::uuid, 'Dumbbell Preacher Curl', 'biceps'::public.muscle_group, ARRAY[]::public.muscle_group[], 'pull'::public.workout_type, false, null::uuid),
+  ('e29e45cf-c322-495c-9f80-b468d7a25a66'::uuid, 'Face Pull', 'shoulders'::public.muscle_group, ARRAY['back'::public.muscle_group], 'pull'::public.workout_type, false, null::uuid),
+  ('9e84fb68-fd1c-451a-84d6-ee6f39a5de4b'::uuid, 'Face-Away Curl', 'biceps'::public.muscle_group, ARRAY[]::public.muscle_group[], 'pull'::public.workout_type, false, null::uuid),
+  ('56516ea2-9424-489d-ab4c-e53adfc14cd8'::uuid, 'Hack Squat', 'quads'::public.muscle_group, ARRAY['glutes'::public.muscle_group], 'legs'::public.workout_type, false, null::uuid),
+  ('09b290cf-7649-4731-a371-a06d6295820d'::uuid, 'Hammer Curl', 'biceps'::public.muscle_group, ARRAY[]::public.muscle_group[], 'pull'::public.workout_type, false, null::uuid),
+  ('ae174f43-1a40-49a5-8a9d-7c9b6c36585a'::uuid, 'Hip Thrust', 'glutes'::public.muscle_group, ARRAY['hamstrings'::public.muscle_group], 'legs'::public.workout_type, false, null::uuid),
+  ('a2e044f6-972e-4158-a9b4-30bfab9f6ff5'::uuid, 'Incline Chest Press Machine', 'chest'::public.muscle_group, ARRAY['triceps'::public.muscle_group, 'shoulders'::public.muscle_group], 'push'::public.workout_type, false, null::uuid),
+  ('2932971b-76c4-4abe-a77d-c3648be74636'::uuid, 'Incline Dumbbell Press', 'chest'::public.muscle_group, ARRAY['shoulders'::public.muscle_group, 'triceps'::public.muscle_group], 'push'::public.workout_type, false, null::uuid),
+  ('02678391-6434-40e5-8c32-7720f25fde49'::uuid, 'Kickback', 'glutes'::public.muscle_group, ARRAY['hamstrings'::public.muscle_group], 'legs'::public.workout_type, false, null::uuid),
+  ('cde1d85c-8291-41b4-b8e9-774a79d97739'::uuid, 'Lat Pulldown', 'back'::public.muscle_group, ARRAY['biceps'::public.muscle_group], 'pull'::public.workout_type, false, null::uuid),
+  ('b27f6c34-632f-454b-b8bf-46e7f382ec1f'::uuid, 'Lat Pulldown Crunch', 'core'::public.muscle_group, ARRAY[]::public.muscle_group[], 'custom'::public.workout_type, false, null::uuid),
+  ('e3861762-eb3e-4c5a-92a6-29d1aa93e2b1'::uuid, 'Lateral Raise', 'shoulders'::public.muscle_group, ARRAY[]::public.muscle_group[], 'push'::public.workout_type, false, null::uuid),
+  ('724474b0-39ed-4d3b-a2a9-010c10f8eb8b'::uuid, 'Leg Curl', 'hamstrings'::public.muscle_group, ARRAY[]::public.muscle_group[], 'legs'::public.workout_type, false, null::uuid),
+  ('a8332857-6592-41ee-a713-a80a795a7f7d'::uuid, 'Leg Extension', 'quads'::public.muscle_group, ARRAY[]::public.muscle_group[], 'legs'::public.workout_type, false, null::uuid),
+  ('bbe98b5e-0bfa-4a6b-983e-72f3442a565b'::uuid, 'Leg Press', 'quads'::public.muscle_group, ARRAY['glutes'::public.muscle_group, 'hamstrings'::public.muscle_group], 'legs'::public.workout_type, false, null::uuid),
+  ('75b6fe57-8dbf-4b3d-b36a-0d4a43ce81c4'::uuid, 'Leg Press Calf Raise', 'calves'::public.muscle_group, ARRAY[]::public.muscle_group[], 'legs'::public.workout_type, false, null::uuid),
+  ('da52f633-1119-4b4b-900d-da4d2aa4b770'::uuid, 'Lying Leg Curl', 'hamstrings'::public.muscle_group, ARRAY['calves'::public.muscle_group], 'legs'::public.workout_type, false, null::uuid),
+  ('81f448be-7b59-4812-8e9c-3f7dc0a3bb93'::uuid, 'Machine Lateral Raise', 'shoulders'::public.muscle_group, ARRAY[]::public.muscle_group[], 'push'::public.workout_type, false, null::uuid),
+  ('b4a2db6b-c9a3-4feb-bf56-5f9cf92d244b'::uuid, 'Overhead Press', 'shoulders'::public.muscle_group, ARRAY['triceps'::public.muscle_group], 'push'::public.workout_type, false, null::uuid),
+  ('e1ddb963-9234-448b-92cd-a765fd3f5213'::uuid, 'Overhead Triceps Extension', 'triceps'::public.muscle_group, ARRAY[]::public.muscle_group[], 'push'::public.workout_type, false, null::uuid),
+  ('2411703f-4a27-47a6-bf8d-8583382d8597'::uuid, 'Pull-Up', 'back'::public.muscle_group, ARRAY['biceps'::public.muscle_group], 'pull'::public.workout_type, false, null::uuid),
+  ('a7253e19-e60f-42cf-a412-84d32fa70d52'::uuid, 'Rear Delt Fly', 'shoulders'::public.muscle_group, ARRAY['back'::public.muscle_group], 'pull'::public.workout_type, false, null::uuid),
+  ('f89c316f-e5d9-4237-a9fa-acb840fb39ea'::uuid, 'Romanian Deadlift', 'hamstrings'::public.muscle_group, ARRAY['glutes'::public.muscle_group, 'back'::public.muscle_group], 'legs'::public.workout_type, false, null::uuid),
+  ('8dc08c36-8e11-45bc-a15f-f9fef1c5bfca'::uuid, 'Seated Cable Row', 'back'::public.muscle_group, ARRAY['biceps'::public.muscle_group], 'pull'::public.workout_type, false, null::uuid),
+  ('10c758ee-b912-4d8b-9aa8-64b9d169c041'::uuid, 'Single-Arm Lat Row', 'back'::public.muscle_group, ARRAY['biceps'::public.muscle_group], 'pull'::public.workout_type, false, null::uuid),
+  ('c200f808-2f32-499f-8bb1-2dd2fd38efc3'::uuid, 'Single-Arm Triceps Pushdown', 'triceps'::public.muscle_group, ARRAY[]::public.muscle_group[], 'push'::public.workout_type, false, null::uuid),
+  ('2345a4fa-953d-4d5e-aa58-230b94043e2f'::uuid, 'Standing Calf Raise', 'calves'::public.muscle_group, ARRAY[]::public.muscle_group[], 'legs'::public.workout_type, false, null::uuid),
+  ('10bc45fe-c359-4871-9c50-72cc4f5b8d66'::uuid, 'T-Bar Row', 'back'::public.muscle_group, ARRAY['biceps'::public.muscle_group], 'pull'::public.workout_type, false, null::uuid),
+  ('db732d37-b4c1-4b11-9b31-9be8500657a9'::uuid, 'Triceps Pushdown', 'triceps'::public.muscle_group, ARRAY[]::public.muscle_group[], 'push'::public.workout_type, false, null::uuid),
+  ('8db78d36-6d00-4ef5-ada4-3b5d06686d16'::uuid, 'Walking Lunge', 'quads'::public.muscle_group, ARRAY['glutes'::public.muscle_group, 'hamstrings'::public.muscle_group], 'legs'::public.workout_type, false, null::uuid),
+  ('542afcf2-fe20-40a2-be30-89ebdfebdceb'::uuid, 'Wide-Grip Lat Pulldown Machine', 'back'::public.muscle_group, ARRAY['biceps'::public.muscle_group], 'pull'::public.workout_type, false, null::uuid)
+on conflict (id) do update set
+  name = excluded.name,
+  primary_muscle = excluded.primary_muscle,
+  secondary_muscles = excluded.secondary_muscles,
+  workout_type = excluded.workout_type,
+  is_custom = false,
+  created_by = null,
+  updated_at = timezone('utc'::text, now());

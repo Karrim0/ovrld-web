@@ -1,100 +1,139 @@
-# Gym Crew
+# OVRLD Web
 
-A mobile-first group workout tracker built with Next.js, TypeScript, Supabase and Tailwind CSS.
+OVRLD Web is the browser and installable PWA experience for the OVRLD training platform. It shares the same Supabase backend and workout data model as OVRLD Mobile, with individual training as the product core and Crews as an optional social layer.
 
-## Current status
+## Stable release
 
-The application currently includes authentication, optional group or solo onboarding, shared and personal PPL splits, local-first workout recording, automatic synchronization, personal records, adherence, streaks, exercise history and personal progress summaries.
+**OVRLD Web v1.8.0**
 
-The next product phases focus on richer group activity, challenges, the full body map, final visual design and deployment hardening.
+This release completes the Gym Crew → OVRLD migration, aligns the web client with the mobile backend, repairs cross-platform workout freshness and offline synchronization, and prepares the repository for production deployment.
 
-## Technology
+## Product capabilities
 
-- Next.js 16 App Router
-- React 19 and TypeScript strict mode
-- Tailwind CSS 4
-- Supabase Auth, PostgreSQL, Storage, Realtime-ready schema and RLS
+- Email authentication, confirmation, password recovery, and protected-route restoration.
+- Individual and optional Crew onboarding.
+- Personal and shared workout plans, templates, and exercise library.
+- Gym Mode with weight, reps, set notes, timers, and session recovery.
+- Workout history, volume, records, streaks, body map, and exercise progress.
+- Offline workout storage with queued synchronization and retry backoff.
+- Cross-platform workout freshness between OVRLD Web and OVRLD Mobile.
+- Arabic/English with RTL/LTR layouts.
+- Light and dark themes.
+- Installable PWA with legacy cache and browser-storage migration.
+
+## Stack
+
+- Next.js 16 and React 19
+- TypeScript and Tailwind CSS 4
+- Supabase Auth, PostgreSQL, Storage, and RLS
+- Dexie and IndexedDB
 - React Hook Form and Zod
-- Dexie/IndexedDB local-first workout storage and ordered sync queue
+- GitHub Actions and Vercel
 
-## Setup
+## Requirements
+
+- Node.js 22
+- npm
+- The same Supabase project used by OVRLD Mobile
+
+## Configure
+
+Copy the environment template:
 
 ```bash
-npm install
+cp .env.example .env.local
 ```
 
-Copy `.env.example` to `.env.local` and provide the public Supabase values:
+Set the public client values:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_KEY
+NEXT_PUBLIC_APP_URL=https://YOUR_OVRLD_DOMAIN.example
 ```
 
-Never place a service-role or secret key in a `NEXT_PUBLIC_` variable.
+Smart Plan Import optionally uses these server-only values:
 
-Link the project and apply all migrations:
+```env
+OPENAI_API_KEY=YOUR_SERVER_ONLY_KEY
+OPENAI_PLAN_IMPORT_MODEL=gpt-5.6-luna
+```
+
+Never expose service-role keys, private API keys, or signing credentials through `NEXT_PUBLIC_` variables.
+
+## Install and develop
 
 ```bash
-npx supabase login
-npx supabase link --project-ref YOUR_PROJECT_REF
-npx supabase db push
-```
-
-The latest migration is:
-
-```text
-supabase/migrations/202607140004_offline_progress_solo.sql
-```
-
-It adds private solo workspaces, personal-record context and automatic record recalculation. Earlier migrations contain authentication, groups, splits, exercises and workout recording.
-
-Regenerate Supabase types after applying migrations:
-
-```bash
-npx supabase gen types typescript --linked --schema public > src/lib/supabase/types.ts
-```
-
-Run the app:
-
-```bash
+npm ci
 npm run dev
 ```
 
 Open `http://localhost:3000`.
 
-## Useful commands
+## Quality gates
+
+Run the complete final gate:
 
 ```bash
-npm run dev
-npm run lint
-npx tsc --noEmit
-npm run build
-npm run start
+npm run phase3:check
 ```
 
-## Implemented journeys
+On Windows:
 
-- Register, confirm email, login, reset password and logout.
-- Create a group or join one with an invite code.
-- View members and copy the invite code.
-- Owner can manage admin/member roles and remove non-owner members.
-- Edit display name and upload an avatar.
-- View and edit the group PPL split as owner/admin.
-- Clone and customize a personal split.
-- Keep Friday fixed as rest and choose up to two additional rest days.
-- Add, remove, reorder and edit exercise targets.
-- Start today's workout from the personal split.
-- Record sets, weights, reps, notes and stopwatch duration.
-- Add exercises for one session or permanently.
-- Finish a workout and review workout history/details.
-- Record and finish workouts without internet, then synchronize automatically.
-- Restore an active workout and stopwatch after closing the app.
-- Track adherence, weekly streaks, duration, volume and muscle distribution.
-- Review automatic records and detailed progress for every exercise.
-- Use the complete personal experience in a private solo workspace.
+```bat
+VERIFY_OVRLD_WEB_FINAL.cmd
+```
 
-See [`docs/PHASE_4_5_OFFLINE_PROGRESS.md`](docs/PHASE_4_5_OFFLINE_PROGRESS.md) for the current implementation report.
+The gate covers the Phase 1 backend contract, Phase 2 synchronization contract, final repository/release contract, TypeScript, ESLint, production build, and Git whitespace validation.
 
-## v1.0 release candidate
+Validate production environment values before deployment:
 
-The current release candidate includes the final mobile-first dark UI, personal analytics, body map, group activity, offline workout logging, production-safe PWA caching and stable Webpack build scripts. See `PHASE_8_FINAL_RELEASE.md` for deployment and verification details.
+```bash
+npm run verify:production-env
+```
+
+## Security audit
+
+Run production and full dependency audits separately:
+
+```bash
+npm run security:audit:production
+npm run security:audit:all
+```
+
+Do not use `npm audit fix --force` on the release branch. Review and upgrade affected packages deliberately on a dedicated dependency branch. See [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md).
+
+## Database safety
+
+The committed migrations match the active OVRLD Mobile chain. Do not run `npx supabase db push` against production unless `npx supabase migration list` confirms the linked project follows the same chain.
+
+## Production release
+
+Follow [`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_DEPLOYMENT.md) for GitHub, Vercel, Supabase Auth redirect, PWA, smoke-test, and rollback steps.
+
+## Main directories
+
+```text
+src/app                 Next.js App Router pages and API routes
+src/components          Shared UI, layout, and provider components
+src/features            Auth, Crew, plans, workouts, and progress features
+src/lib/offline         IndexedDB storage and synchronization
+src/lib/supabase        Supabase clients and generated database types
+supabase/migrations     Shared active backend migration chain
+supabase/tests          Database regression tests
+scripts                 Verification and release scripts
+docs                    Architecture, deployment, and release documentation
+docs/archive            Historical Gym Crew and implementation notes
+```
+
+## Release identity
+
+- Product: `OVRLD Web`
+- Version: `1.8.0`
+- Package: `ovrld-web`
+- Default release branch: `main`
+- Recommended repository name: `ovrld-web`
+
+## License
+
+Use and distribution are governed by the license configured for this repository.

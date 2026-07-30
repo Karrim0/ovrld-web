@@ -1,5 +1,6 @@
 "use client";
 
+import { STORAGE_KEYS, readCompatibleStorage } from "@/config/storage";
 import { getArabicErrorMessage } from "@/lib/localization";
 import {
   useEffect,
@@ -203,7 +204,10 @@ export function ActiveWorkoutClient() {
   function readWeightStep(exerciseId: string, sets: WorkoutSet[]) {
     if (typeof window === "undefined") return inferWeightStep(sets);
     const stored = Number(
-      window.localStorage.getItem(`gym-crew:weight-step:${exerciseId}`),
+      readCompatibleStorage(
+        `${STORAGE_KEYS.weightStepPrefix}:${exerciseId}`,
+        `${STORAGE_KEYS.legacyWeightStepPrefix}:${exerciseId}`,
+      ),
     );
     return WEIGHT_STEPS.includes(stored as (typeof WEIGHT_STEPS)[number])
       ? stored
@@ -307,7 +311,7 @@ export function ActiveWorkoutClient() {
     if (!currentExercise) return;
     setWeightStep(step);
     window.localStorage.setItem(
-      `gym-crew:weight-step:${currentExercise.exerciseId}`,
+      `${STORAGE_KEYS.weightStepPrefix}:${currentExercise.exerciseId}`,
       step.toString(),
     );
   }
@@ -760,7 +764,7 @@ export function ActiveWorkoutClient() {
                   <p className="mt-1 text-lg font-bold text-neutral-300">مفيش أرقام قديمة لسه</p>
                 )}
                 <p className="mt-2 text-xs leading-5 text-neutral-500">
-                  العب السِت الأول. لما تخلص، Gym Crew هيسألك بس عن الوزن والعدات اللي حصلوا فعلًا.
+                  العب السِت الأول. لما تخلص، OVRLD هيسألك بس عن الوزن والعدات اللي حصلوا فعلًا.
                 </p>
               </div>
 

@@ -15,6 +15,12 @@ export interface LoginFormProps {
   onSubmit?: (data: LoginInput) => Promise<void> | void;
 }
 
+function getSafeLoginDestination(value: string | null): string | null {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return null;
+  if (value.startsWith("/login") || value.startsWith("/register")) return null;
+  return value;
+}
+
 export function LoginForm({ onSubmit }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,7 +44,8 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
       if (error) throw error;
       if (!authData.user) throw new Error("تسجيل الدخول تم بس الجلسة مش موجودة. جرّب تاني.");
 
-      const destination = await resolvePostAuthDestination(authData.user.id);
+      const requestedDestination = getSafeLoginDestination(searchParams.get("next"));
+      const destination = requestedDestination ?? await resolvePostAuthDestination(authData.user.id);
       router.replace(destination);
       router.refresh();
     } catch (error) {

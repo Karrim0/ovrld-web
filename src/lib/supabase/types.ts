@@ -484,6 +484,8 @@ export type Database = {
           is_session_only_addition: boolean
           notes: string
           position: number
+          target_reps_max: number
+          target_reps_min: number
           updated_at: string
           workout_session_id: string
         }
@@ -494,6 +496,8 @@ export type Database = {
           is_session_only_addition?: boolean
           notes?: string
           position: number
+          target_reps_max?: number
+          target_reps_min?: number
           updated_at?: string
           workout_session_id: string
         }
@@ -504,6 +508,8 @@ export type Database = {
           is_session_only_addition?: boolean
           notes?: string
           position?: number
+          target_reps_max?: number
+          target_reps_min?: number
           updated_at?: string
           workout_session_id?: string
         }
@@ -600,6 +606,7 @@ export type Database = {
           id: string
           is_completed: boolean
           is_warmup: boolean
+          notes: string
           reps: number | null
           set_number: number
           updated_at: string
@@ -611,6 +618,7 @@ export type Database = {
           id: string
           is_completed?: boolean
           is_warmup?: boolean
+          notes?: string
           reps?: number | null
           set_number: number
           updated_at?: string
@@ -622,6 +630,7 @@ export type Database = {
           id?: string
           is_completed?: boolean
           is_warmup?: boolean
+          notes?: string
           reps?: number | null
           set_number?: number
           updated_at?: string
@@ -647,6 +656,17 @@ export type Database = {
         Args: { target_group_id: string }
         Returns: number
       }
+      add_template_exercise: {
+        Args: {
+          target_exercise_name: string
+          target_position: number
+          target_reps_max: number
+          target_reps_min: number
+          target_sets: number
+          target_split_day_id: string
+        }
+        Returns: undefined
+      }
       add_workout_exercise: {
         Args: {
           session_only?: boolean
@@ -660,7 +680,32 @@ export type Database = {
         Args: { target_workout_exercise_id: string }
         Returns: string
       }
+      apply_girls_strength_4_template: { Args: never; Returns: undefined }
+      apply_girls_strength_4_template_v2: { Args: never; Returns: Json }
+      apply_girls_strength_4_template_v3: { Args: never; Returns: Json }
+      apply_imported_split: { Args: { target_plan: Json }; Returns: undefined }
+      apply_split_template: {
+        Args: { target_template_key: string }
+        Returns: undefined
+      }
       array_is_unique: { Args: { values_array: unknown }; Returns: boolean }
+      assert_base_schedule_has_no_three_rest_days: {
+        Args: {
+          changed_split_day_id: string
+          changed_workout_type: Database["public"]["Enums"]["workout_type"]
+          target_group_id: string
+          target_owner_user_id: string
+        }
+        Returns: undefined
+      }
+      assert_week_schedule_has_no_three_rest_days: {
+        Args: {
+          changed_date: string
+          changed_workout_type: Database["public"]["Enums"]["workout_type"]
+          target_user_id: string
+        }
+        Returns: undefined
+      }
       bump_group_split_version: {
         Args: { target_group_id: string }
         Returns: number
@@ -711,14 +756,18 @@ export type Database = {
         Returns: undefined
       }
       ensure_personal_split: { Args: never; Returns: undefined }
-      ensure_week_schedule: { Args: { target_anchor_date?: string }; Returns: string }
-      apply_imported_split: { Args: { target_plan: Json }; Returns: undefined }
-      apply_split_template: { Args: { target_template_key: string }; Returns: undefined }
-      get_daily_consistency_streak: {
-        Args: never
-        Returns: { current_streak_days: number; longest_streak_days: number }[]
+      ensure_week_schedule: {
+        Args: { target_anchor_date?: string }
+        Returns: string
       }
       generate_group_invite_code: { Args: never; Returns: string }
+      get_daily_consistency_streak: {
+        Args: never
+        Returns: {
+          current_streak_days: number
+          longest_streak_days: number
+        }[]
+      }
       get_group_member_weekly_stats: {
         Args: { target_group_id: string }
         Returns: {
@@ -771,17 +820,38 @@ export type Database = {
         Args: { target_session_id: string }
         Returns: undefined
       }
+      reorder_personal_split_days: {
+        Args: { target_ordered_day_ids: string[] }
+        Returns: undefined
+      }
       reset_personal_split_to_group: { Args: never; Returns: undefined }
-      reset_week_schedule: { Args: { target_anchor_date?: string }; Returns: undefined }
+      reset_week_schedule: {
+        Args: { target_anchor_date?: string }
+        Returns: undefined
+      }
       seed_group_split: {
         Args: { target_group_id: string }
         Returns: undefined
+      }
+      set_personal_day: {
+        Args: {
+          target_color_key: string
+          target_display_name: string
+          target_focus_label: string
+          target_group_id: string
+          target_icon_key: string
+          target_user_id: string
+          target_weekday: Database["public"]["Enums"]["weekday"]
+          target_workout_type: Database["public"]["Enums"]["workout_type"]
+        }
+        Returns: string
       }
       shares_group_with: { Args: { other_user_id: string }; Returns: boolean }
       start_workout_from_split: {
         Args: { target_scheduled_date: string; target_split_day_id: string }
         Returns: string
       }
+      training_week_start: { Args: { target_date: string }; Returns: string }
       update_split_day_settings: {
         Args: {
           target_color_key: string
@@ -806,6 +876,14 @@ export type Database = {
           target_workout_type: Database["public"]["Enums"]["workout_type"]
         }
         Returns: undefined
+      }
+      weekday_from_index: {
+        Args: { target_index: number }
+        Returns: Database["public"]["Enums"]["weekday"]
+      }
+      weekday_index: {
+        Args: { target_weekday: Database["public"]["Enums"]["weekday"] }
+        Returns: number
       }
     }
     Enums: {

@@ -1,9 +1,9 @@
 import { AR_TO_EN } from "./ar-en-map";
+import { LANGUAGE_COOKIE_KEY, STORAGE_KEYS, readCompatibleStorage } from "@/config/storage";
 
 export type AppLanguage = "ar" | "en";
 
-export const LANGUAGE_STORAGE_KEY = "gym-crew:language";
-export const LANGUAGE_COOKIE_KEY = "gym_crew_language";
+export const LANGUAGE_STORAGE_KEY = STORAGE_KEYS.language;
 
 const ARABIC_RE = /[\u0600-\u06ff]/u;
 const ATTRIBUTES = ["aria-label", "title", "placeholder", "alt"] as const;
@@ -232,7 +232,7 @@ export function localizeDom(root: Node, language: AppLanguage): void {
 
 export function readStoredLanguage(): AppLanguage {
   if (typeof window === "undefined") return "ar";
-  const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  const stored = readCompatibleStorage(LANGUAGE_STORAGE_KEY, STORAGE_KEYS.legacyLanguage);
   return stored === "en" ? "en" : "ar";
 }
 
