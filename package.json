@@ -37,6 +37,7 @@
     "react-hook-form": "^7.81.0",
     "read-excel-file": "^9.3.1",
     "server-only": "^0.0.1",
+    "sharp": "0.35.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -49,5 +50,11 @@
     "supabase": "^2.109.1",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.10"
+    },
+    "sharp": "$sharp"
   }
 }
