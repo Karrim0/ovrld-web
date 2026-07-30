@@ -34,6 +34,8 @@ export function buildWorkoutSessionFromSplitDay(
       exerciseId: splitExercise.exerciseId,
       order: splitExercise.order,
       isSessionOnlyAddition: false,
+      targetRepsMin: splitExercise.targetRepsMin,
+      targetRepsMax: splitExercise.targetRepsMax,
       notes: "",
       sets: [],
     })),

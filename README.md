@@ -4,9 +4,9 @@ OVRLD Web is the browser and PWA experience for the OVRLD training platform. It 
 
 ## Current alignment phase
 
-Phase 1 aligns the web repository with the final mobile backend contract and starts the Gym Crew to OVRLD rename safely.
+Phase 2 repairs cross-platform workout freshness, sync recovery, and protected-route login behavior after the Phase 1 backend alignment.
 
-Included in this phase:
+Included across Phase 1 and Phase 2:
 
 - the complete active Supabase migration chain used by OVRLD Mobile;
 - aligned generated database types and RPC definitions;
@@ -14,7 +14,11 @@ Included in this phase:
 - safe migration from legacy `gym-crew:` browser settings to `ovrld:` settings;
 - preserved IndexedDB data for existing offline users;
 - OVRLD service-worker cache names with legacy cache cleanup;
-- automated backend-alignment and rename verification.
+- automated backend-alignment and rename verification;
+- safe post-login route restoration;
+- remote workout refresh without overwriting pending offline changes;
+- interrupted-sync recovery and retry backoff;
+- target-rep and set-note preservation across web, mobile backend, and IndexedDB.
 
 See [`docs/OVRLD_WEB_PHASE_1.md`](docs/OVRLD_WEB_PHASE_1.md) for the compatibility and database-safety rules.
 
@@ -75,10 +79,10 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Phase 1 verification
+## Phase 2 verification
 
 ```bash
-npm run verify:phase1
+npm run verify:phase2
 npm run typecheck
 npm run lint
 npm run build
@@ -87,7 +91,7 @@ npm run build
 Or on Windows:
 
 ```bat
-VERIFY_OVRLD_WEB_PHASE1.cmd
+VERIFY_OVRLD_WEB_PHASE2.cmd
 ```
 
 ## Database safety

@@ -36,5 +36,20 @@ export function useActiveWorkout(sessionId?: string | null): UseActiveWorkoutRes
     void reload();
   }, [reload]);
 
+  useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void reload();
+    };
+    const refreshWhenOnline = () => void reload();
+    window.addEventListener("focus", refreshWhenOnline);
+    window.addEventListener("online", refreshWhenOnline);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.removeEventListener("focus", refreshWhenOnline);
+      window.removeEventListener("online", refreshWhenOnline);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [reload]);
+
   return { session, isLoading, error, reload };
 }

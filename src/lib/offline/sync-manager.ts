@@ -6,6 +6,7 @@ import {
   getPendingSyncCount,
   getSyncQueueItems,
   markFailedItemsPending,
+  recoverInterruptedSyncItems,
   removeSyncQueueItem,
   updateSyncQueueItem,
 } from "./sync-queue";
@@ -42,6 +43,8 @@ function exerciseRow(exercise: WorkoutExercise) {
     exercise_id: exercise.exerciseId,
     position: exercise.order,
     is_session_only_addition: exercise.isSessionOnlyAddition,
+    target_reps_min: exercise.targetRepsMin,
+    target_reps_max: exercise.targetRepsMax,
     notes: exercise.notes,
   };
 }
@@ -55,6 +58,8 @@ function setRow(set: WorkoutSet) {
     reps: set.reps,
     is_warmup: set.isWarmup,
     is_completed: set.isCompleted,
+    notes: set.notes,
+    created_at: set.createdAt,
     updated_at: set.updatedAt,
   };
 }
@@ -113,9 +118,17 @@ export async function processSyncQueue(): Promise<SyncResult> {
       };
     }
 
+    await recoverInterruptedSyncItems();
     const queue = await getSyncQueueItems(["pending", "failed"]);
     if (queue.length === 0) {
-      return { status: "synced" as const, syncedCount: 0, failedCount: 0, pendingCount: 0 };
+      const pendingCount = await getPendingSyncCount();
+      return {
+        status: pendingCount > 0 ? "error" as const : "synced" as const,
+        syncedCount: 0,
+        failedCount: pendingCount,
+        pendingCount,
+        ...(pendingCount > 0 ? { error: "في تغييرات مستنية إعادة المحاولة." } : {}),
+      };
     }
 
     let syncedCount = 0;

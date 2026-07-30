@@ -74,6 +74,8 @@ export async function saveWorkoutLocally<T extends WorkoutSession>(session: T): 
           exerciseId: workoutExercise.exerciseId,
           order: workoutExercise.order,
           isSessionOnlyAddition: workoutExercise.isSessionOnlyAddition,
+          targetRepsMin: workoutExercise.targetRepsMin,
+          targetRepsMax: workoutExercise.targetRepsMax,
           notes: workoutExercise.notes,
         };
         await db.workoutExercises.put(exerciseRow);
@@ -119,7 +121,9 @@ export async function getLocalWorkoutSession(
     ]);
     exercises.push({
       ...row,
-      sets,
+      targetRepsMin: row.targetRepsMin ?? 1,
+      targetRepsMax: row.targetRepsMax ?? 12,
+      sets: sets.map((set) => ({ ...set, notes: set.notes ?? "" })),
       exercise: exercise ? stripCachedAt(exercise) : { ...FALLBACK_EXERCISE, id: row.exerciseId },
     });
   }

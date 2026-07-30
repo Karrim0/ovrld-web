@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run lint && npm run build",
     "verify:phase1": "node scripts/verify-ovrld-web-phase1.mjs",
-    "phase1:check": "npm run verify:phase1 && npm run typecheck && npm run lint && npm run build"
+    "phase1:check": "npm run verify:phase1 && npm run typecheck && npm run lint && npm run build",
+    "verify:phase2": "node scripts/verify-ovrld-web-phase2.mjs",
+    "phase2:check": "npm run verify:phase2 && npm run typecheck && npm run lint && npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

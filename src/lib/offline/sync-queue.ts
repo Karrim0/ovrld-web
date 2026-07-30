@@ -10,6 +10,7 @@ import type {
 } from "@/types";
 import { getOfflineDatabase } from "./database";
 import { STORAGE_KEYS } from "@/config/storage";
+import { isInterruptedProcessingItem, isSyncRetryDue } from "./sync-policy";
 
 export const SYNC_QUEUE_CHANGED_EVENT = STORAGE_KEYS.syncQueueChangedEvent;
 
@@ -163,7 +164,63 @@ export async function getSyncQueueItems(
 ): Promise<SyncQueueItem[]> {
   const db = getOfflineDatabase();
   const rows = await db.syncQueue.where("status").anyOf(statuses).toArray();
-  return rows.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return rows
+    .filter((item) => item.status !== "failed" || isSyncRetryDue(item))
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+/** Restores queue rows left in `processing` after a crashed/closed tab. */
+export async function recoverInterruptedSyncItems(now = new Date()): Promise<number> {
+  const db = getOfflineDatabase();
+  const processing = await db.syncQueue.where("status").equals("processing").toArray();
+  const interrupted = processing.filter((item) => isInterruptedProcessingItem(item, now.getTime()));
+  if (interrupted.length === 0) return 0;
+
+  const updatedAt = now.toISOString();
+  await db.syncQueue.bulkPut(
+    interrupted.map((item) => ({
+      ...item,
+      status: "pending" as const,
+      updatedAt,
+      lastError: item.lastError ?? "Interrupted sync recovered after the previous tab closed.",
+    })),
+  );
+  notifyQueueChanged();
+  return interrupted.length;
+}
+
+/** Prevents a remote refresh from overwriting workout changes that still live only locally. */
+export async function hasPendingMutationsForWorkoutSession(sessionId: UUID): Promise<boolean> {
+  const db = getOfflineDatabase();
+  const rows = await db.syncQueue
+    .where("status")
+    .anyOf(["pending", "processing", "failed"])
+    .toArray();
+
+  const pendingExerciseSessions = new Map<UUID, UUID>();
+  const pendingSetExerciseIds = new Set<UUID>();
+
+  for (const row of rows) {
+    const mutation = row.mutation;
+    if (mutation.entity === "workoutSession") {
+      if (mutation.payload.id === sessionId) return true;
+      continue;
+    }
+    if (mutation.entity === "workoutExercise") {
+      if (mutation.payload.workoutSessionId === sessionId) return true;
+      pendingExerciseSessions.set(mutation.payload.id, mutation.payload.workoutSessionId);
+      continue;
+    }
+    pendingSetExerciseIds.add(mutation.payload.workoutExerciseId);
+  }
+
+  if (pendingSetExerciseIds.size === 0) return false;
+  for (const exerciseId of pendingSetExerciseIds) {
+    if (pendingExerciseSessions.get(exerciseId) === sessionId) return true;
+    const exercise = await db.workoutExercises.get(exerciseId);
+    if (exercise?.workoutSessionId === sessionId) return true;
+  }
+  return false;
 }
 
 export async function updateSyncQueueItem(item: SyncQueueItem): Promise<void> {

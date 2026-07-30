@@ -31,7 +31,7 @@ export function OfflineCacheWarmer() {
         if (cancelled) break;
         await fetch(route, {
           credentials: "include",
-          headers: { "X-Gym-Crew-Offline-Warmup": "1" },
+          headers: { "X-OVRLD-Offline-Warmup": "1" },
         }).catch(() => undefined);
       }
     });

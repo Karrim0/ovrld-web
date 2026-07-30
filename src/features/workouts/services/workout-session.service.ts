@@ -7,6 +7,8 @@ import {
   getLocalWorkoutHistory,
   getLocalWorkoutSession,
   getOfflineDatabase,
+  getCurrentNetworkStatus,
+  hasPendingMutationsForWorkoutSession,
   requestSync,
   removeLocalWorkoutSession,
   saveWorkoutLocally,
@@ -44,6 +46,7 @@ function mapSet(row: WorkoutSetRow, recordSetIds = new Set<string>()): WorkoutSe
     isWarmup: row.is_warmup,
     isCompleted: row.is_completed,
     isPersonalRecord: recordSetIds.has(row.id),
+    notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -56,6 +59,8 @@ function mapWorkoutExercise(row: WorkoutExerciseQueryRow, recordSetIds = new Set
     exerciseId: row.exercise_id,
     order: row.position,
     isSessionOnlyAddition: row.is_session_only_addition,
+    targetRepsMin: row.target_reps_min,
+    targetRepsMax: row.target_reps_max,
     notes: row.notes,
     exercise: mapExercise(row.exercises),
     sets: [...row.workout_sets]
@@ -122,34 +127,64 @@ export async function fetchWorkoutSessionById(
   sessionId: UUID,
 ): Promise<WorkoutSessionWithDetails | null> {
   const local = await getLocalWorkoutSession(sessionId);
-  if (local) return local;
-  return fetchRemoteSessionById(sessionId);
+  if (!getCurrentNetworkStatus()) return local;
+
+  const hasPendingLocalChanges = await hasPendingMutationsForWorkoutSession(sessionId);
+  if (local && hasPendingLocalChanges) return local;
+
+  try {
+    const remote = await fetchRemoteSessionById(sessionId);
+    if (!remote && local) await removeLocalWorkoutSession(sessionId);
+    return remote;
+  } catch (error) {
+    if (local) return local;
+    throw error;
+  }
 }
 
 export async function fetchActiveWorkoutSession(): Promise<WorkoutSessionWithDetails | null> {
   const supabase = createClient();
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  const currentUser = sessionData.session?.user;
-  if (sessionError || !currentUser) throw new Error("لازم تسجّل دخول الأول.");
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const currentUser = userData.user;
+  if (userError || !currentUser) throw new Error("لازم تسجّل دخول الأول.");
 
   const local = await getLocalActiveWorkout(currentUser.id);
-  if (local) return local;
+  if (!getCurrentNetworkStatus()) return local;
 
-  const { data, error } = await supabase
-    .from("workout_sessions")
-    .select(SESSION_SELECT)
-    .eq("user_id", currentUser.id)
-    .eq("status", "in_progress")
-    .order("started_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  if (local && await hasPendingMutationsForWorkoutSession(local.id)) {
+    return local;
+  }
 
-  if (error) throw new Error(error.message);
-  if (!data) return null;
-  const session = mapSession(data as unknown as WorkoutSessionQueryRow);
-  await cacheExercises(session.exercises.map((exercise) => exercise.exercise));
-  await saveWorkoutLocally(session);
-  return session;
+  try {
+    const { data, error } = await supabase
+      .from("workout_sessions")
+      .select(SESSION_SELECT)
+      .eq("user_id", currentUser.id)
+      .eq("status", "in_progress")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (data) {
+      const session = mapSession(data as unknown as WorkoutSessionQueryRow);
+      if (local && local.id !== session.id) await removeLocalWorkoutSession(local.id);
+      await cacheExercises(session.exercises.map((exercise) => exercise.exercise));
+      await saveWorkoutLocally(session);
+      return session;
+    }
+
+    if (local) {
+      // Another client may have finished/cancelled the session. Refresh its
+      // final state, which removes it from the local active-workout query.
+      const remoteLocalSession = await fetchRemoteSessionById(local.id);
+      if (!remoteLocalSession) await removeLocalWorkoutSession(local.id);
+    }
+    return null;
+  } catch (error) {
+    if (local) return local;
+    throw error;
+  }
 }
 
 export async function fetchWorkoutHistory(userId: UUID): Promise<WorkoutSessionWithDetails[]> {
@@ -215,6 +250,8 @@ export async function startWorkoutSession(
         exerciseId: template.exerciseId,
         order: exerciseIndex,
         isSessionOnlyAddition: false,
+        targetRepsMin: template.targetRepsMin,
+        targetRepsMax: template.targetRepsMax,
         notes: "",
         exercise: template.exercise,
         sets: Array.from({ length: template.targetSets }, (_, setIndex) => ({
@@ -226,6 +263,7 @@ export async function startWorkoutSession(
           isWarmup: false,
           isCompleted: false,
           isPersonalRecord: false,
+          notes: "",
           createdAt: now,
           updatedAt: now,
         })),
@@ -288,6 +326,7 @@ export async function addWorkoutSet(workoutExerciseId: UUID): Promise<WorkoutSet
     isWarmup: false,
     isCompleted: false,
     isPersonalRecord: false,
+    notes: "",
     createdAt: now,
     updatedAt: now,
   };
@@ -347,6 +386,8 @@ export async function addExerciseToWorkout(
     exerciseId,
     order: Math.max(-1, ...session.exercises.map((item) => item.order)) + 1,
     isSessionOnlyAddition: sessionOnly,
+    targetRepsMin: 1,
+    targetRepsMax: 12,
     notes: "",
     exercise,
     sets: Array.from({ length: setCount }, (_, index) => ({
@@ -358,6 +399,7 @@ export async function addExerciseToWorkout(
       isWarmup: false,
       isCompleted: false,
       isPersonalRecord: false,
+      notes: "",
       createdAt: now,
       updatedAt: now,
     })),
@@ -407,6 +449,8 @@ export async function reorderWorkoutExercises(
         exerciseId: item.exerciseId,
         order: item.order,
         isSessionOnlyAddition: item.isSessionOnlyAddition,
+        targetRepsMin: item.targetRepsMin,
+        targetRepsMax: item.targetRepsMax,
         notes: item.notes,
       })),
     );
