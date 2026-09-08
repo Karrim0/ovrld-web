@@ -81,7 +81,7 @@ for (const className of ["gc-gain-dashboard", "gc-nutrition-panel", "gc-progress
 }
 
 const sw = read("public/sw.js");
-assert.match(sw, /CACHE_VERSION = "v12"/);
+assert.match(sw, /CACHE_VERSION = "v(?:1[2-9]|[2-9]\d+)"/);
 
 console.table({
   phase: "8 — Gain Mode daily nutrition & clarity",

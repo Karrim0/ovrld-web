@@ -22,6 +22,7 @@ import type { UUID } from "@/types";
 import { getArabicErrorMessage } from "@/lib/localization";
 import { addBodyMeasurement, fetchBodyProgress, saveBodyGoal } from "../services/body-progress.service";
 import type { BodyProgressSnapshot } from "../types";
+import { BodyMeasurementsPanel } from "./BodyMeasurementsPanel";
 
 function asNumber(value: string): number | null {
   if (!value.trim()) return null;
@@ -110,10 +111,10 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
   const [message, setMessage] = useState<string | null>(null);
 
   const [intervalDays, setIntervalDays] = useState("7");
+  const [activeView, setActiveView] = useState<"weight" | "measurements">("weight");
 
   const [weight, setWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
-  const [waist, setWaist] = useState("");
   const [note, setNote] = useState("");
 
   const load = useCallback(async () => {
@@ -134,6 +135,18 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
   }, [userId]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#measurements") setActiveView("measurements");
+  }, []);
+
+  function selectView(view: "weight" | "measurements") {
+    setActiveView(view);
+    if (typeof window !== "undefined") {
+      const next = view === "measurements" ? `${window.location.pathname}#measurements` : window.location.pathname;
+      window.history.replaceState(null, "", next);
+    }
+  }
 
   useEffect(() => {
     if (!snapshot?.nextWeighInAt || typeof window === "undefined" || !("Notification" in window)) return;
@@ -192,6 +205,7 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
         heightCm: snapshot?.goal?.heightCm ?? null,
         targetDate: snapshot?.goal?.targetDate ?? null,
         weighInIntervalDays: interval,
+        bodyMeasurementIntervalDays: snapshot?.goal?.bodyMeasurementIntervalDays ?? 28,
       });
       setMessage("اتحفظ ميعاد متابعة الوزن.");
       await load();
@@ -203,7 +217,6 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
   async function logWeight() {
     const value = asNumber(weight);
     const fat = asNumber(bodyFat);
-    const waistCm = asNumber(waist);
     if (value === null || value < 20 || value > 500) {
       setError("اكتب وزنك الحالي بالكيلوجرام.");
       return;
@@ -213,10 +226,9 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
       await addBodyMeasurement(userId, {
         weightKg: value,
         bodyFatPercentage: fat,
-        waistCm,
         note,
       });
-      setBodyFat(""); setWaist(""); setNote("");
+      setBodyFat(""); setNote("");
       setMessage("اتسجلت القراءة. هنستخدم الاتجاه، مش رقم يوم واحد.");
       await load();
     } catch (caught) {
@@ -273,6 +285,15 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
       {error ? <p className="rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm font-semibold text-red-300">{error}</p> : null}
       {message ? <p className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm font-semibold text-emerald-300">{message}</p> : null}
 
+      <div className="gc-body-view-tabs">
+        <button type="button" onClick={() => selectView("weight")} className={activeView === "weight" ? "gc-body-view-tab-active" : ""}>الوزن</button>
+        <button type="button" onClick={() => selectView("measurements")} className={activeView === "measurements" ? "gc-body-view-tab-active" : ""}>القياسات</button>
+      </div>
+
+      {activeView === "measurements" ? (
+        <BodyMeasurementsPanel userId={userId} snapshot={snapshot} onSaved={load} />
+      ) : (
+        <>
       <section className="gc-body-hero relative overflow-hidden rounded-[30px] p-5 sm:p-7">
         <div className="absolute -left-12 -top-16 h-44 w-44 rounded-full bg-emerald-300/10 blur-3xl" />
         <div className="relative flex items-start justify-between gap-4">
@@ -324,8 +345,7 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
           <summary className="flex items-center justify-between gap-3 text-sm font-bold"><span>تفاصيل اختيارية</span><ChevronDown className="h-4 w-4 text-neutral-500" /></summary>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label><span className="mb-1 block text-xs font-bold text-neutral-500">دهون الجسم %</span><input type="number" inputMode="decimal" value={bodyFat} onChange={(event) => setBodyFat(event.target.value)} className="gc-input" placeholder="اختياري" /></label>
-            <label><span className="mb-1 block text-xs font-bold text-neutral-500">محيط الوسط سم</span><input type="number" inputMode="decimal" value={waist} onChange={(event) => setWaist(event.target.value)} className="gc-input" placeholder="اختياري" /></label>
-            <label className="sm:col-span-2"><span className="mb-1 block text-xs font-bold text-neutral-500">ملاحظة</span><input value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} className="gc-input" placeholder="مثلاً: صباحًا قبل الفطار" /></label>
+            <label><span className="mb-1 block text-xs font-bold text-neutral-500">ملاحظة</span><input value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} className="gc-input" placeholder="مثلاً: صباحًا قبل الفطار" /></label>
           </div>
         </details>
 
@@ -374,6 +394,8 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
         <div className="flex items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-300/10 text-amber-300"><CalendarClock className="h-5 w-5" /></span><div className="min-w-0 flex-1"><p className="font-bold">القياس الجاي</p><p className="mt-1 text-sm text-neutral-500">{dueInDays === null ? "حدد فترة المتابعة" : dueInDays <= 0 ? "النهارده" : `بعد ${dueInDays} يوم`}</p></div></div>
         <button type="button" onClick={() => void enableNotifications()} className="gc-secondary-button mt-4 w-full"><BellRing className="h-4 w-4" /> فعّل تذكير المتابعة</button>
       </section>
+        </>
+      )}
     </div>
   );
 }

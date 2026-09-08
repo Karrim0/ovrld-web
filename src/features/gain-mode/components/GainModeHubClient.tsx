@@ -8,6 +8,7 @@ import { fetchGainModeSnapshot } from "../services/gain-mode.service";
 import type { GainModeSnapshot } from "../types";
 import { GainModeActivationClient } from "./GainModeActivationClient";
 import { GainNutritionPanel } from "./GainNutritionPanel";
+import { GainBodyMeasurementsCard } from "./GainBodyMeasurementsCard";
 
 function kg(value: number | null | undefined) {
   if (value == null) return "—";
@@ -65,6 +66,8 @@ export function GainModeHubClient({ userId }: { userId: UUID }) {
 
       <GainNutritionPanel userId={userId} snapshot={snapshot} />
 
+      <GainBodyMeasurementsCard body={snapshot.body} />
+
       <section className="gc-gain-review">
         <div className="flex items-start gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-indigo-500/10 text-indigo-500"><Target className="h-4 w-4" /></span>
@@ -79,7 +82,7 @@ export function GainModeHubClient({ userId }: { userId: UUID }) {
 
       <section className="gc-list-panel">
         <Link href="/workout/today" className="gc-list-row"><Dumbbell className="h-4 w-4 text-indigo-400" /><span className="min-w-0 flex-1 font-bold">تمرين النهارده</span><ArrowUpLeft className="h-4 w-4 text-neutral-500" /></Link>
-        <Link href="/progress/body" className="gc-list-row"><Scale className="h-4 w-4 text-emerald-400" /><span className="min-w-0 flex-1 font-bold">الوزن والقياسات</span><ArrowUpLeft className="h-4 w-4 text-neutral-500" /></Link>
+        <Link href="/progress/body" className="gc-list-row"><Scale className="h-4 w-4 text-emerald-400" /><span className="min-w-0 flex-1 font-bold">الوزن</span><ArrowUpLeft className="h-4 w-4 text-neutral-500" /></Link>
       </section>
 
       <details className="gc-list-panel group">

@@ -2660,3 +2660,124 @@ html[data-gc-i18n-ready="true"] body {
     box-shadow: none;
   }
 }
+
+/* Phase 9 — body measurements + clearer body/Gain Mode hierarchy */
+.gc-body-view-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 0.95rem;
+  background: var(--surface-elevated);
+  padding: 0.28rem;
+}
+
+.gc-body-view-tabs button {
+  min-height: 2.6rem;
+  border-radius: 0.72rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: var(--muted);
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.gc-body-view-tabs .gc-body-view-tab-active {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.gc-measurements-hero,
+.gc-gain-measurements-card {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-sm);
+}
+
+.gc-measurements-hero {
+  padding: 1rem;
+}
+
+.gc-gain-measurements-card {
+  padding: 0.85rem;
+}
+
+.gc-measurements-icon {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, #34d399 12%, transparent);
+  color: #10b981;
+}
+
+.gc-day-status-due {
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  color: #d97706;
+}
+
+.dark .gc-day-status-due {
+  color: #fbbf24;
+}
+
+.gc-body-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.gc-body-metric {
+  min-width: 0;
+  border-radius: 0.8rem;
+  background: var(--surface-overlay);
+  padding: 0.7rem;
+}
+
+.gc-body-metric span,
+.gc-body-metric small {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.gc-body-metric strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.gc-body-metric small {
+  margin-top: 0.15rem;
+}
+
+.gc-measurements-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface-overlay);
+  padding: 0.85rem;
+}
+
+.gc-measurements-empty strong {
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.gc-measurements-empty span {
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+@media (min-width: 480px) {
+  .gc-body-metric-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}

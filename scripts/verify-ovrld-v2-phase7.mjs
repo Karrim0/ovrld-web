@@ -100,7 +100,7 @@ assert.match(sw, /CACHE_VERSION = "v(?:1[1-9]|[2-9]\d+)"/);
 
 const migrations = fs.readdirSync(path.join(root, "supabase/migrations")).filter((name) => /^20260908/.test(name)).sort();
 assert.ok(migrations.includes("202609080003_gain_mode_v1.sql"));
-assert.ok(migrations.filter((name) => name > "202609080003_gain_mode_v1.sql").every((name) => /^202609080004_gain_nutrition_v1\.sql$/.test(name)), "Unexpected successor migration after Phase 7.");
+assert.ok(migrations.filter((name) => name > "202609080003_gain_mode_v1.sql").every((name) => /^20260908000(?:4_gain_nutrition_v1|5_body_measurements_v1)\.sql$/.test(name)), "Unexpected successor migration after Phase 7.");
 
 const map = read("src/lib/localization/ar-en-map.ts");
 for (const phrase of ["حسابي", "الأرقام القياسية", "القوة ماشية لفوق", "بنجمع خط الأساس"]) assert.ok(map.includes(phrase));

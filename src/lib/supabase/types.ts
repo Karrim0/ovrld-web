@@ -17,30 +17,48 @@ export type Database = {
       body_measurements: {
         Row: {
           body_fat_percentage: number | null
+          calf_cm: number | null
+          chest_cm: number | null
           created_at: string
+          hips_cm: number | null
           id: string
           measured_at: string
+          neck_cm: number | null
           note: string
+          thigh_cm: number | null
+          upper_arm_cm: number | null
           user_id: string
           waist_cm: number | null
           weight_kg: number
         }
         Insert: {
           body_fat_percentage?: number | null
+          calf_cm?: number | null
+          chest_cm?: number | null
           created_at?: string
+          hips_cm?: number | null
           id?: string
           measured_at?: string
+          neck_cm?: number | null
           note?: string
+          thigh_cm?: number | null
+          upper_arm_cm?: number | null
           user_id: string
           waist_cm?: number | null
           weight_kg: number
         }
         Update: {
           body_fat_percentage?: number | null
+          calf_cm?: number | null
+          chest_cm?: number | null
           created_at?: string
+          hips_cm?: number | null
           id?: string
           measured_at?: string
+          neck_cm?: number | null
           note?: string
+          thigh_cm?: number | null
+          upper_arm_cm?: number | null
           user_id?: string
           waist_cm?: number | null
           weight_kg?: number
@@ -57,6 +75,7 @@ export type Database = {
       }
       user_body_goals: {
         Row: {
+          body_measurement_interval_days: number
           created_at: string
           goal_type: string
           height_cm: number | null
@@ -67,6 +86,7 @@ export type Database = {
           weigh_in_interval_days: number
         }
         Insert: {
+          body_measurement_interval_days?: number
           created_at?: string
           goal_type?: string
           height_cm?: number | null
@@ -77,6 +97,7 @@ export type Database = {
           weigh_in_interval_days?: number
         }
         Update: {
+          body_measurement_interval_days?: number
           created_at?: string
           goal_type?: string
           height_cm?: number | null
