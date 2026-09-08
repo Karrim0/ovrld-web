@@ -1,7 +1,12 @@
 import { createClient } from "@/lib/supabase/client";
 import { addDaysToDate, getTodayISODate, toISODateOnly } from "@/lib/dates";
 import type { ISODateOnlyString, UUID } from "@/types";
-import type { GainNutritionDaySummary, GainNutritionEntry } from "../types";
+import type {
+  GainNutritionDaySummary,
+  GainNutritionEntry,
+  GainNutritionEntrySource,
+  GainSavedMeal,
+} from "../types";
 
 type NutritionRow = {
   id: string;
@@ -10,9 +15,27 @@ type NutritionRow = {
   label: string;
   calories_kcal: number;
   protein_grams: number | string;
+  source?: string | null;
   created_at: string;
   updated_at: string;
 };
+
+type SavedMealRow = {
+  id: string;
+  user_id: string;
+  label: string;
+  calories_kcal: number;
+  protein_grams: number | string;
+  use_count: number;
+  last_used_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+function nutritionSource(value: string | null | undefined): GainNutritionEntrySource {
+  if (value === "ai" || value === "saved") return value;
+  return "manual";
+}
 
 function mapEntry(row: NutritionRow): GainNutritionEntry {
   return {
@@ -22,6 +45,21 @@ function mapEntry(row: NutritionRow): GainNutritionEntry {
     label: row.label,
     caloriesKcal: Number(row.calories_kcal),
     proteinGrams: Number(row.protein_grams),
+    source: nutritionSource(row.source),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapSavedMeal(row: SavedMealRow): GainSavedMeal {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    label: row.label,
+    caloriesKcal: Number(row.calories_kcal),
+    proteinGrams: Number(row.protein_grams),
+    useCount: Number(row.use_count),
+    lastUsedAt: row.last_used_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -108,6 +146,7 @@ export interface AddGainNutritionEntryInput {
   label?: string;
   caloriesKcal: number;
   proteinGrams: number;
+  source?: GainNutritionEntrySource;
 }
 
 export async function addGainNutritionEntry(
@@ -127,20 +166,32 @@ export async function addGainNutritionEntry(
   }
 
   const supabase = createClient();
-  const { data, error } = await supabase
+  const basePayload = {
+    user_id: userId,
+    logged_on: input.loggedOn ?? getTodayISODate(),
+    label: input.label?.trim().slice(0, 80) ?? "",
+    calories_kcal: caloriesKcal,
+    protein_grams: proteinGrams,
+  };
+  const first = await supabase
     .from("gain_nutrition_entries")
-    .insert({
-      user_id: userId,
-      logged_on: input.loggedOn ?? getTodayISODate(),
-      label: input.label?.trim().slice(0, 80) ?? "",
-      calories_kcal: caloriesKcal,
-      protein_grams: proteinGrams,
-    })
+    .insert({ ...basePayload, source: input.source ?? "manual" })
     .select("*")
     .single();
 
-  if (error) throw new Error(error.message);
-  return mapEntry(data as NutritionRow);
+  if (!first.error) return mapEntry(first.data as NutritionRow);
+
+  // Keep Phase 8 manual logging usable during a short deploy window before the Phase 11 migration lands.
+  const sourceColumnMissing = first.error.code === "PGRST204" || /source.*column|column.*source/i.test(first.error.message);
+  if (!sourceColumnMissing) throw new Error(first.error.message);
+
+  const fallback = await supabase
+    .from("gain_nutrition_entries")
+    .insert(basePayload)
+    .select("*")
+    .single();
+  if (fallback.error) throw new Error(fallback.error.message);
+  return mapEntry(fallback.data as NutritionRow);
 }
 
 export async function deleteGainNutritionEntry(userId: UUID, entryId: UUID): Promise<void> {
@@ -151,6 +202,79 @@ export async function deleteGainNutritionEntry(userId: UUID, entryId: UUID): Pro
     .eq("id", entryId)
     .eq("user_id", userId);
   if (error) throw new Error(error.message);
+}
+
+export async function fetchGainSavedMeals(userId: UUID): Promise<GainSavedMeal[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("gain_saved_meals")
+    .select("*")
+    .eq("user_id", userId)
+    .order("use_count", { ascending: false })
+    .order("last_used_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row: unknown) => mapSavedMeal(row as SavedMealRow));
+}
+
+export interface SaveGainMealInput {
+  label: string;
+  caloriesKcal: number;
+  proteinGrams: number;
+}
+
+export async function saveGainMeal(userId: UUID, input: SaveGainMealInput): Promise<GainSavedMeal> {
+  const label = input.label.trim().slice(0, 80);
+  const caloriesKcal = Math.round(input.caloriesKcal);
+  const proteinGrams = Math.round(input.proteinGrams * 10) / 10;
+  if (!label) throw new Error("اكتبي اسم للوجبة المحفوظة.");
+  if (!Number.isFinite(caloriesKcal) || caloriesKcal < 0 || caloriesKcal > 5000) throw new Error("راجع سعرات الوجبة.");
+  if (!Number.isFinite(proteinGrams) || proteinGrams < 0 || proteinGrams > 300) throw new Error("راجع بروتين الوجبة.");
+  if (caloriesKcal === 0 && proteinGrams === 0) throw new Error("سجّل سعرات أو بروتين على الأقل.");
+
+  const existing = await fetchGainSavedMeals(userId);
+  const match = existing.find((meal) => meal.label.trim().toLocaleLowerCase("ar-EG") === label.toLocaleLowerCase("ar-EG"));
+  const supabase = createClient();
+  if (match) {
+    const { data, error } = await supabase
+      .from("gain_saved_meals")
+      .update({ calories_kcal: caloriesKcal, protein_grams: proteinGrams })
+      .eq("id", match.id)
+      .eq("user_id", userId)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return mapSavedMeal(data as SavedMealRow);
+  }
+
+  const { data, error } = await supabase
+    .from("gain_saved_meals")
+    .insert({ user_id: userId, label, calories_kcal: caloriesKcal, protein_grams: proteinGrams })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return mapSavedMeal(data as SavedMealRow);
+}
+
+export async function deleteGainSavedMeal(userId: UUID, mealId: UUID): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("gain_saved_meals")
+    .delete()
+    .eq("id", mealId)
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+}
+
+export async function logGainSavedMeal(mealId: UUID, loggedOn: ISODateOnlyString = getTodayISODate()): Promise<UUID> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("log_gain_saved_meal", {
+    target_saved_meal_id: mealId,
+    target_logged_on: loggedOn,
+  });
+  if (error) throw new Error(error.message);
+  return data as UUID;
 }
 
 export async function saveGainNutritionTargets(

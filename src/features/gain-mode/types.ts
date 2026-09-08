@@ -22,6 +22,8 @@ export interface GainModeProfile {
   updatedAt: ISODateString;
 }
 
+export type GainNutritionEntrySource = "manual" | "ai" | "saved";
+
 export interface GainNutritionEntry {
   id: UUID;
   userId: UUID;
@@ -29,8 +31,40 @@ export interface GainNutritionEntry {
   label: string;
   caloriesKcal: number;
   proteinGrams: number;
+  source: GainNutritionEntrySource;
   createdAt: ISODateString;
   updatedAt: ISODateString;
+}
+
+export interface GainSavedMeal {
+  id: UUID;
+  userId: UUID;
+  label: string;
+  caloriesKcal: number;
+  proteinGrams: number;
+  useCount: number;
+  lastUsedAt: ISODateString | null;
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
+}
+
+export type GainAiFoodConfidence = "low" | "medium" | "high";
+
+export interface GainAiFoodEstimateItem {
+  name: string;
+  quantityText: string;
+  caloriesKcal: number;
+  proteinGrams: number;
+}
+
+export interface GainAiFoodEstimate {
+  recognized: boolean;
+  label: string;
+  caloriesKcal: number;
+  proteinGrams: number;
+  confidence: GainAiFoodConfidence;
+  items: GainAiFoodEstimateItem[];
+  assumptions: string[];
 }
 
 export interface GainNutritionDaySummary {

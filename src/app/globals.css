@@ -2908,3 +2908,156 @@ html[data-gc-i18n-ready="true"] body {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* OVRLD v2 Phase 11 — AI food logging + saved meals */
+.gc-ai-food-box,
+.gc-ai-review-box,
+.gc-saved-meals-box {
+  border: 1px solid var(--border);
+  border-radius: 0.95rem;
+  background: var(--surface-overlay);
+  padding: 0.8rem;
+}
+
+.gc-ai-food-box {
+  background:
+    radial-gradient(circle at 10% 0%, color-mix(in srgb, #8b5cf6 8%, transparent), transparent 42%),
+    var(--surface-overlay);
+}
+
+.gc-ai-food-icon {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, #8b5cf6 12%, var(--surface-elevated));
+  color: #8b5cf6;
+}
+
+.gc-ai-review-box {
+  border-color: color-mix(in srgb, #8b5cf6 24%, var(--border));
+  background: color-mix(in srgb, #8b5cf6 4%, var(--surface-overlay));
+}
+
+.gc-ai-confidence {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.58rem;
+  font-weight: 900;
+}
+
+.gc-ai-confidence-high {
+  background: color-mix(in srgb, #34d399 12%, transparent);
+  color: #059669;
+}
+
+.gc-ai-confidence-medium {
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  color: #d97706;
+}
+
+.gc-ai-confidence-low {
+  background: color-mix(in srgb, #f97316 12%, transparent);
+  color: #ea580c;
+}
+
+.gc-ai-food-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border-radius: 0.72rem;
+  background: var(--surface-elevated);
+  padding: 0.58rem 0.65rem;
+}
+
+.gc-ai-food-item strong,
+.gc-ai-food-item small {
+  display: block;
+}
+
+.gc-ai-food-item strong {
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.gc-ai-food-item small {
+  margin-top: 0.1rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.gc-ai-assumptions {
+  border-radius: 0.72rem;
+  background: color-mix(in srgb, #f59e0b 7%, var(--surface-elevated));
+  padding: 0.55rem 0.65rem;
+  font-size: 0.6rem;
+  line-height: 1rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.gc-saved-meals-box {
+  background: var(--surface-elevated);
+}
+
+.gc-saved-meal-chip {
+  display: inline-flex;
+  min-width: max-content;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 0.78rem;
+  background: var(--surface-overlay);
+  padding: 0.48rem 0.6rem;
+  text-align: start;
+}
+
+.gc-saved-meal-chip > span,
+.gc-saved-meal-chip strong,
+.gc-saved-meal-chip small {
+  display: block;
+}
+
+.gc-saved-meal-chip strong {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.gc-saved-meal-chip small {
+  margin-top: 0.1rem;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.gc-quiet-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: transparent;
+  padding-inline: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: var(--muted);
+}
+
+.gc-entry-source {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: color-mix(in srgb, #8b5cf6 10%, transparent);
+  padding: 0.12rem 0.35rem;
+  font-size: 0.5rem;
+  font-weight: 900;
+  color: #7c3aed;
+}

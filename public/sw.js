@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v14";
+const CACHE_VERSION = "v15";
 const STATIC_CACHE = `ovrld-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `ovrld-pages-${CACHE_VERSION}`;
 const APP_CACHE_PREFIXES = ["ovrld-", "gym-crew-"];

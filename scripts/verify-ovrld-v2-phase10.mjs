@@ -64,7 +64,7 @@ const css = read("src/app/globals.css");
 for (const className of ["gc-review-decision", "gc-review-section", "gc-review-metric-grid", "gc-calorie-change", "gc-inline-success"]) {
   assert.ok(css.includes(`.${className}`), `Missing Phase 10 CSS class ${className}`);
 }
-assert.match(read("public/sw.js"), /CACHE_VERSION = "v14"/);
+assert.match(read("public/sw.js"), /CACHE_VERSION = "v(?:1[4-9]|[2-9]\d+)"/);
 
 console.table({
   phase: "10 — Adaptive Gain Reviews",

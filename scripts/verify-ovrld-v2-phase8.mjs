@@ -50,7 +50,8 @@ assert.match(gain, /fetchGainNutritionDay/);
 assert.match(gain, /nutritionAvailable/);
 
 const panel = read("src/features/gain-mode/components/GainNutritionPanel.tsx");
-for (const phrase of ["السعرات", "البروتين", "سجّلي أكلك", "آخر 7 أيام", "أهداف الأكل"]) assert.ok(panel.includes(phrase));
+for (const phrase of ["السعرات", "البروتين", "آخر 7 أيام", "أهداف الأكل"]) assert.ok(panel.includes(phrase));
+assert.ok(panel.includes("سجّلي أكلك") || panel.includes("GainAiFoodLogger") || panel.includes("إدخال أرقام يدويًا"));
 assert.match(panel, /gc-progress-track/);
 assert.match(panel, /gc-nutrition-week/);
 

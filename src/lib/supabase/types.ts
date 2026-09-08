@@ -455,6 +455,7 @@ export type Database = {
           label: string
           logged_on: string
           protein_grams: number
+          source: string
           updated_at: string
           user_id: string
         }
@@ -465,6 +466,7 @@ export type Database = {
           label?: string
           logged_on?: string
           protein_grams?: number
+          source?: string
           updated_at?: string
           user_id: string
         }
@@ -475,12 +477,57 @@ export type Database = {
           label?: string
           logged_on?: string
           protein_grams?: number
+          source?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "gain_nutrition_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gain_saved_meals: {
+        Row: {
+          calories_kcal: number
+          created_at: string
+          id: string
+          label: string
+          last_used_at: string | null
+          protein_grams: number
+          updated_at: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          calories_kcal: number
+          created_at?: string
+          id?: string
+          label: string
+          last_used_at?: string | null
+          protein_grams?: number
+          updated_at?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          calories_kcal?: number
+          created_at?: string
+          id?: string
+          label?: string
+          last_used_at?: string | null
+          protein_grams?: number
+          updated_at?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gain_saved_meals_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -933,6 +980,13 @@ export type Database = {
           target_calorie_kcal: number
         }
         Returns: number
+      }
+      log_gain_saved_meal: {
+        Args: {
+          target_logged_on?: string
+          target_saved_meal_id: string
+        }
+        Returns: string
       }
       apply_girls_strength_4_template: { Args: never; Returns: undefined }
       apply_girls_strength_4_template_v2: { Args: never; Returns: Json }

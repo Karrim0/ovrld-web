@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, Flame, Plus, Save, SlidersHorizontal, Trash2, Utensils } from "lucide-react";
+import { ChevronDown, Flame, Hash, Save, SlidersHorizontal, Trash2, Utensils } from "lucide-react";
 import type { UUID } from "@/types";
 import { getArabicErrorMessage } from "@/lib/localization";
 import {
@@ -13,6 +13,7 @@ import {
 } from "../services/nutrition.service";
 import { fetchGainModeSnapshot } from "../services/gain-mode.service";
 import type { GainModeSnapshot, GainNutritionDaySummary } from "../types";
+import { GainAiFoodLogger } from "./GainAiFoodLogger";
 
 function clampProgress(value: number | null) {
   if (value === null || !Number.isFinite(value)) return 0;
@@ -176,8 +177,11 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
         <strong className="tabular-nums">{calorieLeft === null ? "—" : `${calorieLeft} kcal`} · {proteinLeft === null ? "—" : `${proteinLeft}g بروتين`}</strong>
       </div>
 
-      <button type="button" onClick={() => setShowForm((value) => !value)} className="gc-primary-button mt-3 w-full min-h-11">
-        <Plus className="h-4 w-4" /> سجّلي أكلك
+      <GainAiFoodLogger userId={userId} onLogged={refresh} />
+
+      <button type="button" onClick={() => setShowForm((value) => !value)} className="gc-quiet-action mt-3 w-full min-h-10">
+        <Hash className="h-4 w-4" /> إدخال أرقام يدويًا
+        <ChevronDown className={`ms-auto h-4 w-4 transition-transform ${showForm ? "rotate-180" : ""}`} />
       </button>
 
       {showForm ? (
@@ -197,7 +201,7 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
           <div className="space-y-1.5">
             {today.entries.map((entry) => (
               <div key={entry.id} className="gc-food-entry">
-                <span className="min-w-0 flex-1"><strong className="block truncate text-xs">{entry.label || "تسجيل"}</strong><span className="text-[10px] tabular-nums text-neutral-500">{entry.caloriesKcal} kcal · {numberText(entry.proteinGrams)}g protein</span></span>
+                <span className="min-w-0 flex-1"><span className="flex min-w-0 items-center gap-1.5"><strong className="block min-w-0 truncate text-xs">{entry.label || "تسجيل"}</strong>{entry.source !== "manual" ? <span className="gc-entry-source">{entry.source === "ai" ? "AI" : "محفوظة"}</span> : null}</span><span className="text-[10px] tabular-nums text-neutral-500">{entry.caloriesKcal} kcal · {numberText(entry.proteinGrams)}g protein</span></span>
                 <button type="button" disabled={busy} onClick={() => void removeEntry(entry.id)} aria-label="امسح التسجيل" className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 hover:bg-red-400/10 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
             ))}
