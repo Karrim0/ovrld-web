@@ -14,6 +14,88 @@ export type Database = {
   }
   public: {
     Tables: {
+      body_measurements: {
+        Row: {
+          body_fat_percentage: number | null
+          created_at: string
+          id: string
+          measured_at: string
+          note: string
+          user_id: string
+          waist_cm: number | null
+          weight_kg: number
+        }
+        Insert: {
+          body_fat_percentage?: number | null
+          created_at?: string
+          id?: string
+          measured_at?: string
+          note?: string
+          user_id: string
+          waist_cm?: number | null
+          weight_kg: number
+        }
+        Update: {
+          body_fat_percentage?: number | null
+          created_at?: string
+          id?: string
+          measured_at?: string
+          note?: string
+          user_id?: string
+          waist_cm?: number | null
+          weight_kg?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "body_measurements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_body_goals: {
+        Row: {
+          created_at: string
+          goal_type: string
+          height_cm: number | null
+          target_date: string | null
+          target_weight_kg: number | null
+          updated_at: string
+          user_id: string
+          weigh_in_interval_days: number
+        }
+        Insert: {
+          created_at?: string
+          goal_type?: string
+          height_cm?: number | null
+          target_date?: string | null
+          target_weight_kg?: number | null
+          updated_at?: string
+          user_id: string
+          weigh_in_interval_days?: number
+        }
+        Update: {
+          created_at?: string
+          goal_type?: string
+          height_cm?: number | null
+          target_date?: string | null
+          target_weight_kg?: number | null
+          updated_at?: string
+          user_id?: string
+          weigh_in_interval_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_body_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercises: {
         Row: {
           created_at: string
@@ -247,6 +329,53 @@ export type Database = {
           },
         ]
       }
+      gain_mode_profiles: {
+        Row: {
+          activity_level: string
+          age_years: number
+          appetite_level: string
+          created_at: string
+          diet_pattern: string
+          meal_size_difficulty: boolean
+          nutrition_mode: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_level?: string
+          age_years: number
+          appetite_level?: string
+          created_at?: string
+          diet_pattern?: string
+          meal_size_difficulty?: boolean
+          nutrition_mode?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_level?: string
+          age_years?: number
+          appetite_level?: string
+          created_at?: string
+          diet_pattern?: string
+          meal_size_difficulty?: boolean
+          nutrition_mode?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gain_mode_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           additional_rest_days: Database["public"]["Enums"]["weekday"][]
@@ -254,6 +383,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          onboarding_completed_at: string | null
           share_personal_records: boolean
           share_weights: boolean
           share_workout_summary: boolean
@@ -267,6 +397,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id: string
+          onboarding_completed_at?: string | null
           share_personal_records?: boolean
           share_weights?: boolean
           share_workout_summary?: boolean
@@ -280,6 +411,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          onboarding_completed_at?: string | null
           share_personal_records?: boolean
           share_weights?: boolean
           share_workout_summary?: boolean
@@ -850,6 +982,10 @@ export type Database = {
       start_workout_from_split: {
         Args: { target_scheduled_date: string; target_split_day_id: string }
         Returns: string
+      }
+      swap_week_schedule_days: {
+        Args: { first_schedule_date: string; second_schedule_date: string }
+        Returns: undefined
       }
       training_week_start: { Args: { target_date: string }; Returns: string }
       update_split_day_settings: {

@@ -50,7 +50,7 @@ const manifest = read("src/app/manifest.ts");
 assert.match(manifest, /short_name:\s*APP_CONFIG\.name/);
 
 const serviceWorker = read("public/sw.js");
-assert.match(serviceWorker, /CACHE_VERSION = "v7"/);
+assert.match(serviceWorker, /CACHE_VERSION = "v(?:[7-9]|[1-9]\d+)"/);
 assert.match(serviceWorker, /"gym-crew-"/);
 
 const health = read("src/app/api/health/route.ts");
@@ -64,7 +64,7 @@ assert.match(readme, /docs\/PRODUCTION_DEPLOYMENT\.md/);
 assert.doesNotMatch(readme, /Current alignment phase/);
 
 const workflow = read(".github/workflows/ovrld-web-ci.yml");
-assert.match(workflow, /npm run phase3:check/);
+assert.match(workflow, /npm run phase(?:[3-9]|[1-9]\d+):check/);
 assert.match(workflow, /node-version:\s*22/);
 assert.doesNotMatch(workflow, /npm audit fix --force/);
 
@@ -124,7 +124,7 @@ console.table({
   version: packageJson.version,
   release: "stable",
   repository: "final structure",
-  pwa: "cache v7 + OVRLD short name",
+  pwa: "versioned OVRLD cache + legacy cleanup",
   deployment: "environment + Vercel + Supabase checklist",
   security: "targeted audit workflow; no forced upgrades",
 });

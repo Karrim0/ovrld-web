@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v7";
+const CACHE_VERSION = "v10";
 const STATIC_CACHE = `ovrld-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `ovrld-pages-${CACHE_VERSION}`;
 const APP_CACHE_PREFIXES = ["ovrld-", "gym-crew-"];
@@ -13,6 +13,8 @@ const OFFLINE_ROUTES = new Set([
   "/progress/records",
   "/progress/exercises",
   "/progress/body-map",
+  "/progress/body",
+  "/progress/gain",
   "/group",
   "/profile",
 ]);
@@ -112,4 +114,19 @@ self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
+});
+
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const existing = clients.find((client) => "focus" in client);
+      if (existing) {
+        if ("navigate" in existing) existing.navigate("/progress/body");
+        return existing.focus();
+      }
+      return self.clients.openWindow ? self.clients.openWindow("/progress/body") : undefined;
+    }),
+  );
 });

@@ -50,8 +50,8 @@ export async function DashboardHeader({ title, showBackButton, actions, showProf
         </div>
         <div className="gc-header-actions flex shrink-0 items-center gap-1.5 sm:gap-2">
           {actions}
-          <ThemeSwitcher />
-          <LanguageSwitcher />
+          <span className="hidden lg:inline-flex"><ThemeSwitcher /></span>
+          <span className="hidden lg:inline-flex"><LanguageSwitcher /></span>
           <SyncStatusIndicator />
           {profile ? <ProfileAvatarLink avatarUrl={profile.avatarUrl} displayName={profile.displayName} /> : null}
         </div>

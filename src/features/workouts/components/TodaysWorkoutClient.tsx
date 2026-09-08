@@ -151,11 +151,12 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   const title = translateWorkoutLabel(today.displayName) || "تمرين النهارده";
   const displayedExercises = compact ? today.exercises.slice(0, 3) : today.exercises;
   const estimatedMinutes = estimateMinutes(today);
+  const totalTargetSets = today.exercises.reduce((total, exercise) => total + exercise.targetSets, 0);
 
   return (
     <div className="space-y-4">
       {error ? <p className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-300">{error}</p> : null}
-      <section className="gc-card overflow-hidden p-0">
+      <section className={`gc-card overflow-hidden p-0 ${compact ? "gc-today-hero" : ""}`}>
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-indigo-300 text-[#11131a]"><Dumbbell className="h-6 w-6" /></span>
@@ -165,12 +166,27 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
           <button type="button" disabled={isStarting || today.exercises.length === 0 || !today.sourceDay} onClick={() => void startScheduled()} className="gc-primary-button mt-5 w-full disabled:opacity-50"><Play className="h-5 w-5" /> {isStarting ? "بنبدأ…" : "ابدأ التمرينة"}</button>
         </div>
 
-        {!compact ? (
+        {compact ? (
+          <div className="border-t border-white/[0.06] px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+            <div className="mb-3 flex items-center gap-2 text-[11px] font-bold text-neutral-500">
+              <span>{totalTargetSets} سِتات</span><span>•</span><span>{estimatedMinutes} دقيقة تقريبًا</span>
+            </div>
+            <div className="gc-today-exercise-strip">
+              {displayedExercises.map((item, index) => (
+                <span key={item.id} className="gc-today-exercise-pill">
+                  <span className="gc-today-exercise-index">{index + 1}</span>
+                  <span className="min-w-0 truncate">{translateExerciseName(item.exercise.name)}</span>
+                </span>
+              ))}
+              {today.exercises.length > displayedExercises.length ? <span className="gc-today-exercise-more">+{today.exercises.length - displayedExercises.length}</span> : null}
+            </div>
+          </div>
+        ) : (
           <div className="border-t border-white/[0.06] p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between gap-3"><h3 className="font-semibold">تمارين النهارده</h3><Link href={`/split/personal?day=${weekday}`} className="text-xs font-semibold text-indigo-200">عدّل الأسبوع</Link></div>
             <ol className="space-y-2">{displayedExercises.map((item, index) => <li key={item.id} className="flex items-center gap-3 rounded-xl border border-white/[0.055] bg-white/[0.02] p-3"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.055] text-xs font-bold">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{translateExerciseName(item.exercise.name)}</p><p className="mt-0.5 text-xs text-neutral-500">{item.targetSets} سِتات · {item.targetRepsMin}–{item.targetRepsMax} عدات</p></div></li>)}</ol>
           </div>
-        ) : null}
+        )}
       </section>
       {!compact ? renderAlternateStarter() : null}
     </div>

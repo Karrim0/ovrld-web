@@ -31,7 +31,7 @@ export function CreateGroupForm({ onSubmit }: CreateGroupFormProps) {
         await createGroup(data.name);
       }
 
-      router.replace("/split/personal");
+      router.replace("/body-goal");
       router.refresh();
     } catch (error) {
       setSubmitError(getArabicErrorMessage(error, "معرفناش نعمل الجروب."));

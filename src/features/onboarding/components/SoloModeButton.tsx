@@ -16,7 +16,7 @@ export function SoloModeButton() {
     setError(null);
     try {
       await createSoloWorkspace();
-      router.replace("/split/personal");
+      router.replace("/body-goal");
       router.refresh();
     } catch (caught) {
       setError(getArabicErrorMessage(caught, "معرفناش نبدأ الوضع الفردي."));
@@ -37,9 +37,9 @@ export function SoloModeButton() {
           <Dumbbell className="h-5 w-5" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-bold">اتمرّن لوحدك</span>
+          <span className="block font-bold">ابدأ مساحتك الشخصية</span>
           <span className="mt-0.5 block text-sm text-neutral-400">
-            {isLoading ? "بنجهّزلك مكانك…" : "اعمل جدولك بطريقتك وتابع تقدمك براحتك."}
+            {isLoading ? "بنجهّزلك مكانك…" : "ظبّط جدولك، سجّل كل سِت، وخلي تقدمك يتجمع تلقائيًا."}
           </span>
         </span>
         <ArrowLeft className="h-5 w-5 text-neutral-500" />

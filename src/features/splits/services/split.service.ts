@@ -181,6 +181,19 @@ export async function resetWeekSchedule(anchorDate: ISODateOnlyString): Promise<
   if (error) throw new Error(error.message);
 }
 
+export async function swapWeeklyScheduleDays(
+  firstScheduleDate: ISODateOnlyString,
+  secondScheduleDate: ISODateOnlyString,
+): Promise<void> {
+  if (firstScheduleDate === secondScheduleDate) return;
+  const supabase = createClient();
+  const { error } = await supabase.rpc("swap_week_schedule_days", {
+    first_schedule_date: firstScheduleDate,
+    second_schedule_date: secondScheduleDate,
+  });
+  if (error) throw new Error(error.message);
+}
+
 export async function applySplitTemplate(templateKey: StarterPlanKey): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.rpc("apply_split_template", { target_template_key: templateKey });

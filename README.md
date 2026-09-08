@@ -75,7 +75,7 @@ Open `http://localhost:3000`.
 Run the complete final gate:
 
 ```bash
-npm run phase3:check
+npm run phase5:check
 ```
 
 On Windows:
@@ -137,3 +137,24 @@ docs/archive            Historical Gym Crew and implementation notes
 ## License
 
 Use and distribution are governed by the license configured for this repository.
+
+## OVRLD V2 product work
+
+The current V2 product direction is mobile-first workout execution plus process tracking. Phase 5 adds a Smart Process Loop on Home, micro-progression hints in Gym Mode, and stale-session timer recovery without auto-changing the user's program. See `docs/OVRLD_V2_PHASE_5_SMART_PROCESS_LOOP.md`.
+
+## Phase 4.1 body-progress hotfix
+
+- Prevents the Body Progress route from rendering chart components with a null snapshot after a failed Supabase fetch.
+- Replaces the unsafe non-null assertion passed to `WeightSparkline` with a guarded render path.
+- Shows a recoverable retry state instead of crashing the whole route.
+- Detects the common case where the new body-progress schema has not been applied yet and shows a friendly database-update message.
+
+The body-progress and flexible-week-swap migrations still need to be applied to the linked Supabase project before those features can write/read their new database objects.
+
+
+## Phase 5 smart process loop
+
+- Home now resolves training adherence, exercise momentum, and optional body check-ins into one next-step card.
+- Gym Mode offers a small progression hint from the previous matching set and the current rep range.
+- Active sessions older than 18 hours are treated as stale so abandoned workouts never display or save multi-day gym timers.
+- No Phase 5 database migration is required.

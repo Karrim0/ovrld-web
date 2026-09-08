@@ -17,6 +17,7 @@ import {
   workoutSetMutation,
 } from "@/lib/offline";
 import { generateClientId } from "@/lib/utils/id";
+import { getTodayISODate } from "@/lib/dates";
 import type { UUID, WorkoutExercise, WorkoutSession, WorkoutSet } from "@/types";
 import { fetchExerciseById, mapExercise } from "@/features/exercises/services/exercise.service";
 import type { SplitDayWithDetails } from "@/features/splits/types";
@@ -365,6 +366,23 @@ export async function updateWorkoutSessionNotes(sessionId: UUID, notes: string):
   await saveWorkoutLocally(updated);
   await enqueueOfflineMutation(workoutSessionMutation("update", updated));
   requestSync();
+}
+
+export async function resumeStaleWorkoutSession(sessionId: UUID): Promise<WorkoutSessionWithDetails> {
+  const session = await getLocalWorkoutSession(sessionId);
+  if (!session) throw new Error("التمرينة مش موجودة على الجهاز.");
+  const now = new Date().toISOString();
+  const resumed: WorkoutSessionWithDetails = {
+    ...session,
+    scheduledDate: getTodayISODate(),
+    startedAt: now,
+    durationSeconds: 0,
+    updatedAt: now,
+  };
+  await saveWorkoutLocally(resumed);
+  await enqueueOfflineMutation(workoutSessionMutation("update", resumed));
+  requestSync();
+  return resumed;
 }
 
 export async function addExerciseToWorkout(

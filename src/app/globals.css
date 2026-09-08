@@ -62,7 +62,7 @@ html.dark {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
@@ -98,7 +98,7 @@ body {
   padding-left: env(safe-area-inset-left, 0px);
   background: var(--body-gradient);
   color: var(--foreground);
-  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
   transition: background-color 180ms ease, color 180ms ease;
@@ -1286,5 +1286,816 @@ html[data-gc-i18n-ready="true"] body {
     border-color: rgba(111, 126, 232, 0.35);
     color: var(--accent-strong);
     transform: translateY(-1px);
+  }
+}
+
+/* OVRLD v2 product layer: training first, mobile first. */
+@layer components {
+  .gc-body-hero {
+    border: 1px solid color-mix(in srgb, var(--success) 18%, var(--border));
+    background:
+      radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--success) 13%, transparent), transparent 18rem),
+      linear-gradient(145deg, color-mix(in srgb, var(--surface-elevated) 94%, var(--success) 6%), var(--surface));
+    box-shadow: var(--shadow-card);
+  }
+
+  .gc-glass-stat {
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--surface-overlay) 88%, transparent);
+    padding: 0.72rem 0.65rem;
+    backdrop-filter: blur(12px);
+  }
+
+  .gc-glass-stat > span {
+    display: block;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gc-glass-stat > strong {
+    display: block;
+    margin-top: 0.25rem;
+    overflow: hidden;
+    font-size: 0.84rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gc-weight-input {
+    width: min(8rem, 100%);
+    border: 0;
+    background: transparent;
+    color: var(--foreground);
+    text-align: center;
+    font-size: clamp(2.25rem, 12vw, 3.4rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.055em;
+    font-variant-numeric: tabular-nums;
+    box-shadow: none;
+  }
+
+  .gc-weight-input:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .gc-weight-nudge {
+    display: grid;
+    width: 3.25rem;
+    height: 3.25rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface-overlay);
+    color: var(--foreground);
+    transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+  }
+
+  .gc-weight-nudge:active {
+    transform: scale(0.94);
+    background: var(--accent-soft);
+  }
+
+  .gc-quick-chip {
+    min-height: 2.35rem;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background: var(--surface-overlay);
+    color: var(--muted-strong);
+    font-size: 0.72rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gc-quiet-link {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 1.1rem;
+    background: color-mix(in srgb, var(--surface-overlay) 72%, transparent);
+    padding: 0.8rem;
+    color: var(--foreground);
+  }
+}
+
+@media (max-width: 767px) {
+  .gc-bottom-nav {
+    border-radius: 1.25rem;
+    padding: 0.4rem;
+  }
+
+  .gc-bottom-nav .grid {
+    align-items: end;
+  }
+
+  .gc-bottom-nav-workout {
+    min-height: 4.15rem;
+    margin-top: -0.9rem;
+    border-radius: 1.15rem;
+    box-shadow: 0 14px 34px rgba(83, 98, 210, 0.28);
+  }
+
+  .gc-bottom-nav-workout svg {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  .gc-topbar {
+    background: color-mix(in srgb, var(--surface-glass) 88%, transparent);
+  }
+}
+
+/* OVRLD v2 phase 2: frictionless gym logging + clearer plan hierarchy. */
+@layer components {
+  .gc-today-hero {
+    border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
+    background:
+      radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 15rem),
+      linear-gradient(150deg, color-mix(in srgb, var(--surface-elevated) 96%, var(--accent) 4%), var(--surface));
+    box-shadow: 0 18px 52px color-mix(in srgb, var(--accent) 10%, transparent), var(--shadow-card);
+  }
+
+  .gc-today-exercise-strip {
+    display: flex;
+    min-width: 0;
+    gap: 0.45rem;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .gc-today-exercise-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gc-today-exercise-pill {
+    display: inline-flex;
+    min-width: 0;
+    max-width: 11rem;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-overlay);
+    padding: 0.42rem 0.65rem 0.42rem 0.45rem;
+    color: var(--muted-strong);
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .gc-today-exercise-index {
+    display: grid;
+    width: 1.45rem;
+    height: 1.45rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 0.64rem;
+    font-weight: 900;
+  }
+
+  .gc-today-exercise-more {
+    display: grid;
+    min-width: 2.3rem;
+    height: 2.3rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-subtle);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 900;
+  }
+
+  .gc-plan-hero {
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+    border-radius: 1.5rem;
+    background:
+      radial-gradient(circle at 92% -5%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 17rem),
+      linear-gradient(145deg, color-mix(in srgb, var(--surface-elevated) 96%, var(--accent) 4%), var(--surface));
+    box-shadow: var(--shadow-card);
+  }
+
+  .gc-plan-stat {
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--surface-overlay) 82%, transparent);
+    padding: 0.7rem 0.55rem;
+    text-align: center;
+  }
+
+  .gc-plan-stat strong {
+    display: block;
+    color: var(--foreground);
+    font-size: 1.2rem;
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gc-plan-stat span {
+    display: block;
+    margin-top: 0.35rem;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gc-quick-set-control {
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface-subtle);
+    padding: 0.7rem;
+  }
+
+  .gc-quick-set-label {
+    display: block;
+    color: var(--muted);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.035em;
+    text-align: center;
+  }
+
+  .gc-quick-set-nudge {
+    display: grid;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 0.85rem;
+    background: var(--surface-overlay);
+    color: var(--foreground);
+    transition: transform 100ms ease, background 100ms ease, border-color 100ms ease;
+  }
+
+  .gc-quick-set-nudge:active {
+    transform: scale(0.93);
+    border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+    background: var(--accent-soft);
+  }
+
+  .gc-quick-set-value {
+    min-width: 0;
+    min-height: 2.75rem;
+    border-radius: 0.8rem;
+    color: var(--foreground);
+    font-size: clamp(1.35rem, 7vw, 1.8rem);
+    font-weight: 950;
+    letter-spacing: -0.045em;
+    line-height: 1;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gc-quick-copy {
+    min-height: 2.3rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+    border-radius: 0.8rem;
+    background: var(--accent-soft);
+    padding-inline: 0.7rem;
+    color: var(--accent-strong);
+    font-size: 0.67rem;
+    font-weight: 900;
+  }
+}
+
+@media (max-width: 359px) {
+  .gc-quick-set-control {
+    padding: 0.55rem;
+  }
+
+  .gc-quick-set-control > div {
+    grid-template-columns: 2.4rem minmax(0, 1fr) 2.4rem;
+    gap: 0.25rem;
+  }
+
+  .gc-quick-set-nudge {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+}
+
+
+/* OVRLD v2 phase 3: mobile visual system, guided goals, and thumb-first week navigation. */
+@layer components {
+  .gc-week-strip {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(4.65rem, 4.65rem);
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline proximity;
+    scrollbar-width: none;
+    padding: 0.1rem 0 0.35rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gc-week-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gc-week-day-card {
+    position: relative;
+    min-width: 0;
+    min-height: 5.8rem;
+    scroll-snap-align: start;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 1.05rem;
+    background: var(--surface-subtle);
+    padding: 0.6rem 0.4rem;
+    color: var(--foreground);
+    text-align: center;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transition: transform 130ms ease, border-color 130ms ease, background 130ms ease, box-shadow 130ms ease;
+  }
+
+  .dark .gc-week-day-card {
+    background: rgba(255, 255, 255, 0.025);
+    box-shadow: none;
+  }
+
+  .gc-week-day-card:active {
+    transform: scale(0.97);
+  }
+
+  .gc-week-day-card-active {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    background:
+      radial-gradient(circle at 50% -15%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 4.5rem),
+      color-mix(in srgb, var(--accent-soft) 72%, var(--surface-elevated));
+    box-shadow: 0 9px 24px color-mix(in srgb, var(--accent) 11%, transparent);
+  }
+
+  .gc-week-day-card-selected::after {
+    content: "";
+    position: absolute;
+    inset-inline: 1.25rem;
+    bottom: 0.28rem;
+    height: 0.17rem;
+    border-radius: 999px;
+    background: var(--accent);
+  }
+
+  .gc-week-day-icon {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    margin: 0.35rem auto 0;
+    place-items: center;
+    border-radius: 0.75rem;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+  }
+
+  .gc-week-day-icon-rest {
+    background: var(--surface-soft);
+    color: var(--muted);
+  }
+
+  .gc-onboarding-progress {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding-inline: 0.25rem;
+  }
+
+  .gc-onboarding-step {
+    display: flex;
+    min-width: 3.2rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--muted);
+  }
+
+  .gc-onboarding-step strong {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-overlay);
+    font-size: 0.72rem;
+    font-weight: 900;
+  }
+
+  .gc-onboarding-step small {
+    font-size: 0.62rem;
+    line-height: 0.8rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .gc-onboarding-step-active {
+    color: var(--accent-strong);
+  }
+
+  .gc-onboarding-step-active strong {
+    border-color: transparent;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+
+  .gc-onboarding-progress-line {
+    width: clamp(1.4rem, 10vw, 3rem);
+    height: 1px;
+    margin-bottom: 1rem;
+    background: var(--border-strong);
+  }
+
+  .gc-onboarding-skip-note {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface-overlay);
+    padding: 0.85rem;
+    color: var(--muted-strong);
+  }
+
+  .gc-goal-choice-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .gc-goal-choice {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 4.6rem;
+    align-items: center;
+    gap: 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 1.1rem;
+    background: var(--surface-elevated);
+    padding: 0.75rem;
+    color: var(--foreground);
+    box-shadow: 0 4px 18px rgba(23, 31, 56, 0.035);
+    transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+  }
+
+  .dark .gc-goal-choice {
+    box-shadow: none;
+  }
+
+  .gc-goal-choice:active {
+    transform: scale(0.985);
+  }
+
+  .gc-goal-choice-active {
+    border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 62%, var(--surface-elevated)), var(--surface-elevated));
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 9%, transparent);
+  }
+
+  .gc-goal-choice-icon {
+    display: grid;
+    width: 2.8rem;
+    height: 2.8rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 0.9rem;
+    background: var(--surface-soft);
+    color: var(--muted-strong);
+  }
+
+  .gc-goal-choice-active .gc-goal-choice-icon {
+    background: var(--accent);
+    color: var(--accent-contrast);
+  }
+
+  .gc-goal-radio {
+    display: grid;
+    width: 1.35rem;
+    height: 1.35rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    color: var(--accent-contrast);
+  }
+
+  .gc-goal-choice-active .gc-goal-radio {
+    border-color: transparent;
+    background: var(--accent);
+  }
+
+  .gc-gym-log-button {
+    position: relative;
+    isolation: isolate;
+    box-shadow: 0 15px 34px color-mix(in srgb, var(--accent) 24%, transparent);
+  }
+
+  .gc-gym-log-button::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: -0.35rem;
+    border-radius: 1.15rem;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    opacity: 0;
+    transition: opacity 140ms ease;
+  }
+
+  .gc-gym-log-button:active::before {
+    opacity: 1;
+  }
+
+  .gc-workout-finish-button {
+    background: var(--success);
+    color: #ffffff;
+    box-shadow: 0 13px 30px color-mix(in srgb, var(--success) 22%, transparent);
+  }
+
+  .dark .gc-workout-finish-button {
+    color: #09120e;
+  }
+}
+
+@media (min-width: 620px) {
+  .gc-goal-choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gc-week-strip {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .gc-week-day-card {
+    min-height: 6rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .gc-week-strip {
+    grid-auto-columns: 4.35rem;
+    gap: 0.4rem;
+  }
+
+  .gc-week-day-card {
+    min-height: 5.55rem;
+    padding-inline: 0.3rem;
+  }
+
+  .gc-onboarding-step {
+    min-width: 2.65rem;
+  }
+
+  .gc-onboarding-step small {
+    font-size: 0.56rem;
+  }
+}
+
+@layer components {
+  .gc-body-checkin-due {
+    border-color: color-mix(in srgb, #f6c453 38%, var(--border));
+    background:
+      radial-gradient(circle at 90% 0%, rgba(246, 196, 83, 0.11), transparent 13rem),
+      var(--surface-elevated);
+  }
+}
+
+@layer components {
+  .gc-week-swap-box {
+    border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--accent-soft) 34%, var(--surface-subtle));
+    padding: 0.85rem;
+  }
+}
+
+/* OVRLD v2 phase 5: smart process loop + stale-session recovery. */
+@layer components {
+  .gc-process-loop {
+    border: 1px solid var(--border);
+    border-radius: 1.55rem;
+    background: var(--surface-elevated);
+    box-shadow: 0 18px 46px rgba(22, 31, 56, 0.07);
+  }
+
+  .dark .gc-process-loop {
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.16);
+  }
+
+  .gc-process-loop-positive {
+    background:
+      radial-gradient(circle at 92% -20%, rgba(74, 222, 128, 0.12), transparent 12rem),
+      var(--surface-elevated);
+  }
+
+  .gc-process-loop-watch {
+    border-color: color-mix(in srgb, #f6c453 30%, var(--border));
+    background:
+      radial-gradient(circle at 92% -20%, rgba(246, 196, 83, 0.12), transparent 12rem),
+      var(--surface-elevated);
+  }
+
+  .gc-process-loop-body {
+    border-color: color-mix(in srgb, #5ee6b1 24%, var(--border));
+    background:
+      radial-gradient(circle at 92% -20%, rgba(94, 230, 177, 0.12), transparent 12rem),
+      var(--surface-elevated);
+  }
+
+  .gc-process-loop-neutral {
+    background:
+      radial-gradient(circle at 92% -20%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 12rem),
+      var(--surface-elevated);
+  }
+
+  .gc-process-live-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-overlay);
+    padding: 0.22rem 0.5rem;
+    color: var(--muted);
+    font-size: 0.58rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .gc-process-live-dot > span {
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: 999px;
+    background: #5ee6b1;
+    box-shadow: 0 0 0 0.22rem rgba(94, 230, 177, 0.1);
+  }
+
+  .gc-process-stat {
+    min-width: 0;
+    background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+    padding: 0.75rem 0.55rem;
+    text-align: center;
+  }
+
+  .gc-process-stat strong {
+    display: block;
+    overflow: hidden;
+    font-size: 1.15rem;
+    font-weight: 900;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gc-process-stat span {
+    display: block;
+    margin-top: 0.12rem;
+    color: var(--muted-strong);
+    font-size: 0.64rem;
+    font-weight: 800;
+  }
+
+  .gc-process-stat small {
+    display: block;
+    margin-top: 0.1rem;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 0.58rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gc-process-action {
+    display: flex;
+    min-height: 2.9rem;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 1rem;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-size: 0.82rem;
+    font-weight: 900;
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 18%, transparent);
+    transition: transform 120ms ease, filter 120ms ease;
+  }
+
+  .gc-process-action:active {
+    transform: scale(0.985);
+  }
+
+  .gc-process-signals {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .gc-process-signal {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface-overlay);
+    padding: 0.75rem;
+    transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+  }
+
+  .gc-process-signal:active {
+    transform: scale(0.99);
+  }
+
+  .gc-stale-session-alert {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid color-mix(in srgb, #f6c453 32%, var(--border));
+    border-radius: 1.15rem;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(246, 196, 83, 0.1), transparent 9rem),
+      var(--surface-elevated);
+    padding: 0.75rem;
+  }
+
+  .gc-stale-session-resume {
+    display: inline-flex;
+    min-height: 2.5rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border-radius: 0.85rem;
+    background: rgba(246, 196, 83, 0.14);
+    padding: 0.55rem 0.75rem;
+    color: #d9a82c;
+    font-size: 0.68rem;
+    font-weight: 900;
+  }
+
+  .dark .gc-stale-session-resume {
+    color: #f6c453;
+  }
+
+  .gc-progression-hint {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 0.65rem;
+    border: 1px solid color-mix(in srgb, #5ee6b1 18%, var(--border));
+    border-radius: 1rem;
+    background: color-mix(in srgb, rgba(94, 230, 177, 0.08) 65%, var(--surface-overlay));
+    padding: 0.7rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .gc-process-signals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .gc-stale-session-resume {
+    width: 100%;
+  }
+
+  .gc-process-stat {
+    padding-inline: 0.35rem;
+  }
+
+  .gc-process-stat small {
+    font-size: 0.54rem;
   }
 }

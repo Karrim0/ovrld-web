@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
   Check,
@@ -22,9 +23,11 @@ import {
   ListPlus,
   LogOut,
   MessageSquareText,
+  Minus,
   MoreHorizontal,
   Play,
   Plus,
+  RefreshCcw,
   Save,
   Settings2,
   SkipForward,
@@ -48,6 +51,7 @@ import {
   cancelWorkoutSession,
   deleteWorkoutExercise,
   finishWorkoutSession,
+  resumeStaleWorkoutSession,
   reorderWorkoutExercises,
   updateWorkoutExerciseNotes,
   updateWorkoutSessionNotes,
@@ -56,6 +60,7 @@ import {
 import { SessionElapsedTime } from "./SessionElapsedTime";
 import { MuscleFocusGraphic } from "./MuscleFocusGraphic";
 import { SetElapsedClock } from "./SetElapsedClock";
+import { getSafeWorkoutDurationSeconds, isStaleActiveWorkout } from "../utils/session-time";
 
 type GymPhase = "overview" | "ready" | "working" | "logging" | "post";
 
@@ -86,6 +91,11 @@ function formatNumber(value: number) {
 
 function formatWorkoutDate(value: string) {
   return formatDateArEg(value);
+}
+
+function tapFeedback(pattern: number | number[] = 8) {
+  if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
+  navigator.vibrate(pattern);
 }
 
 function inferWeightStep(previousSets: WorkoutSet[]) {
@@ -131,6 +141,24 @@ function getComparison(snapshot: LoggedSetSnapshot) {
   return pieces.length > 0 ? pieces.join(" · ") : "نفس آخر مرة";
 }
 
+function buildProgressionHint(
+  previousSet: WorkoutSet | undefined,
+  targetRepsMin: number,
+  targetRepsMax: number,
+  weightStep: number,
+) {
+  if (!previousSet || previousSet.reps === null) return null;
+  const reps = previousSet.reps;
+  if (reps < targetRepsMax) {
+    const nextReps = Math.min(targetRepsMax, Math.max(targetRepsMin, reps + 1));
+    return `هدف صغير: نفس الوزن وحاول ${nextReps} عدة لو الفورم لسه نضيف.`;
+  }
+  if (previousSet.weightKg !== null && previousSet.weightKg > 0) {
+    return `وصلت سقف العدات. لو السِت كانت مريحة، جرّب +${formatNumber(weightStep)} كجم وابدأ من ${targetRepsMin} عدات.`;
+  }
+  return null;
+}
+
 function exerciseIsComplete(sets: WorkoutSet[]) {
   return sets.length > 0 && sets.every((set) => set.isCompleted);
 }
@@ -161,6 +189,7 @@ export function ActiveWorkoutClient() {
   const [lastLogged, setLastLogged] = useState<LoggedSetSnapshot | null>(null);
   const [draggingExerciseId, setDraggingExerciseId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [resumingStale, setResumingStale] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initializedSession = useRef<string | null>(null);
 
@@ -200,6 +229,10 @@ export function ActiveWorkoutClient() {
     ? currentExercise?.sets.findIndex((set) => set.id === activeSet.id) ?? 0
     : Math.max(0, (currentExercise?.sets.length ?? 1) - 1);
   const previousSet = previousSets[activeSetIndex];
+  const staleSession = session ? isStaleActiveWorkout(session.startedAt) : false;
+  const progressionHint = currentExercise
+    ? buildProgressionHint(previousSet, currentExercise.targetRepsMin, currentExercise.targetRepsMax, weightStep)
+    : null;
 
   function readWeightStep(exerciseId: string, sets: WorkoutSet[]) {
     if (typeof window === "undefined") return inferWeightStep(sets);
@@ -229,6 +262,7 @@ export function ActiveWorkoutClient() {
   }, [session]);
 
   const progress = totals.totalSets > 0 ? (totals.completedSets / totals.totalSets) * 100 : 0;
+  const workoutComplete = totals.totalSets > 0 && totals.completedSets === totals.totalSets;
   const availableExercises = library.filter(
     (exercise) =>
       !session?.exercises.some((item) => item.exerciseId === exercise.id),
@@ -316,6 +350,40 @@ export function ActiveWorkoutClient() {
     );
   }
 
+  function nudgeWeight(delta: number) {
+    const parsed = parseOptionalNumber(selectedWeight);
+    const base = parsed === null || Number.isNaN(parsed)
+      ? previousSet?.weightKg ?? activeSet?.weightKg ?? 0
+      : parsed;
+    const next = Math.max(0, Math.round((base + delta) * 100) / 100);
+    setSelectedWeight(formatNumber(next));
+    setShowCustomWeight(false);
+    tapFeedback();
+  }
+
+  function nudgeReps(delta: number) {
+    const parsed = Number(selectedReps);
+    const base = Number.isInteger(parsed) && parsed > 0
+      ? parsed
+      : previousSet?.reps ?? activeSet?.reps ?? 8;
+    setSelectedReps(String(Math.max(1, base + delta)));
+    setShowCustomReps(false);
+    tapFeedback();
+  }
+
+  function prepareSetValues(setIndex: number) {
+    if (!currentExercise) return;
+    const set = currentExercise.sets[setIndex];
+    const previous = previousSets[setIndex];
+    setSelectedWeight(set?.weightKg?.toString() ?? previous?.weightKg?.toString() ?? "");
+    setSelectedReps(set?.reps?.toString() ?? previous?.reps?.toString() ?? "");
+    setWeightStep(readWeightStep(currentExercise.exerciseId, previousSets));
+    setShowCustomWeight(false);
+    setShowCustomReps(false);
+    setLastLogged(null);
+    setSetStartedAt(null);
+  }
+
   function startSet() {
     if (!activeSet) return;
     setError(null);
@@ -340,9 +408,14 @@ export function ActiveWorkoutClient() {
     setBusy(true);
     setError(null);
 
+    const isFinalPlannedSet = totals.totalSets > 0 && totals.completedSets + 1 >= totals.totalSets;
+
     // Start inside the user's tap so mobile browsers unlock the completion sound.
-    restTimer.start(restTimer.durationSeconds);
-    restTimer.open();
+    // The final planned set does not need a rest timer; it should flow straight to workout completion.
+    if (!isFinalPlannedSet) {
+      restTimer.start(restTimer.durationSeconds);
+      restTimer.open();
+    }
 
     try {
       await updateWorkoutSet(activeSet.id, {
@@ -360,11 +433,14 @@ export function ActiveWorkoutClient() {
         previousReps: previousSet?.reps ?? null,
       });
       setSetStartedAt(null);
+      tapFeedback(isFinalPlannedSet ? [18, 35, 18] : 14);
       await reload();
       setPhase("post");
     } catch (caught) {
-      restTimer.reset();
-      restTimer.close();
+      if (!isFinalPlannedSet) {
+        restTimer.reset();
+        restTimer.close();
+      }
       setError(getArabicErrorMessage(caught, "معرفناش نسجّل السِت دي."));
     } finally {
       setBusy(false);
@@ -461,6 +537,21 @@ export function ActiveWorkoutClient() {
     }
   }
 
+  async function resumeStaleSession() {
+    if (!session || !staleSession) return;
+    setResumingStale(true);
+    setError(null);
+    try {
+      await resumeStaleWorkoutSession(session.id);
+      await reload();
+      tapFeedback([8, 30, 8]);
+    } catch (caught) {
+      setError(getArabicErrorMessage(caught, "معرفناش نعيد تشغيل مؤقت التمرينة."));
+    } finally {
+      setResumingStale(false);
+    }
+  }
+
   async function finish() {
     if (!session) return;
     const incompleteSets = totals.totalSets - totals.completedSets;
@@ -474,9 +565,10 @@ export function ActiveWorkoutClient() {
     setError(null);
     try {
       await updateWorkoutSessionNotes(session.id, sessionNotes);
-      const durationSeconds = Math.max(
-        0,
-        Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 1000),
+      const durationSeconds = getSafeWorkoutDurationSeconds(
+        session.startedAt,
+        Date.now(),
+        session.durationSeconds,
       );
       await finishWorkoutSession(session.id, durationSeconds, sessionNotes);
       restTimer.clear();
@@ -576,6 +668,21 @@ export function ActiveWorkoutClient() {
         </div>
       </header>
 
+      {staleSession ? (
+        <section className="gc-stale-session-alert" role="status">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-amber-300/12 text-amber-300">
+            <AlertTriangle className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <strong className="block text-sm">التمرينة دي مفتوحة من فترة</strong>
+            <span className="mt-0.5 block text-xs leading-5 text-neutral-500">مش هنحسب الوقت القديم كأنه وقت جيم. كمّل من دلوقتي ونحتفظ بالسِتات اللي اتسجلت.</span>
+          </span>
+          <button type="button" disabled={resumingStale} onClick={() => void resumeStaleSession()} className="gc-stale-session-resume disabled:opacity-50">
+            <RefreshCcw className="h-3.5 w-3.5" /> {resumingStale ? "بنعيد…" : "كمّل من دلوقتي"}
+          </button>
+        </section>
+      ) : null}
+
       {error ? (
         <p className="rounded-2xl border border-red-400/20 bg-red-400/10 p-3 text-sm font-semibold text-red-300" role="alert">
           {error}
@@ -667,19 +774,25 @@ export function ActiveWorkoutClient() {
             })}
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              const recommended = session.exercises.findIndex((exercise) =>
-                exercise.sets.some((set) => !set.isCompleted),
-              );
-              selectExercise(recommended >= 0 ? recommended : 0);
-            }}
-            className="gc-primary-button w-full"
-          >
-            <Play className="h-5 w-5" />
-            {totals.completedSets > 0 ? "كمّل التمرين المقترح" : "ابدأ التمرين المقترح"}
-          </button>
+          {workoutComplete ? (
+            <button type="button" disabled={busy} onClick={() => void finish()} className="gc-primary-button gc-workout-finish-button w-full disabled:opacity-50">
+              <Check className="h-5 w-5" /> {busy ? "بنخلّص…" : "كل السِتات خلصت · اقفل التمرينة"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                const recommended = session.exercises.findIndex((exercise) =>
+                  exercise.sets.some((set) => !set.isCompleted),
+                );
+                selectExercise(recommended >= 0 ? recommended : 0);
+              }}
+              className="gc-primary-button w-full"
+            >
+              <Play className="h-5 w-5" />
+              {totals.completedSets > 0 ? "كمّل التمرين المقترح" : "ابدأ التمرين المقترح"}
+            </button>
+          )}
         </section>
       ) : (
         <section className="space-y-4">
@@ -727,12 +840,18 @@ export function ActiveWorkoutClient() {
               <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-400 text-[#101319]">
                 <Check className="h-8 w-8" />
               </span>
-              <h2 className="mt-4 text-xl font-bold">التمرين خلص</h2>
-              <p className="mt-1 text-sm text-neutral-500">كل السِتات المطلوبة اتسجلت.</p>
+              <h2 className="mt-4 text-xl font-bold">{workoutComplete ? "خلصت تمرينة النهارده" : "التمرين ده خلص"}</h2>
+              <p className="mt-1 text-sm text-neutral-500">{workoutComplete ? "كل السِتات المطلوبة اتسجلت. خطوة واحدة ونقفل الجلسة." : "كل السِتات المطلوبة للتمرين ده اتسجلت."}</p>
               <div className="mt-5 grid gap-2 min-[380px]:grid-cols-2">
-                <button type="button" onClick={goToNextExercise} className="gc-primary-button">
-                  التمرين اللي بعده <ChevronLeft className="h-4 w-4" />
-                </button>
+                {workoutComplete ? (
+                  <button type="button" disabled={busy} onClick={() => void finish()} className="gc-primary-button gc-workout-finish-button">
+                    <Check className="h-4 w-4" /> {busy ? "بنخلّص…" : "خلّص التمرينة"}
+                  </button>
+                ) : (
+                  <button type="button" onClick={goToNextExercise} className="gc-primary-button">
+                    التمرين اللي بعده <ChevronLeft className="h-4 w-4" />
+                  </button>
+                )}
                 <button type="button" disabled={busy} onClick={() => void addSet(currentExercise.id)} className="gc-secondary-button">
                   <Plus className="h-4 w-4" /> ضيف سِت كمان
                 </button>
@@ -741,39 +860,88 @@ export function ActiveWorkoutClient() {
           ) : null}
 
           {phase === "ready" && activeSet ? (
-            <div className="gc-card p-4 min-[380px]:p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="gc-eyebrow">اللي جاي</p>
-                  <h2 className="mt-1 text-2xl font-bold">سِت {activeSet.setNumber}</h2>
+            <div className="gc-card overflow-hidden">
+              <div className="p-4 min-[380px]:p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="gc-eyebrow">بعد ما تخلص</p>
+                    <h2 className="mt-1 text-2xl font-bold">سِت {activeSet.setNumber}</h2>
+                  </div>
+                  <span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-xs font-bold text-neutral-400">
+                    {currentExercise.sets.filter((set) => set.isCompleted).length}/{currentExercise.sets.length} خلصوا
+                  </span>
                 </div>
-                <span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-xs font-bold text-neutral-400">
-                  {currentExercise.sets.filter((set) => set.isCompleted).length}/{currentExercise.sets.length} خلصوا
-                </span>
-              </div>
 
-              <div className="mt-4 rounded-2xl border border-indigo-300/15 bg-indigo-300/[0.055] p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-indigo-200">آخر مرة في سِت {activeSet.setNumber}</p>
-                {previousSet ? (
-                  <p className="mt-1 text-3xl font-bold tabular-nums">
-                    {previousSet.weightKg ?? 0} <span className="text-base text-neutral-500">كجم</span>
-                    <span className="mx-2 text-neutral-600">×</span>
-                    {previousSet.reps ?? 0} <span className="text-base text-neutral-500">عدة</span>
-                  </p>
-                ) : (
-                  <p className="mt-1 text-lg font-bold text-neutral-300">مفيش أرقام قديمة لسه</p>
-                )}
-                <p className="mt-2 text-xs leading-5 text-neutral-500">
-                  العب السِت الأول. لما تخلص، OVRLD هيسألك بس عن الوزن والعدات اللي حصلوا فعلًا.
-                </p>
-              </div>
+                <div className="mt-4 rounded-2xl border border-indigo-300/15 bg-indigo-300/[0.055] p-3.5">
+                  <div className="flex min-w-0 items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-indigo-200">آخر مرة · سِت {activeSet.setNumber}</p>
+                      {previousSet ? (
+                        <p className="mt-1 truncate text-xl font-black tabular-nums">
+                          {previousSet.weightKg ?? 0} كجم × {previousSet.reps ?? 0}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-sm font-bold text-neutral-300">أول مرة — ابدأ من رقم مريح</p>
+                      )}
+                    </div>
+                    {previousSet ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedWeight(previousSet.weightKg?.toString() ?? "");
+                          setSelectedReps(previousSet.reps?.toString() ?? "");
+                        }}
+                        className="gc-quick-copy shrink-0"
+                      >
+                        نفس الأرقام
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
 
-              <button type="button" onClick={startSet} className="gc-primary-button mt-5 w-full text-base">
-                <Play className="h-5 w-5" /> ابدأ سِت {activeSet.setNumber}
-              </button>
-              <button type="button" onClick={() => setPhase("overview")} className="mt-2 min-h-11 w-full text-sm font-semibold text-neutral-500">
-                اختار تمرين تاني
-              </button>
+                {progressionHint ? (
+                  <div className="gc-progression-hint mt-3">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-emerald-300/10 text-emerald-300"><ArrowUp className="h-4 w-4" /></span>
+                    <span className="min-w-0 flex-1"><strong className="block text-xs">اقتراح صغير، مش أمر</strong><span className="mt-0.5 block text-xs leading-5 text-neutral-500">{progressionHint}</span></span>
+                  </div>
+                ) : null}
+
+                <div className="mt-3 grid grid-cols-2 gap-2" aria-label="تسجيل سريع للسِت">
+                  <div className="gc-quick-set-control">
+                    <span className="gc-quick-set-label">الوزن · كجم</span>
+                    <div className="mt-2 grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-1.5">
+                      <button type="button" onClick={() => nudgeWeight(-weightStep)} className="gc-quick-set-nudge" aria-label={`قلل الوزن ${formatNumber(weightStep)} كجم`}><Minus className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => setPhase("logging")} className="gc-quick-set-value" aria-label="عدّل الوزن">{selectedWeight || previousSet?.weightKg || "—"}</button>
+                      <button type="button" onClick={() => nudgeWeight(weightStep)} className="gc-quick-set-nudge" aria-label={`زوّد الوزن ${formatNumber(weightStep)} كجم`}><Plus className="h-4 w-4" /></button>
+                    </div>
+                  </div>
+                  <div className="gc-quick-set-control">
+                    <span className="gc-quick-set-label">العدات</span>
+                    <div className="mt-2 grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-1.5">
+                      <button type="button" onClick={() => nudgeReps(-1)} className="gc-quick-set-nudge" aria-label="قلل عدة"><Minus className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => setPhase("logging")} className="gc-quick-set-value" aria-label="عدّل العدات">{selectedReps || previousSet?.reps || "—"}</button>
+                      <button type="button" onClick={() => nudgeReps(1)} className="gc-quick-set-nudge" aria-label="زوّد عدة"><Plus className="h-4 w-4" /></button>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={busy || selectedReps === ""}
+                  onClick={() => void logSet()}
+                  className="gc-primary-button gc-gym-log-button mt-4 w-full min-h-14 text-base disabled:opacity-40"
+                >
+                  <Check className="h-5 w-5" /> {busy ? "بنحفظ…" : `سجّل ${selectedWeight || "0"} كجم × ${selectedReps || "—"}`}
+                </button>
+
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setPhase("logging")} className="gc-secondary-button min-h-11 text-xs">اختيارات أكتر</button>
+                  <button type="button" onClick={startSet} className="gc-secondary-button min-h-11 text-xs"><Play className="h-3.5 w-3.5" /> مؤقت السِت</button>
+                </div>
+                <button type="button" onClick={() => setPhase("overview")} className="mt-1 min-h-10 w-full text-xs font-semibold text-neutral-500">
+                  اختار تمرين تاني
+                </button>
+              </div>
             </div>
           ) : null}
 
@@ -912,7 +1080,7 @@ export function ActiveWorkoutClient() {
                 type="button"
                 disabled={busy || selectedReps === ""}
                 onClick={() => void logSet()}
-                className="gc-primary-button w-full text-base disabled:opacity-40"
+                className="gc-primary-button gc-gym-log-button w-full text-base disabled:opacity-40"
               >
                 {busy ? (
                   "بنحفظ…"
@@ -943,13 +1111,16 @@ export function ActiveWorkoutClient() {
               ) : null}
 
               <div className="mt-5 grid gap-2">
-                {nextIncompleteSet ? (
+                {workoutComplete ? (
+                  <button type="button" disabled={busy} onClick={() => void finish()} className="gc-primary-button gc-workout-finish-button w-full disabled:opacity-50">
+                    <Check className="h-4 w-4" /> {busy ? "بنخلّص…" : "خلصت كل حاجة · اقفل التمرينة"}
+                  </button>
+                ) : nextIncompleteSet ? (
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedWeight("");
-                      setSelectedReps("");
-                      setLastLogged(null);
+                      const nextIndex = currentExercise.sets.findIndex((set) => set.id === nextIncompleteSet.id);
+                      prepareSetValues(nextIndex >= 0 ? nextIndex : activeSetIndex);
                       setPhase("ready");
                     }}
                     className="gc-primary-button w-full"
@@ -961,9 +1132,11 @@ export function ActiveWorkoutClient() {
                     التمرين اللي بعده <ChevronLeft className="h-4 w-4" />
                   </button>
                 )}
-                <button type="button" onClick={goToNextExercise} className="gc-secondary-button w-full">
-                  <SkipForward className="h-4 w-4" /> روح لتمرين تاني
-                </button>
+                {!workoutComplete ? (
+                  <button type="button" onClick={goToNextExercise} className="gc-secondary-button w-full">
+                    <SkipForward className="h-4 w-4" /> روح لتمرين تاني
+                  </button>
+                ) : null}
                 <button type="button" disabled={busy} onClick={() => void addSet(currentExercise.id)} className="min-h-11 text-sm font-semibold text-neutral-500 disabled:opacity-40">
                   <Plus className="ml-1 inline h-4 w-4" /> ضيف سِت كمان
                 </button>

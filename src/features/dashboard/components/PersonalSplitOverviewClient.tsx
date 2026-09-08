@@ -23,7 +23,7 @@ function getBrowserDate() {
 }
 function getServerDate(): null { return null; }
 
-export function PersonalSplitOverviewClient({ userId }: { userId: UUID }) {
+export function PersonalSplitOverviewClient({ userId, compact = false }: { userId: UUID; compact?: boolean }) {
   const [days, setDays] = useState<WeeklyScheduleDayWithDetails[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const today = useSyncExternalStore(subscribeToDate, getBrowserDate, getServerDate);
@@ -45,30 +45,30 @@ export function PersonalSplitOverviewClient({ userId }: { userId: UUID }) {
   return (
     <section className="gc-card p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
-        <div><p className="gc-eyebrow">جدولك</p><h2 className="mt-1 text-xl font-bold">أسبوع التمرين ده</h2><p className="mt-1 text-sm text-neutral-500">هنا هتشوف أسماء أيامك وتعديلات الأسبوع ده.</p></div>
+        <div><p className="gc-eyebrow">جدولك</p><h2 className="mt-1 text-xl font-bold">{compact ? "الأسبوع ده" : "أسبوع التمرين ده"}</h2>{compact ? null : <p className="mt-1 text-sm text-neutral-500">هنا هتشوف أسماء أيامك وتعديلات الأسبوع ده.</p>}</div>
         <Link href="/split/personal" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08] bg-white/[0.04] text-indigo-200" aria-label="عدّل جدولك الشخصي"><PencilLine className="h-4 w-4" /></Link>
       </div>
 
-      <div className="mt-4 grid grid-cols-7 gap-1.5" aria-label="ملخص جدول الأسبوع">
+      <div className="gc-week-strip mt-4" aria-label="ملخص جدول الأسبوع">
         {orderedDays.map((day) => {
           const weekday = getWeekdayFromDate(parseISODateOnly(day.scheduleDate));
           const active = day.scheduleDate === today;
           const Icon = ICONS[day.iconKey];
           return (
-            <Link key={day.scheduleDate} href={`/split/personal?day=${weekday}`} className={`min-w-0 rounded-xl border px-1 py-2 text-center transition ${active ? "border-indigo-300/50 bg-indigo-300/14" : "border-white/[0.06] bg-white/[0.025]"}`} aria-current={active ? "date" : undefined}>
-              <span className={`block text-[9px] font-bold uppercase tracking-wide ${active ? "text-indigo-200" : "text-neutral-500"}`}>{SHORT_DAY[weekday]}</span>
-              <Icon className={`mx-auto mt-1 h-3.5 w-3.5 ${day.workoutType === "rest" ? "text-neutral-600" : active ? "text-indigo-200" : "text-neutral-400"}`} />
-              <span className={`mt-1 block truncate text-[9px] font-semibold sm:text-[10px] ${day.workoutType === "rest" ? "text-neutral-500" : "text-neutral-200"}`}>{translateWorkoutLabel(day.displayName)}</span>
-              {active ? <span className="mx-auto mt-1 block h-1 w-1 rounded-full bg-indigo-300" /> : null}
+            <Link key={day.scheduleDate} href={`/split/personal?day=${weekday}`} className={`gc-week-day-card ${active ? "gc-week-day-card-active" : ""}`} aria-current={active ? "date" : undefined}>
+              <span className={`block text-[10px] font-black uppercase tracking-wide ${active ? "text-indigo-200" : "text-neutral-500"}`}>{SHORT_DAY[weekday]}</span>
+              <span className={`gc-week-day-icon ${day.workoutType === "rest" ? "gc-week-day-icon-rest" : ""}`}><Icon className="h-4 w-4" /></span>
+              <span className={`mt-1.5 block truncate text-[11px] font-bold ${day.workoutType === "rest" ? "text-neutral-500" : "text-neutral-200"}`}>{translateWorkoutLabel(day.displayName)}</span>
+              <span className="mt-1 block text-[9px] font-semibold text-neutral-600">{active ? "النهارده" : new Intl.DateTimeFormat("ar-EG", { day: "numeric" }).format(parseISODateOnly(day.scheduleDate))}</span>
             </Link>
           );
         })}
       </div>
 
-      <Link href="/split/personal" className="mt-4 flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3.5 transition hover:border-indigo-300/25">
+      {compact ? null : <Link href="/split/personal" className="mt-4 flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3.5 transition hover:border-indigo-300/25">
         <span className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-300/10 text-indigo-200"><CalendarDays className="h-4 w-4" /></span>
         <span className="min-w-0 flex-1"><span className="block text-sm font-bold">حرّك يوم أو عدّله</span><span className="block text-xs text-neutral-500">الأسبوع ده بس أو كل أسبوع</span></span><ArrowLeft className="h-4 w-4 text-neutral-500" />
-      </Link>
+      </Link>}
     </section>
   );
 }

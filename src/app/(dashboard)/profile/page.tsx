@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { ArrowUpLeft, Dumbbell, Settings, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowUpLeft, Dumbbell, Scale, Settings, ShieldCheck, Sparkles, UserRound, Users } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { LanguageSwitcher } from "@/components/localization/LanguageSwitcher";
+import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { LogoutButton } from "@/features/auth/components/LogoutButton";
 import { requireCurrentUser } from "@/features/auth/services/auth.server";
 import { createClient } from "@/lib/supabase/server";
@@ -47,7 +49,30 @@ export default async function ProfilePage() {
             <span className="min-w-0 flex-1"><span className="block font-bold">جدول التمرين</span><span className="block text-sm text-neutral-500">ظبّط جدولك الشخصي</span></span>
             <ArrowUpLeft className="h-4 w-4 text-neutral-600" />
           </Link>
+          <Link href="/progress/body" className="gc-card-interactive flex items-center gap-3 p-4">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-300/10 text-emerald-300"><Scale className="h-5 w-5" /></span>
+            <span className="min-w-0 flex-1"><span className="block font-bold">متابعة الجسم</span><span className="block text-sm text-neutral-500">الوزن والهدف ومواعيد القياس</span></span>
+            <ArrowUpLeft className="h-4 w-4 text-neutral-600" />
+          </Link>
+          <Link href="/progress/gain" className="gc-card-interactive flex items-center gap-3 p-4">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-300/10 text-emerald-300"><Sparkles className="h-5 w-5" /></span>
+            <span className="min-w-0 flex-1"><span className="block font-bold">Gain Mode</span><span className="block text-sm text-neutral-500">ميزة زيادة الوزن المخصصة</span></span>
+            <ArrowUpLeft className="h-4 w-4 text-neutral-600" />
+          </Link>
+          <Link href="/group" className="gc-card-interactive flex items-center gap-3 p-4">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/[0.05] text-neutral-300"><Users className="h-5 w-5" /></span>
+            <span className="min-w-0 flex-1"><span className="block font-bold">Crew</span><span className="block text-sm text-neutral-500">ميزة اجتماعية اختيارية، مش محور التطبيق</span></span>
+            <ArrowUpLeft className="h-4 w-4 text-neutral-600" />
+          </Link>
         </div>
+
+        <section>
+          <div className="mb-3 px-1"><p className="gc-eyebrow">التطبيق</p><h3 className="mt-1 text-lg font-bold">اللغة والمظهر</h3></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <LanguageSwitcher variant="panel" />
+            <ThemeSwitcher variant="panel" />
+          </div>
+        </section>
 
         <section className="gc-card flex items-start gap-3 p-4">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-indigo-300" />

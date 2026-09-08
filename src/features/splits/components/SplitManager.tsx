@@ -8,9 +8,12 @@ import { useSearchParams } from "next/navigation";
 import {
   Activity,
   ArrowDown,
+  ArrowLeftRight,
   ArrowUp,
   Check,
+  ChevronDown,
   Dumbbell,
+  CalendarDays,
   Flame,
   Heart,
   Moon,
@@ -21,6 +24,7 @@ import {
   Shield,
   Target,
   Trash2,
+  WandSparkles,
   Zap,
 } from "lucide-react";
 import { WEEKDAYS_STARTING_SATURDAY } from "@/constants/schedule";
@@ -49,11 +53,13 @@ import {
   removeSplitExercise,
   resetPersonalSplitToGroup,
   resetWeekSchedule,
+  swapWeeklyScheduleDays,
   updateSplitDaySettings,
   updateSplitExerciseTargets,
   updateWeeklyScheduleDay,
 } from "../services/split.service";
 import { SplitSetupChooser } from "./SplitSetupChooser";
+import { PlanAuditPanel } from "./PlanAuditPanel";
 
 interface SplitManagerProps {
   mode: "group" | "personal";
@@ -220,6 +226,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
   const [library, setLibrary] = useState<Exercise[]>([]);
   const [selectedBaseId, setSelectedBaseId] = useState<string | null>(null);
   const [selectedWeekDate, setSelectedWeekDate] = useState<ISODateOnlyString | null>(null);
+  const [swapTargetDate, setSwapTargetDate] = useState<ISODateOnlyString | "">("");
   const [selectedExercise, setSelectedExercise] = useState("");
   const [showCustomExercise, setShowCustomExercise] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -409,6 +416,26 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
     }
   }
 
+  async function swapSelectedWeekDay() {
+    if (!selectedWeek || !swapTargetDate || selectedWeek.scheduleDate === swapTargetDate) return;
+    const target = weekDays.find((day) => day.scheduleDate === swapTargetDate);
+    if (!target) return;
+
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      await swapWeeklyScheduleDays(selectedWeek.scheduleDate, swapTargetDate);
+      await loadAll();
+      setMessage(`${dateCaption(selectedWeek.scheduleDate)} اتبدّل مع ${dateCaption(target.scheduleDate)} من غير ما نغيّر جدولك الأساسي.`);
+      setSwapTargetDate("");
+    } catch (caught) {
+      setError(getArabicErrorMessage(caught, "معرفناش نبدّل اليومين."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function resetCurrentWeek() {
     if (!window.confirm("تمسح تعديلات الأسبوع ده وترجع لجدولك الأساسي؟")) return;
     setBusy(true);
@@ -439,17 +466,69 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
   }
 
   if (isLoading) return <div className="h-72 animate-pulse rounded-[24px] border border-white/[0.06] bg-white/[0.035]" />;
-  if (!selectedBase) return <p className="gc-card p-5 text-sm text-neutral-400">مفيش أيام في الجدول لسه.</p>;
+  if (!selectedBase) {
+    return mode === "personal" ? (
+      <div className="space-y-4 pb-20 pt-4">
+        <section className="gc-plan-hero p-5">
+          <p className="gc-eyebrow">ابدأ خطتك</p>
+          <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">جدولك هو قلب OVRLD</h2>
+          <p className="mt-2 text-sm leading-6 text-neutral-500">اعمل جدول يدوي، استورده، أو ابدأ بقالب وبعدها عدّل أي يوم براحتك.</p>
+        </section>
+        <SplitSetupChooser onChanged={loadAll} />
+      </div>
+    ) : <p className="gc-card p-5 text-sm text-neutral-400">مفيش أيام في الجدول لسه.</p>;
+  }
 
   const selected = view === "base" ? selectedBase : selectedWeek;
   const SelectedIcon = ICONS[formIcon];
   const selectedWeekday = selectedWeek ? getWeekdayFromDate(parseISODateOnly(selectedWeek.scheduleDate)) : null;
   const selectedWeekSource = orderedDays.find((day) => day.id === weekSourceId) ?? null;
   const hasValidWeekSource = view !== "week" || formType === "rest" || Boolean(selectedWeekSource && selectedWeekSource.workoutType !== "rest");
+  const baseTrainingDays = orderedDays.filter((day) => day.workoutType !== "rest").length;
+  const weekTrainingDays = orderedWeek.filter((day) => day.workoutType !== "rest").length;
+  const baseExerciseCount = orderedDays.reduce((total, day) => total + day.exercises.length, 0);
+  const activeTrainingDays = view === "week" ? weekTrainingDays : baseTrainingDays;
+  const planRevision = orderedDays.map((day) => `${day.id}:${day.workoutType}:${day.exercises.map((item) => `${item.id}-${item.targetSets}-${item.targetRepsMin}-${item.targetRepsMax}`).join(",")}`).join("|");
 
   return (
     <div className="space-y-4 pb-20 pt-4">
-      {mode === "personal" ? <SplitSetupChooser onChanged={loadAll} /> : null}
+      {mode === "personal" ? (
+        <>
+          <section className="gc-plan-hero overflow-hidden p-4 min-[380px]:p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="gc-eyebrow">خطة التمرين</p>
+                <h2 className="mt-1 text-2xl font-black tracking-[-0.04em]">جدولك قدامك، والأسبوع مرن</h2>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-neutral-500">غيّر يوم، بدّل تمرين براحة، أو خُد راحة النهارده من غير ما تبوّظ الخطة الأساسية.</p>
+              </div>
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-indigo-300 text-[#11131a]"><CalendarDays className="h-5 w-5" /></span>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="gc-plan-stat"><strong>{activeTrainingDays}</strong><span>أيام تمرين</span></div>
+              <div className="gc-plan-stat"><strong>{7 - activeTrainingDays}</strong><span>أيام راحة</span></div>
+              <div className="gc-plan-stat"><strong>{baseExerciseCount}</strong><span>تمرين محفوظ</span></div>
+            </div>
+          </section>
+
+          <details className="gc-card group overflow-hidden">
+            <summary className="flex min-h-14 list-none items-center gap-3 px-4 [&::-webkit-details-marker]:hidden">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-300/10 text-indigo-200"><WandSparkles className="h-4 w-4" /></span>
+              <span className="min-w-0 flex-1"><strong className="block text-sm">اعمل أو استورد جدول جديد</strong><span className="block truncate text-xs text-neutral-500">استخدمها لما تحب تغيّر الخطة من أساسها</span></span>
+              <ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-white/[0.06] p-3"><SplitSetupChooser onChanged={loadAll} /></div>
+          </details>
+
+          <details className="gc-card group overflow-hidden">
+            <summary className="flex min-h-14 list-none items-center gap-3 px-4 [&::-webkit-details-marker]:hidden">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-300/10 text-indigo-200"><Target className="h-4 w-4" /></span>
+              <span className="min-w-0 flex-1"><strong className="block text-sm">تحليل الخطة</strong><span className="block truncate text-xs text-neutral-500">افتحه لما تحب تراجع توزيع العضلات والحجم</span></span>
+              <ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-white/[0.06] p-2"><PlanAuditPanel userId={userId} revision={planRevision} /></div>
+          </details>
+        </>
+      ) : null}
 
       {mode === "personal" ? (
         <section className="gc-card p-2">
@@ -470,7 +549,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
           {view === "week" ? <button type="button" disabled={busy} onClick={() => void resetCurrentWeek()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08]" aria-label="رجّع الأسبوع ده"><RotateCcw className="h-4 w-4" /></button> : mode === "personal" ? <button type="button" disabled={busy} onClick={() => void resetBase()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08]" aria-label="رجّع لجدول الجروب"><RotateCcw className="h-4 w-4" /></button> : null}
         </div>
 
-        <div className="mt-4 grid grid-cols-7 gap-1.5" role="tablist" aria-label="اختار يوم من الجدول">
+        <div className="gc-week-strip mt-4" role="tablist" aria-label="اختار يوم من الجدول">
           {(view === "week" ? orderedWeek : orderedDays).map((day) => {
             const isWeekDay = "scheduleDate" in day;
             const weekday = isWeekDay ? getWeekdayFromDate(parseISODateOnly(day.scheduleDate)) : day.weekday;
@@ -480,11 +559,11 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
               <button key={isWeekDay ? day.scheduleDate : day.id} type="button" role="tab" aria-selected={active} onClick={() => {
                 if (isWeekDay) setSelectedWeekDate(day.scheduleDate); else selectBase(day);
                 setMessage(null);
-              }} className={`min-w-0 rounded-xl border px-1 py-2 text-center transition ${active ? "border-indigo-300/55 bg-indigo-300 text-[#11131a]" : "border-white/[0.07] bg-white/[0.025]"}`}>
-                <span className={`block text-[9px] font-bold uppercase ${active ? "text-[#11131a]/65" : "text-neutral-500"}`}>{SHORT_DAY[weekday]}</span>
-                <Icon className={`mx-auto mt-1 h-3.5 w-3.5 ${active ? "text-[#11131a]" : day.workoutType === "rest" ? "text-neutral-600" : "text-neutral-300"}`} />
-                <span className={`mt-1 block truncate text-[9px] font-semibold sm:text-[10px] ${active ? "text-[#11131a]" : day.workoutType === "rest" ? "text-neutral-500" : "text-neutral-200"}`}>{translateWorkoutLabel(day.displayName) || "تمرين"}</span>
-                {isWeekDay ? <span className={`mt-0.5 block text-[8px] ${active ? "text-[#11131a]/55" : "text-neutral-600"}`}>{dateCaption(day.scheduleDate)}</span> : null}
+              }} className={`gc-week-day-card ${active ? "gc-week-day-card-active gc-week-day-card-selected" : ""}`}>
+                <span className={`block text-[10px] font-black uppercase ${active ? "text-indigo-200" : "text-neutral-500"}`}>{SHORT_DAY[weekday]}</span>
+                <span className={`gc-week-day-icon ${day.workoutType === "rest" ? "gc-week-day-icon-rest" : ""}`}><Icon className="h-4 w-4" /></span>
+                <span className={`mt-1.5 block truncate text-[11px] font-bold ${day.workoutType === "rest" ? "text-neutral-500" : "text-neutral-200"}`}>{translateWorkoutLabel(day.displayName) || "تمرين"}</span>
+                {isWeekDay ? <span className="mt-1 block text-[9px] font-semibold text-neutral-600">{dateCaption(day.scheduleDate)}</span> : null}
               </button>
             );
           })}
@@ -510,6 +589,22 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
             {canEdit ? (
               <div className="mt-5 space-y-4">
                 {view === "week" ? (
+                  <fieldset className="gc-week-swap-box">
+                    <legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">بدّل يومين بسرعة</legend>
+                    <div className="mt-2 flex gap-2">
+                      <select value={swapTargetDate} onChange={(event) => setSwapTargetDate(event.target.value as ISODateOnlyString | "")} className="gc-input min-w-0 flex-1 text-sm">
+                        <option value="">بدّل {selectedWeekday ? LONG_DAY[selectedWeekday] : "اليوم ده"} مع…</option>
+                        {orderedWeek.filter((day) => day.scheduleDate !== selectedWeek?.scheduleDate).map((day) => (
+                          <option key={day.scheduleDate} value={day.scheduleDate}>{LONG_DAY[getWeekdayFromDate(parseISODateOnly(day.scheduleDate))]} · {translateWorkoutLabel(day.displayName)}</option>
+                        ))}
+                      </select>
+                      <button type="button" disabled={!swapTargetDate || busy} onClick={() => void swapSelectedWeekDay()} className="gc-secondary-button shrink-0 px-3 disabled:opacity-40" aria-label="بدّل اليومين"><ArrowLeftRight className="h-4 w-4" /><span className="hidden min-[390px]:inline">بدّل</span></button>
+                    </div>
+                    <p className="mt-1.5 text-[11px] leading-5 text-neutral-600">التمرينين هيتبدّلوا مكان بعض للأسبوع ده بس بضغطة واحدة.</p>
+                  </fieldset>
+                ) : null}
+
+                {view === "week" ? (
                   <fieldset>
                     <legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">اختار تمرينة من جدولك</legend>
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -530,32 +625,25 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                   </div>
                 </fieldset>
 
-                {view === "base" && formType !== "rest" ? (
-                  <fieldset>
-                    <legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">فلتر مكتبة التمارين</legend>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {WORKOUT_FILTERS.map((filter) => <button key={filter.value} type="button" onClick={() => setFormType(filter.value)} className={`rounded-full border px-3 py-2 text-xs font-bold ${formType === filter.value ? "border-indigo-300/45 bg-indigo-300/[0.12] text-indigo-100" : "border-white/[0.08] text-neutral-500"}`}>{filter.label}</button>)}
-                    </div>
-                    <p className="mt-2 text-xs text-neutral-600">ده بيساعد في البحث جوه مكتبة التمارين، ومش بيغيّر اسم اليوم اللي إنت كاتبه.</p>
-                  </fieldset>
-                ) : null}
+                <label className="text-xs font-bold uppercase tracking-wide text-neutral-500">اسم اليوم<input value={formName} onChange={(event) => setFormName(event.target.value)} maxLength={40} placeholder="مثال: أبر A" className="gc-input mt-1 normal-case" /></label>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="text-xs font-bold uppercase tracking-wide text-neutral-500">اسم اليوم<input value={formName} onChange={(event) => setFormName(event.target.value)} maxLength={40} placeholder="مثال: أبر A" className="gc-input mt-1 normal-case" /></label>
-                  <label className="text-xs font-bold uppercase tracking-wide text-neutral-500">تركيز اليوم<input value={formFocus} onChange={(event) => setFormFocus(event.target.value)} maxLength={32} placeholder="مثال: صدر وضهر" className="gc-input mt-1 normal-case" /></label>
-                </div>
-
-                <fieldset>
-                  <legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">الأيقونة</legend>
-                  <div className="mt-2 flex flex-wrap gap-2">{ICON_OPTIONS.map(({ key, label }) => { const Icon = ICONS[key]; return <button key={key} type="button" title={label} aria-label={label} onClick={() => setFormIcon(key)} className={`grid h-11 w-11 place-items-center rounded-xl border ${formIcon === key ? "border-indigo-300/50 bg-indigo-300 text-[#11131a]" : "border-white/[0.08] bg-white/[0.025] text-neutral-400"}`}><Icon className="h-4 w-4" /></button>; })}</div>
-                </fieldset>
-
-                <fieldset>
-                  <legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">اللون</legend>
-                  <div className="mt-2 flex gap-2">{COLOR_OPTIONS.map(({ key, className }) => <button key={key} type="button" aria-label={`لون ${COLOR_LABELS[key]}`} onClick={() => setFormColor(key)} className={`relative grid h-10 w-10 place-items-center rounded-full border ${formColor === key ? "border-white/70" : "border-white/[0.08]"}`}><span className={`h-5 w-5 rounded-full ${className}`} />{formColor === key ? <Check className="absolute h-3 w-3 text-[#11131a]" /> : null}</button>)}</div>
-                </fieldset>
-
-                <label className="block text-xs font-bold uppercase tracking-wide text-neutral-500">ملاحظات اليوم<textarea value={formNotes} onChange={(event) => setFormNotes(event.target.value)} maxLength={240} rows={3} placeholder="المسكة، سرعة الحركة، شدة التمرين…" className="gc-input mt-1 resize-none text-sm normal-case" /></label>
+                <details className="group rounded-2xl border border-white/[0.07] bg-white/[0.02]">
+                  <summary className="flex min-h-12 list-none items-center gap-3 px-3.5 text-sm font-bold [&::-webkit-details-marker]:hidden">
+                    <MoreVertical className="h-4 w-4 text-neutral-500" />
+                    <span className="min-w-0 flex-1">خيارات متقدمة</span>
+                    <span className="text-xs font-semibold text-neutral-600">تركيز · شكل · ملاحظات</span>
+                    <ChevronDown className="h-4 w-4 text-neutral-600 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="space-y-4 border-t border-white/[0.06] p-3.5">
+                    <label className="text-xs font-bold uppercase tracking-wide text-neutral-500">تركيز اليوم<input value={formFocus} onChange={(event) => setFormFocus(event.target.value)} maxLength={32} placeholder="مثال: صدر وضهر" className="gc-input mt-1 normal-case" /></label>
+                    {view === "base" && formType !== "rest" ? (
+                      <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">فلتر مكتبة التمارين</legend><div className="mt-2 flex flex-wrap gap-2">{WORKOUT_FILTERS.map((filter) => <button key={filter.value} type="button" onClick={() => setFormType(filter.value)} className={`rounded-full border px-3 py-2 text-xs font-bold ${formType === filter.value ? "border-indigo-300/45 bg-indigo-300/[0.12] text-indigo-100" : "border-white/[0.08] text-neutral-500"}`}>{filter.label}</button>)}</div></fieldset>
+                    ) : null}
+                    <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">الأيقونة</legend><div className="mt-2 flex flex-wrap gap-2">{ICON_OPTIONS.map(({ key, label }) => { const Icon = ICONS[key]; return <button key={key} type="button" title={label} aria-label={label} onClick={() => setFormIcon(key)} className={`grid h-11 w-11 place-items-center rounded-xl border ${formIcon === key ? "border-indigo-300/50 bg-indigo-300 text-[#11131a]" : "border-white/[0.08] bg-white/[0.025] text-neutral-400"}`}><Icon className="h-4 w-4" /></button>; })}</div></fieldset>
+                    <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">اللون</legend><div className="mt-2 flex gap-2">{COLOR_OPTIONS.map(({ key, className }) => <button key={key} type="button" aria-label={`لون ${COLOR_LABELS[key]}`} onClick={() => setFormColor(key)} className={`relative grid h-10 w-10 place-items-center rounded-full border ${formColor === key ? "border-white/70" : "border-white/[0.08]"}`}><span className={`h-5 w-5 rounded-full ${className}`} />{formColor === key ? <Check className="absolute h-3 w-3 text-[#11131a]" /> : null}</button>)}</div></fieldset>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-neutral-500">ملاحظات اليوم<textarea value={formNotes} onChange={(event) => setFormNotes(event.target.value)} maxLength={240} rows={3} placeholder="المسكة، سرعة الحركة، شدة التمرين…" className="gc-input mt-1 resize-none text-sm normal-case" /></label>
+                  </div>
+                </details>
                 <button type="button" disabled={busy || formName.trim().length < 2 || formFocus.trim().length < 2 || (view === "week" && (!weekSourceId || !hasValidWeekSource))} onClick={() => void saveIdentity()} className="gc-primary-button w-full min-h-12 disabled:opacity-40"><Save className="h-4 w-4" /> احفظ {view === "week" ? "الأسبوع ده" : "اليوم الأساسي"}</button>
               </div>
             ) : null}
