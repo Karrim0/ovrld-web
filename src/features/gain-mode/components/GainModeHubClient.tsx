@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowUpLeft, ChevronDown, Dumbbell, Scale, Settings2, Sparkles, Target, TrendingUp } from "lucide-react";
+import { ArrowUpLeft, ChevronDown, Dumbbell, Scale, Settings2, Sparkles, TrendingUp } from "lucide-react";
 import type { UUID } from "@/types";
 import { fetchGainModeSnapshot } from "../services/gain-mode.service";
 import type { GainModeSnapshot } from "../types";
 import { GainModeActivationClient } from "./GainModeActivationClient";
 import { GainNutritionPanel } from "./GainNutritionPanel";
 import { GainBodyMeasurementsCard } from "./GainBodyMeasurementsCard";
+import { GainReviewPreview } from "./GainReviewPreview";
 
 function kg(value: number | null | undefined) {
   if (value == null) return "—";
@@ -68,17 +69,7 @@ export function GainModeHubClient({ userId }: { userId: UUID }) {
 
       <GainBodyMeasurementsCard body={snapshot.body} />
 
-      <section className="gc-gain-review">
-        <div className="flex items-start gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-indigo-500/10 text-indigo-500"><Target className="h-4 w-4" /></span>
-          <div className="min-w-0 flex-1">
-            <p className="gc-eyebrow">المراجعة الحالية</p>
-            <h3 className="mt-0.5 text-sm font-black">{snapshot.review.title}</h3>
-            <p className="mt-1 text-xs leading-5 text-neutral-500">{snapshot.review.detail}</p>
-          </div>
-        </div>
-        <Link href={snapshot.review.href} className="gc-review-action mt-3">{snapshot.review.cta}<ArrowUpLeft className="h-4 w-4" /></Link>
-      </section>
+      <GainReviewPreview userId={userId} />
 
       <section className="gc-list-panel">
         <Link href="/workout/today" className="gc-list-row"><Dumbbell className="h-4 w-4 text-indigo-400" /><span className="min-w-0 flex-1 font-bold">تمرين النهارده</span><ArrowUpLeft className="h-4 w-4 text-neutral-500" /></Link>

@@ -350,6 +350,50 @@ export type Database = {
           },
         ]
       }
+      gain_calorie_adjustments: {
+        Row: {
+          created_at: string
+          id: string
+          new_target_kcal: number
+          previous_target_kcal: number | null
+          reason: string
+          review_period_end: string | null
+          review_period_start: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          new_target_kcal: number
+          previous_target_kcal?: number | null
+          reason?: string
+          review_period_end?: string | null
+          review_period_start?: string | null
+          source?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          new_target_kcal?: number
+          previous_target_kcal?: number | null
+          reason?: string
+          review_period_end?: string | null
+          review_period_start?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gain_calorie_adjustments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gain_mode_profiles: {
         Row: {
           activity_level: string
@@ -879,6 +923,16 @@ export type Database = {
       add_workout_set: {
         Args: { target_workout_exercise_id: string }
         Returns: string
+      }
+      apply_gain_calorie_adjustment: {
+        Args: {
+          adjustment_reason?: string
+          adjustment_source?: string
+          period_end?: string
+          period_start?: string
+          target_calorie_kcal: number
+        }
+        Returns: number
       }
       apply_girls_strength_4_template: { Args: never; Returns: undefined }
       apply_girls_strength_4_template_v2: { Args: never; Returns: Json }

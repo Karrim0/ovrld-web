@@ -2781,3 +2781,130 @@ html[data-gc-i18n-ready="true"] body {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
+
+/* OVRLD v2 Phase 10 — Gain Mode review & adaptive decision UI */
+.gc-review-decision,
+.gc-review-section {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-elevated);
+  padding: 0.9rem;
+}
+
+.gc-review-decision {
+  overflow: hidden;
+}
+
+.gc-review-icon {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.78rem;
+  background: color-mix(in srgb, #6366f1 11%, var(--surface-overlay));
+  color: #6366f1;
+}
+
+.gc-review-suggest .gc-review-icon {
+  background: color-mix(in srgb, #34d399 13%, var(--surface-overlay));
+  color: #10b981;
+}
+
+.gc-review-observe .gc-review-icon {
+  background: color-mix(in srgb, #f59e0b 13%, var(--surface-overlay));
+  color: #d97706;
+}
+
+.gc-review-on_track .gc-review-icon {
+  background: color-mix(in srgb, #34d399 13%, var(--surface-overlay));
+  color: #10b981;
+}
+
+.gc-review-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.gc-review-metric-grid > div {
+  min-width: 0;
+  border-radius: 0.78rem;
+  background: var(--surface-overlay);
+  padding: 0.7rem;
+}
+
+.gc-review-metric-grid svg {
+  color: var(--muted);
+}
+
+.gc-review-metric-grid span,
+.gc-mini-label {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.6rem;
+  line-height: 0.8rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.gc-review-metric-grid strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.gc-calorie-change {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 0.85rem;
+  background: var(--surface-overlay);
+  padding: 0.75rem;
+}
+
+.gc-calorie-change > div {
+  text-align: center;
+}
+
+.gc-calorie-change span,
+.gc-calorie-change small {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.gc-calorie-change strong {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 1rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.gc-inline-error,
+.gc-inline-success {
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.gc-inline-error {
+  background: color-mix(in srgb, #ef4444 10%, var(--surface-overlay));
+  color: #dc2626;
+}
+
+.gc-inline-success {
+  background: color-mix(in srgb, #34d399 11%, var(--surface-overlay));
+  color: #059669;
+}
+
+@media (min-width: 520px) {
+  .gc-review-metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

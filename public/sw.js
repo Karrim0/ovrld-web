@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v13";
+const CACHE_VERSION = "v14";
 const STATIC_CACHE = `ovrld-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `ovrld-pages-${CACHE_VERSION}`;
 const APP_CACHE_PREFIXES = ["ovrld-", "gym-crew-"];
@@ -15,6 +15,7 @@ const OFFLINE_ROUTES = new Set([
   "/progress/body-map",
   "/progress/body",
   "/progress/gain",
+  "/progress/gain/review",
   "/group",
   "/profile",
 ]);

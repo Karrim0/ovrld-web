@@ -55,6 +55,74 @@ export interface GainWeeklyReview {
   weeklyWeightChangeKg: number | null;
 }
 
+
+export type GainCalorieAdjustmentSource = "adaptive_review" | "manual";
+export type GainAdaptiveDecisionState = "collect" | "hold" | "suggest" | "observe" | "on_track";
+
+export interface GainCalorieAdjustment {
+  id: UUID;
+  userId: UUID;
+  previousTargetKcal: number | null;
+  newTargetKcal: number;
+  reason: string;
+  source: GainCalorieAdjustmentSource;
+  reviewPeriodStart: ISODateOnlyString | null;
+  reviewPeriodEnd: ISODateOnlyString | null;
+  createdAt: ISODateString;
+}
+
+export interface GainNutritionWindowSummary {
+  startDate: ISODateOnlyString;
+  endDate: ISODateOnlyString;
+  daysTotal: number;
+  daysLogged: number;
+  averageCaloriesKcal: number | null;
+  averageProteinGrams: number | null;
+  averageCalorieTargetRatio: number | null;
+  averageProteinTargetRatio: number | null;
+  calorieTargetHitDays: number;
+  proteinTargetHitDays: number;
+}
+
+export interface GainReviewWindow {
+  startDate: ISODateOnlyString;
+  endDate: ISODateOnlyString;
+  nutrition: GainNutritionWindowSummary;
+  workoutsCompleted: number;
+  workoutsScheduled: number | null;
+  trainingAdherence: number | null;
+  weightChangeKg: number | null;
+  improvingExercises: number;
+  trackedExercises: number;
+}
+
+export interface GainAdaptiveDecision {
+  state: GainAdaptiveDecisionState;
+  title: string;
+  detail: string;
+  reasonCode: string;
+  suggestedCalorieTargetKcal: number | null;
+  calorieDeltaKcal: number | null;
+  canApply: boolean;
+  observationDaysRemaining: number;
+}
+
+export interface GainReviewSnapshot {
+  calorieTargetKcal: number | null;
+  proteinTargetGrams: number | null;
+  weekly: GainReviewWindow;
+  month28: GainReviewWindow;
+  decision: GainAdaptiveDecision;
+  measurements: {
+    waistDeltaCm: number | null;
+    hipsDeltaCm: number | null;
+    thighDeltaCm: number | null;
+    comparedFrom: ISODateString | null;
+    comparedTo: ISODateString | null;
+  };
+  adjustments: GainCalorieAdjustment[];
+}
+
 export interface GainModeSnapshot {
   profile: GainModeProfile;
   body: BodyProgressSnapshot;

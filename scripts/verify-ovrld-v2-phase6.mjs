@@ -111,12 +111,12 @@ for (const phrase of [
 }
 
 const workflow = read(".github/workflows/ovrld-web-ci.yml");
-assert.match(workflow, /npm run phase(?:6|7|8|9):check/);
+assert.match(workflow, /npm run phase(?:6|7|8|9|10):check/);
 
 const packageJson = JSON.parse(read("package.json"));
 assert.ok(packageJson.scripts?.["verify:phase6"], "Missing verify:phase6 script.");
 assert.ok(packageJson.scripts?.["phase6:check"], "Missing phase6:check script.");
-assert.match(packageJson.scripts?.check ?? "", /npm run phase(?:6|7|8|9):check/, "Default check must point to Phase 6 or newer.");
+assert.match(packageJson.scripts?.check ?? "", /npm run phase(?:6|7|8|9|10):check/, "Default check must point to Phase 6 or newer.");
 
 console.table({
   phase: "6 — optional Gain Mode foundation",

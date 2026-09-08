@@ -60,7 +60,7 @@ for (const className of ["gc-body-view-tabs", "gc-measurements-hero", "gc-body-m
   assert.ok(css.includes(`.${className}`), `Missing Phase 9 CSS class ${className}`);
 }
 
-assert.match(read("public/sw.js"), /CACHE_VERSION = "v13"/);
+assert.match(read("public/sw.js"), /CACHE_VERSION = "v(?:1[3-9]|[2-9]\d+)"/);
 
 console.table({
   phase: "9 — Body measurements & body progress",

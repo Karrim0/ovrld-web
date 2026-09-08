@@ -62,7 +62,7 @@ assert.doesNotMatch(gainHome, /snapshot\.review\.detail/);
 
 const gainHub = read("src/features/gain-mode/components/GainModeHubClient.tsx");
 assert.match(gainHub, /gc-gain-(?:summary|dashboard)/);
-assert.match(gainHub, /gc-(?:priority-row|gain-review)/);
+assert.match(gainHub, /gc-(?:priority-row|gain-review)|GainReviewPreview/);
 assert.doesNotMatch(gainHub, /رحلتك في مكان واحد|Simple Mode|مش بنطارد رقم الميزان/);
 
 const progressPage = read("src/app/(dashboard)/progress/page.tsx");
@@ -100,7 +100,7 @@ assert.match(sw, /CACHE_VERSION = "v(?:1[1-9]|[2-9]\d+)"/);
 
 const migrations = fs.readdirSync(path.join(root, "supabase/migrations")).filter((name) => /^20260908/.test(name)).sort();
 assert.ok(migrations.includes("202609080003_gain_mode_v1.sql"));
-assert.ok(migrations.filter((name) => name > "202609080003_gain_mode_v1.sql").every((name) => /^20260908000(?:4_gain_nutrition_v1|5_body_measurements_v1)\.sql$/.test(name)), "Unexpected successor migration after Phase 7.");
+assert.ok(migrations.filter((name) => name > "202609080003_gain_mode_v1.sql").every((name) => /^20260908000(?:4_gain_nutrition_v1|5_body_measurements_v1|6_gain_reviews_adaptive_v1)\.sql$/.test(name)), "Unexpected successor migration after Phase 7.");
 
 const map = read("src/lib/localization/ar-en-map.ts");
 for (const phrase of ["حسابي", "الأرقام القياسية", "القوة ماشية لفوق", "بنجمع خط الأساس"]) assert.ok(map.includes(phrase));

@@ -68,7 +68,7 @@ export async function fetchGainNutritionRange(
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
-  return (data ?? []).map((row) => mapEntry(row as NutritionRow));
+  return (data ?? []).map((row: unknown) => mapEntry(row as NutritionRow));
 }
 
 export async function fetchGainNutritionDay(
@@ -159,12 +159,34 @@ export async function saveGainNutritionTargets(
   proteinTargetGrams: number | null,
 ): Promise<void> {
   const supabase = createClient();
+  const { data: current, error: lookupError } = await supabase
+    .from("gain_mode_profiles")
+    .select("calorie_target_kcal")
+    .eq("user_id", userId)
+    .single();
+  if (lookupError) throw new Error(lookupError.message);
+
+  const previousCalories = current.calorie_target_kcal == null ? null : Number(current.calorie_target_kcal);
+  if (calorieTargetKcal !== null && calorieTargetKcal !== previousCalories) {
+    const { error: rpcError } = await supabase.rpc("apply_gain_calorie_adjustment", {
+      target_calorie_kcal: Math.round(calorieTargetKcal),
+      adjustment_reason: "تعديل يدوي لهدف السعرات",
+      adjustment_source: "manual",
+      period_start: undefined,
+      period_end: undefined,
+    });
+    if (rpcError) throw new Error(rpcError.message);
+  } else if (calorieTargetKcal === null && previousCalories !== null) {
+    const { error: resetError } = await supabase
+      .from("gain_mode_profiles")
+      .update({ calorie_target_kcal: null })
+      .eq("user_id", userId);
+    if (resetError) throw new Error(resetError.message);
+  }
+
   const { error } = await supabase
     .from("gain_mode_profiles")
-    .update({
-      calorie_target_kcal: calorieTargetKcal,
-      protein_target_grams: proteinTargetGrams,
-    })
+    .update({ protein_target_grams: proteinTargetGrams })
     .eq("user_id", userId);
   if (error) throw new Error(error.message);
 }

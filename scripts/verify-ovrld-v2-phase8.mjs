@@ -62,7 +62,7 @@ assert.doesNotMatch(home, /شوفي الرحلة/);
 const hub = read("src/features/gain-mode/components/GainModeHubClient.tsx");
 assert.match(hub, /GainNutritionPanel/);
 assert.match(hub, /gc-gain-dashboard/);
-assert.match(hub, /المراجعة الحالية/);
+assert.match(hub, /المراجعة الحالية|GainReviewPreview/);
 
 const progress = read("src/features/gain-mode/components/GainModeProgressCard.tsx");
 for (const label of ["البداية", "الحالي", "الهدف"]) assert.ok(progress.includes(label));
