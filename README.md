@@ -141,6 +141,10 @@ docs/archive            Historical Gym Crew and implementation notes
 - Default release branch: `main`
 - Recommended repository name: `ovrld-web`
 
+## OVRLD V2 Phase 8
+
+Gain Mode now includes private daily calorie/protein logging, editable nutrition targets, a seven-day nutrition signal, and a clearer start/current/goal weight journey. See `docs/OVRLD_V2_PHASE_8_GAIN_NUTRITION.md`.
+
 ## License
 
 Use and distribution are governed by the license configured for this repository.

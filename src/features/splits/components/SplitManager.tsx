@@ -492,28 +492,6 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
   return (
     <div className="space-y-4 pb-20 pt-4">
       {mode === "personal" ? (
-        <>
-          <section className="gc-plan-summary">
-            <div className="grid grid-cols-3">
-              <div className="gc-number-cell"><span>تمرين</span><strong>{activeTrainingDays}</strong><small>أيام</small></div>
-              <div className="gc-number-cell border-x border-white/[0.055]"><span>راحة</span><strong>{7 - activeTrainingDays}</strong><small>أيام</small></div>
-              <div className="gc-number-cell"><span>التمارين</span><strong>{baseExerciseCount}</strong><small>محفوظ</small></div>
-            </div>
-          </section>
-
-          <details className="gc-list-panel group">
-            <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><WandSparkles className="h-4 w-4 text-indigo-300" /><span className="min-w-0 flex-1 font-bold">إنشاء أو استيراد جدول</span><ChevronDown className="h-4 w-4 text-neutral-600 transition-transform group-open:rotate-180" /></summary>
-            <div className="border-t border-white/[0.055] p-3"><SplitSetupChooser onChanged={loadAll} /></div>
-          </details>
-
-          <details className="gc-list-panel group">
-            <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><Target className="h-4 w-4 text-indigo-300" /><span className="min-w-0 flex-1 font-bold">تحليل الخطة</span><ChevronDown className="h-4 w-4 text-neutral-600 transition-transform group-open:rotate-180" /></summary>
-            <div className="border-t border-white/[0.055] p-2"><PlanAuditPanel userId={userId} revision={planRevision} /></div>
-          </details>
-        </>
-      ) : null}
-
-      {mode === "personal" ? (
         <section className="gc-card p-2">
           <div className="grid grid-cols-2 gap-1 rounded-2xl bg-black/20 p-1">
             <button type="button" onClick={() => setView("week")} className={`min-h-11 rounded-xl text-sm font-bold transition ${view === "week" ? "bg-indigo-300 text-[#11131a]" : "text-neutral-400"}`}>الأسبوع ده</button>
@@ -531,7 +509,15 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
           {view === "week" ? <button type="button" disabled={busy} onClick={() => void resetCurrentWeek()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08]" aria-label="رجّع الأسبوع ده"><RotateCcw className="h-4 w-4" /></button> : mode === "personal" ? <button type="button" disabled={busy} onClick={() => void resetBase()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08]" aria-label="رجّع لجدول الجروب"><RotateCcw className="h-4 w-4" /></button> : null}
         </div>
 
-        <div className="gc-week-strip mt-4" role="tablist" aria-label="اختار يوم من الجدول">
+        {mode === "personal" ? (
+          <div className="gc-plan-inline-stats mt-3">
+            <span><strong>{activeTrainingDays}</strong> تمرين</span>
+            <span><strong>{7 - activeTrainingDays}</strong> راحة</span>
+            <span><strong>{baseExerciseCount}</strong> تمرين محفوظ</span>
+          </div>
+        ) : null}
+
+        <div className="gc-week-strip mt-3" role="tablist" aria-label="اختار يوم من الجدول">
           {(view === "week" ? orderedWeek : orderedDays).map((day) => {
             const isWeekDay = "scheduleDate" in day;
             const weekday = isWeekDay ? getWeekdayFromDate(parseISODateOnly(day.scheduleDate)) : day.weekday;
@@ -552,6 +538,16 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
         </div>
       </section>
 
+      {mode === "personal" ? (
+        <details className="gc-list-panel group">
+          <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><WandSparkles className="h-4 w-4 text-indigo-400" /><span className="min-w-0 flex-1 font-bold">أدوات الجدول</span><span className="text-[10px] font-semibold text-neutral-500">إنشاء · استيراد · تحليل</span><ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" /></summary>
+          <div className="space-y-3 border-t border-[var(--border)] p-3">
+            <details className="rounded-xl border border-[var(--border)]"><summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><WandSparkles className="h-4 w-4 text-indigo-400" /><span className="min-w-0 flex-1 font-bold">إنشاء أو استيراد جدول</span><ChevronDown className="h-4 w-4 text-neutral-500" /></summary><div className="border-t border-[var(--border)] p-3"><SplitSetupChooser onChanged={loadAll} /></div></details>
+            <details className="rounded-xl border border-[var(--border)]"><summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><Target className="h-4 w-4 text-indigo-400" /><span className="min-w-0 flex-1 font-bold">تحليل الخطة</span><ChevronDown className="h-4 w-4 text-neutral-500" /></summary><div className="border-t border-[var(--border)] p-2"><PlanAuditPanel userId={userId} revision={planRevision} /></div></details>
+          </div>
+        </details>
+      ) : null}
+
       {error ? <p className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm font-semibold text-red-300">{error}</p> : null}
       {message ? <p className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-sm font-semibold text-emerald-300">{message}</p> : null}
 
@@ -570,19 +566,18 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
             {canEdit ? (
               <div className="mt-5 space-y-4">
                 {view === "week" ? (
-                  <fieldset className="gc-week-swap-box">
-                    <legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">بدّل يومين بسرعة</legend>
-                    <div className="mt-2 flex gap-2">
+                  <details className="rounded-xl border border-[var(--border)] bg-[var(--surface-overlay)] group">
+                    <summary className="flex min-h-11 list-none items-center gap-2 px-3 text-xs font-black [&::-webkit-details-marker]:hidden"><ArrowLeftRight className="h-4 w-4 text-neutral-500" /><span className="min-w-0 flex-1">بدّل اليوم مع يوم تاني</span><ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" /></summary>
+                    <div className="flex gap-2 border-t border-[var(--border)] p-3">
                       <select value={swapTargetDate} onChange={(event) => setSwapTargetDate(event.target.value as ISODateOnlyString | "")} className="gc-input min-w-0 flex-1 text-sm">
-                        <option value="">بدّل {selectedWeekday ? LONG_DAY[selectedWeekday] : "اليوم ده"} مع…</option>
+                        <option value="">اختار يوم…</option>
                         {orderedWeek.filter((day) => day.scheduleDate !== selectedWeek?.scheduleDate).map((day) => (
                           <option key={day.scheduleDate} value={day.scheduleDate}>{LONG_DAY[getWeekdayFromDate(parseISODateOnly(day.scheduleDate))]} · {translateWorkoutLabel(day.displayName)}</option>
                         ))}
                       </select>
-                      <button type="button" disabled={!swapTargetDate || busy} onClick={() => void swapSelectedWeekDay()} className="gc-secondary-button shrink-0 px-3 disabled:opacity-40" aria-label="بدّل اليومين"><ArrowLeftRight className="h-4 w-4" /><span className="hidden min-[390px]:inline">بدّل</span></button>
+                      <button type="button" disabled={!swapTargetDate || busy} onClick={() => void swapSelectedWeekDay()} className="gc-secondary-button shrink-0 px-3 disabled:opacity-40" aria-label="بدّل اليومين"><ArrowLeftRight className="h-4 w-4" /></button>
                     </div>
-                    <p className="mt-1.5 text-[11px] leading-5 text-neutral-600">التمرينين هيتبدّلوا مكان بعض للأسبوع ده بس بضغطة واحدة.</p>
-                  </fieldset>
+                  </details>
                 ) : null}
 
                 {view === "week" ? (

@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { useTheme } from "@/contexts/theme-context";
 
 interface ThemeSwitcherProps {
-  variant?: "compact" | "panel";
+  variant?: "compact" | "panel" | "row";
   className?: string;
 }
 
@@ -52,6 +52,23 @@ export function ThemeSwitcher({ variant = "compact", className = "" }: ThemeSwit
           </button>
         </div>
       </section>
+    );
+  }
+
+
+  if (variant === "row") {
+    const dark = mounted && theme === "dark";
+    return (
+      <button
+        data-no-localize
+        type="button"
+        onClick={toggleTheme}
+        className={`gc-list-row w-full text-start ${className}`}
+      >
+        <SunMoon className="h-4 w-4 shrink-0 text-indigo-400" aria-hidden />
+        <span className="min-w-0 flex-1 font-bold">{isArabic ? "شكل التطبيق" : "App appearance"}</span>
+        <span className="text-xs font-black text-neutral-500">{isArabic ? dark ? "داكن" : "فاتح" : dark ? "Dark" : "Light"}</span>
+      </button>
     );
   }
 

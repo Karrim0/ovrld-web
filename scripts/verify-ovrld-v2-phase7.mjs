@@ -61,8 +61,8 @@ assert.match(gainHome, /gc-number-cell/);
 assert.doesNotMatch(gainHome, /snapshot\.review\.detail/);
 
 const gainHub = read("src/features/gain-mode/components/GainModeHubClient.tsx");
-assert.match(gainHub, /gc-gain-summary/);
-assert.match(gainHub, /gc-priority-row/);
+assert.match(gainHub, /gc-gain-(?:summary|dashboard)/);
+assert.match(gainHub, /gc-(?:priority-row|gain-review)/);
 assert.doesNotMatch(gainHub, /رحلتك في مكان واحد|Simple Mode|مش بنطارد رقم الميزان/);
 
 const progressPage = read("src/app/(dashboard)/progress/page.tsx");
@@ -76,7 +76,7 @@ assert.match(progress, /gc-empty-state/);
 assert.doesNotMatch(progress, /StatCard/);
 
 const split = read("src/features/splits/components/SplitManager.tsx");
-assert.match(split, /gc-plan-summary/);
+assert.match(split, /gc-plan-(?:summary|inline-stats)/);
 assert.match(split, /إنشاء أو استيراد جدول/);
 assert.match(split, /خيارات متقدمة/);
 assert.doesNotMatch(split, /جدولك قدامك، والأسبوع مرن/);
@@ -96,11 +96,11 @@ const manifest = read("src/app/manifest.ts");
 assert.match(manifest, /icon-maskable-512x512\.png/);
 assert.match(manifest, /purpose: "maskable"/);
 const sw = read("public/sw.js");
-assert.match(sw, /CACHE_VERSION = "v11"/);
+assert.match(sw, /CACHE_VERSION = "v(?:1[1-9]|[2-9]\d+)"/);
 
 const migrations = fs.readdirSync(path.join(root, "supabase/migrations")).filter((name) => /^20260908/.test(name)).sort();
 assert.ok(migrations.includes("202609080003_gain_mode_v1.sql"));
-assert.equal(migrations.filter((name) => name > "202609080003_gain_mode_v1.sql").length, 0, "Phase 7 must not add a database migration.");
+assert.ok(migrations.filter((name) => name > "202609080003_gain_mode_v1.sql").every((name) => /^202609080004_gain_nutrition_v1\.sql$/.test(name)), "Unexpected successor migration after Phase 7.");
 
 const map = read("src/lib/localization/ar-en-map.ts");
 for (const phrase of ["حسابي", "الأرقام القياسية", "القوة ماشية لفوق", "بنجمع خط الأساس"]) assert.ok(map.includes(phrase));

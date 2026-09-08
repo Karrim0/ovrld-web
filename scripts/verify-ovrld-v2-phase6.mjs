@@ -92,8 +92,8 @@ assert.match(split, /خيارات متقدمة/);
 assert.match(split, /تحليل الخطة/);
 
 const profilePage = read("src/app/(dashboard)/profile/page.tsx");
-assert.match(profilePage, /LanguageSwitcher variant="panel"/);
-assert.match(profilePage, /ThemeSwitcher variant="panel"/);
+assert.match(profilePage, /LanguageSwitcher variant="(?:panel|row)"/);
+assert.match(profilePage, /ThemeSwitcher variant="(?:panel|row)"/);
 
 const sw = read("public/sw.js");
 assert.match(sw, /CACHE_VERSION = "v(?:1[0-9]|[2-9]\d+)"/);
@@ -111,12 +111,12 @@ for (const phrase of [
 }
 
 const workflow = read(".github/workflows/ovrld-web-ci.yml");
-assert.match(workflow, /npm run phase(?:6|7):check/);
+assert.match(workflow, /npm run phase(?:6|7|8):check/);
 
 const packageJson = JSON.parse(read("package.json"));
 assert.ok(packageJson.scripts?.["verify:phase6"], "Missing verify:phase6 script.");
 assert.ok(packageJson.scripts?.["phase6:check"], "Missing phase6:check script.");
-assert.match(packageJson.scripts?.check ?? "", /npm run phase(?:6|7):check/, "Default check must point to Phase 6 or newer.");
+assert.match(packageJson.scripts?.check ?? "", /npm run phase(?:6|7|8):check/, "Default check must point to Phase 6 or newer.");
 
 console.table({
   phase: "6 — optional Gain Mode foundation",

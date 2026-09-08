@@ -3,6 +3,8 @@ import { fetchBodyProgress } from "@/features/body-progress/services/body-progre
 import { fetchAdherenceSummary } from "@/features/progress/services/progress.service";
 import { fetchProgressIntelligence } from "@/features/progress/services/progress-intelligence.service";
 import type { UUID } from "@/types";
+import { fetchGainNutritionDay, summarizeNutritionDay } from "./nutrition.service";
+import { getTodayISODate } from "@/lib/dates";
 import type {
   GainActivityLevel,
   GainAppetiteLevel,
@@ -23,6 +25,8 @@ type GainModeRow = {
   meal_size_difficulty: boolean;
   diet_pattern: GainDietPattern;
   nutrition_mode: GainNutritionMode;
+  calorie_target_kcal: number | null;
+  protein_target_grams: number | string | null;
   created_at: string;
   updated_at: string;
 };
@@ -37,6 +41,8 @@ function mapProfile(row: GainModeRow): GainModeProfile {
     mealSizeDifficulty: row.meal_size_difficulty,
     dietPattern: row.diet_pattern,
     nutritionMode: row.nutrition_mode,
+    calorieTargetKcal: row.calorie_target_kcal == null ? null : Number(row.calorie_target_kcal),
+    proteinTargetGrams: row.protein_target_grams == null ? null : Number(row.protein_target_grams),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -53,20 +59,28 @@ export interface SaveGainModeProfileInput {
 
 export async function saveGainModeProfile(userId: UUID, input: SaveGainModeProfileInput): Promise<GainModeProfile> {
   const supabase = createClient();
-  const { data, error } = await supabase
+  const payload = {
+    status: "active" as const,
+    age_years: input.ageYears,
+    activity_level: input.activityLevel,
+    appetite_level: input.appetiteLevel,
+    meal_size_difficulty: input.mealSizeDifficulty,
+    diet_pattern: input.dietPattern,
+    nutrition_mode: input.nutritionMode ?? "simple",
+  };
+
+  // Keep Phase 8 nutrition target overrides intact when the user edits the older Gain Mode settings.
+  const { data: existing, error: lookupError } = await supabase
     .from("gain_mode_profiles")
-    .upsert({
-      user_id: userId,
-      status: "active",
-      age_years: input.ageYears,
-      activity_level: input.activityLevel,
-      appetite_level: input.appetiteLevel,
-      meal_size_difficulty: input.mealSizeDifficulty,
-      diet_pattern: input.dietPattern,
-      nutrition_mode: input.nutritionMode ?? "simple",
-    }, { onConflict: "user_id" })
-    .select("*")
-    .single();
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (lookupError) throw new Error(lookupError.message);
+
+  const query = existing
+    ? supabase.from("gain_mode_profiles").update(payload).eq("user_id", userId)
+    : supabase.from("gain_mode_profiles").insert({ user_id: userId, ...payload });
+  const { data, error } = await query.select("*").single();
 
   if (error) throw new Error(error.message);
   return mapProfile(data as GainModeRow);
@@ -92,36 +106,59 @@ export async function completeOnboarding(userId: UUID): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Protein reference target for resistance training. The 1.6 g/kg point is a practical
+ * reference from a large meta-analysis, not a medical prescription.
+ */
 export function estimateProteinTarget(weightKg: number | null): number | null {
   if (!weightKg || weightKg <= 0) return null;
   return Math.round(weightKg * 1.6);
+}
+
+/**
+ * Starting calorie estimate for adult women using Mifflin-St Jeor REE, a broad activity
+ * multiplier, then a conservative +300 kcal starting surplus. It is intentionally labelled
+ * as an estimate in the UI and can be overridden by the user.
+ */
+export function estimateCalorieTarget(input: {
+  weightKg: number | null;
+  heightCm: number | null;
+  ageYears: number;
+  activityLevel: GainActivityLevel;
+}): number | null {
+  const { weightKg, heightCm, ageYears, activityLevel } = input;
+  if (!weightKg || !heightCm || !ageYears || weightKg <= 0 || heightCm <= 0 || ageYears <= 0) return null;
+  const ree = 10 * weightKg + 6.25 * heightCm - 5 * ageYears - 161;
+  const factor = activityLevel === "light" ? 1.35 : activityLevel === "high" ? 1.7 : 1.5;
+  const target = ree * factor + 300;
+  return Math.max(800, Math.min(6000, Math.round(target / 50) * 50));
 }
 
 function strategyFor(profile: GainModeProfile): Pick<GainModeSnapshot, "primaryNutritionAction" | "supportDetail"> {
   if (profile.appetiteLevel === "low" || profile.mealSizeDifficulty) {
     return {
       primaryNutritionAction: "قسّمي الأكل بدل ما تكبّري الوجبة",
-      supportDetail: "ابدئي بوجبات أصغر وسناكس أكتر، وزوّدي سعرات للأكل اللي أصلًا بتحبيه. المشروبات الكثيفة بالسعرات ممكن تساعد بين الوجبات.",
+      supportDetail: "وجبات أصغر وسناكس أكتر غالبًا أسهل من إجبار نفسك على وجبة ضخمة.",
     };
   }
   if (profile.activityLevel === "high") {
     return {
       primaryNutritionAction: "ثبّتي أكلك في الأيام النشيطة",
-      supportDetail: "نشاطك العالي ممكن يستهلك الزيادة بسهولة. خليكِ ثابتة على الوجبات والسناكس وراجعي اتجاه الوزن بدل الاعتماد على الإحساس.",
+      supportDetail: "النشاط العالي ممكن يستهلك الزيادة بسهولة، فخلي التسجيل والوجبات ثابتين.",
     };
   }
   return {
-    primaryNutritionAction: "زيادة هادية وثابتة",
-    supportDetail: "كبداية عامة، زيادة تدريجية في الطاقة أفضل من الأكل العشوائي. هنراجع اتجاه الوزن والالتزام قبل أي تعديل كبير.",
+    primaryNutritionAction: "ثبّتي الزيادة اليومية",
+    supportDetail: "خلي الأرقام ثابتة الأول، وبعدها اتجاه الوزن هو اللي يحدد لو محتاجين تعديل.",
   };
 }
 
 function dietSupportFor(profile: GainModeProfile): string | null {
   if (profile.dietPattern === "vegan") {
-    return "بما إن نمطك Vegan، خلي مصادر البروتين والطاقة النباتية متوزعة على اليوم: صويا/توفو، بقول، مكسرات وزبداتها، وحبوب أو بدائل مناسبة ليكي.";
+    return "وزّعي مصادر البروتين والطاقة النباتية على اليوم: صويا/توفو، بقول، مكسرات وزبداتها، وحبوب أو بدائل مناسبة ليكي.";
   }
   if (profile.dietPattern === "vegetarian") {
-    return "بما إن نمطك نباتي، وزّعي مصادر البروتين المناسبة ليكي على اليوم؛ ألبان/بيض لو بتستخدميهم، ومعاهم بقول وصويا ومكسرات حسب راحتك.";
+    return "وزّعي مصادر البروتين المناسبة ليكي على اليوم؛ ألبان/بيض لو بتستخدميهم، ومعاهم بقول وصويا ومكسرات.";
   }
   return null;
 }
@@ -164,40 +201,49 @@ function buildWeeklyReview(
 ): GainWeeklyReview {
   const latest = body.latest;
   if (!latest || (body.nextWeighInAt && new Date(body.nextWeighInAt).getTime() <= Date.now())) {
-    return { tone: "collect", title: latest ? "معاد الوزن جه" : "سجّلي نقطة البداية", detail: "نفس الظروف قدر الإمكان، ومن غير ما نحكم على قراءة واحدة.", cta: "سجّلي الوزن", href: "/progress/body", weeklyWeightChangeKg: null };
+    return { tone: "collect", title: latest ? "معاد الوزن جه" : "سجّلي نقطة البداية", detail: "سجّلي الوزن في ظروف متشابهة قدر الإمكان.", cta: "سجّلي الوزن", href: "/progress/body", weeklyWeightChangeKg: null };
   }
 
   const targetWeight = body.goal?.targetWeightKg ?? null;
   if (targetWeight !== null && latest.weightKg >= targetWeight) {
-    return { tone: "steady", title: "وصلتي للهدف المسجل 🎯", detail: "ثبّتي الروتين شوية وراجعي اتجاه الوزن والقوة قبل ما تختاري هدف جديد.", cta: "راجعي الرحلة", href: "/progress/gain", weeklyWeightChangeKg: null };
+    return { tone: "steady", title: "وصلتي للهدف المسجل 🎯", detail: "راجعي اتجاه الوزن والقوة قبل اختيار هدف جديد.", cta: "راجعي الوزن", href: "/progress/body", weeklyWeightChangeKg: null };
   }
 
   const weeklyWeightChangeKg = estimateRecentWeeklyWeightChange(body.measurements);
-
   if (weeklyWeightChangeKg === null) {
-    return { tone: "collect", title: "لسه بنبني اتجاه الوزن", detail: "محتاجين 3 قراءات على الأقل عبر حوالي أسبوعين قبل أي تعديل. كمّلي القياسات والتمرين.", cta: "شوفي الرحلة", href: "/progress/body", weeklyWeightChangeKg: null };
+    return { tone: "collect", title: "بنبني اتجاه الوزن", detail: "3 قراءات عبر حوالي أسبوعين تدي إشارة أحسن من قراءة واحدة.", cta: "سجّلي الوزن", href: "/progress/body", weeklyWeightChangeKg: null };
   }
 
   if (weeklyWeightChangeKg <= 0.05) {
     const lowAdherence = adherence.weeklyScheduled > 0 && adherence.weekly !== null && adherence.weekly < 0.67;
     if (lowAdherence) {
-      return { tone: "training", title: "الوزن ثابت، بس الأول ثبّتي الأسبوع", detail: "قبل ما نزود الأكل أو نغير الخطة، خلّي تمرينك والتسجيل ثابتين عشان نعرف إحنا بنقيس إيه.", cta: "افتحي تمرينك", href: "/workout/today", weeklyWeightChangeKg };
+      return { tone: "training", title: "ثبّتي الأسبوع الأول", detail: "ثبّتي التمرين والتسجيل قبل تغيير الهدف الغذائي.", cta: "افتحي التمرين", href: "/workout/today", weeklyWeightChangeKg };
     }
     if (profile.appetiteLevel === "low" || profile.mealSizeDifficulty) {
-      return { tone: "adjust", title: "الوزن شبه ثابت · جرّبي إضافة سهلة", detail: "بدل وجبة أكبر، ثبّتي سناك أو إضافة كثيفة بالسعرات يوميًا وراجعي الاتجاه في القياسات الجاية.", cta: "راجعي Gain Mode", href: "/progress/gain", weeklyWeightChangeKg };
+      return { tone: "adjust", title: "الوزن ثابت · إضافة سهلة", detail: "زودي سناك أو إضافة ثابتة بدل وجبة أكبر.", cta: "سجّلي أكلك", href: "/progress/gain#nutrition", weeklyWeightChangeKg };
     }
-    return { tone: "adjust", title: "الوزن شبه ثابت · محتاجين زيادة بسيطة", detail: "اعملي تعديل صغير وثابت في الأكل بدل قفزة كبيرة، وبعدها خلي الميزان والالتزام يقولوا إذا كان التعديل كفاية.", cta: "راجعي Gain Mode", href: "/progress/gain", weeklyWeightChangeKg };
+    return { tone: "adjust", title: "الوزن ثابت · راجعي الأكل", detail: "ثبّتي هدف السعرات كام يوم قبل أي قفزة كبيرة.", cta: "راجعي اليوم", href: "/progress/gain#nutrition", weeklyWeightChangeKg };
   }
 
   if (intelligence.improvingCount > 0) {
-    return { tone: "steady", title: "الوزن بيتحرك والقوة بتتحسن", detail: "دي إشارة كويسة إن الـprocess ماشية. ما تغيريش حاجة كبيرة لمجرد قراءة واحدة.", cta: "شوفي التقدم", href: "/progress", weeklyWeightChangeKg };
+    return { tone: "steady", title: "الوزن والقوة بيتحسنوا", detail: "الاتجاه كويس؛ خليكِ ثابتة بدل تغيير الخطة بسرعة.", cta: "شوفي التقدم", href: "/progress", weeklyWeightChangeKg };
   }
 
-  return { tone: "steady", title: "الوزن بيتحرك في الاتجاه المطلوب", detail: "كمّلي بنفس الإيقاع وخلي تسجيل التمرين يوضح هل القوة كمان بتتحسن مع الوقت.", cta: "شوفي الرحلة", href: "/progress/body", weeklyWeightChangeKg };
+  return { tone: "steady", title: "الوزن بيتحرك صح", detail: "كمّلي بنفس الإيقاع وراقبي القوة مع الوزن.", cta: "شوفي الوزن", href: "/progress/body", weeklyWeightChangeKg };
+}
+
+export function getDailyNutritionStatus(snapshot: Pick<GainModeSnapshot, "todayNutrition">): string {
+  const day = snapshot.todayNutrition;
+  const caloriesLeft = day.calorieTargetKcal === null ? null : Math.max(0, day.calorieTargetKcal - day.caloriesKcal);
+  const proteinLeft = day.proteinTargetGrams === null ? null : Math.max(0, Math.round(day.proteinTargetGrams - day.proteinGrams));
+  if (day.entries.length === 0) return "لسه مسجلتيش أكل النهارده";
+  if ((day.calorieProgress ?? 0) >= 0.95 && (day.proteinProgress ?? 0) >= 0.9) return "يومك قريب جدًا من الخطة";
+  if (caloriesLeft !== null && proteinLeft !== null) return `باقي ${caloriesLeft} kcal · ${proteinLeft}g بروتين`;
+  if (caloriesLeft !== null) return `باقي ${caloriesLeft} kcal`;
+  return "كمّلي تسجيل اليوم";
 }
 
 export async function fetchGainModeSnapshot(userId: UUID): Promise<GainModeSnapshot | null> {
-  // Avoid the heavier progress/body requests for users who never enabled Gain Mode.
   const profile = await fetchGainModeProfile(userId);
   if (!profile || profile.status !== "active") return null;
 
@@ -206,11 +252,32 @@ export async function fetchGainModeSnapshot(userId: UUID): Promise<GainModeSnaps
     fetchAdherenceSummary(userId),
     fetchProgressIntelligence(userId),
   ]);
+  const weightKg = body.latest?.weightKg ?? body.start?.weightKg ?? null;
+  const estimatedCalories = estimateCalorieTarget({
+    weightKg,
+    heightCm: body.goal?.heightCm ?? null,
+    ageYears: profile.ageYears,
+    activityLevel: profile.activityLevel,
+  });
+  const estimatedProtein = estimateProteinTarget(weightKg);
+  const calorieTargetKcal = profile.calorieTargetKcal ?? estimatedCalories;
+  const proteinTargetGrams = profile.proteinTargetGrams ?? estimatedProtein;
+  let nutritionAvailable = true;
+  const todayNutrition = await fetchGainNutritionDay(userId, undefined, calorieTargetKcal, proteinTargetGrams).catch(() => {
+    nutritionAvailable = false;
+    return summarizeNutritionDay(getTodayISODate(), [], calorieTargetKcal, proteinTargetGrams);
+  });
   const strategy = strategyFor(profile);
+
   return {
     profile,
     body,
-    proteinTargetGrams: estimateProteinTarget(body.latest?.weightKg ?? body.start?.weightKg ?? null),
+    calorieTargetKcal,
+    calorieTargetIsEstimate: profile.calorieTargetKcal === null,
+    proteinTargetGrams,
+    proteinTargetIsEstimate: profile.proteinTargetGrams === null,
+    todayNutrition,
+    nutritionAvailable,
     ...strategy,
     dietSupportDetail: dietSupportFor(profile),
     review: buildWeeklyReview(profile, body, adherence, intelligence),

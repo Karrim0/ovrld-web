@@ -7,7 +7,7 @@ export default async function GainModePage() {
   const user = await requireCurrentUser();
   return (
     <>
-      <DashboardHeader title="Gain Mode" showBackButton />
+      <DashboardHeader title="زيادة الوزن" showBackButton />
       <PageContainer><GainModeHubClient userId={user.id} /></PageContainer>
     </>
   );

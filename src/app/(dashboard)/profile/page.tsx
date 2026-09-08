@@ -42,7 +42,7 @@ export default async function ProfilePage() {
 
         <section>
           <h3 className="mb-2 px-1 text-sm font-black">التطبيق</h3>
-          <div className="grid gap-2 sm:grid-cols-2"><LanguageSwitcher variant="panel" /><ThemeSwitcher variant="panel" /></div>
+          <div className="gc-list-panel"><LanguageSwitcher variant="row" /><ThemeSwitcher variant="row" /></div>
         </section>
       </PageContainer>
     </>

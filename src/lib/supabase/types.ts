@@ -334,10 +334,12 @@ export type Database = {
           activity_level: string
           age_years: number
           appetite_level: string
+          calorie_target_kcal: number | null
           created_at: string
           diet_pattern: string
           meal_size_difficulty: boolean
           nutrition_mode: string
+          protein_target_grams: number | null
           status: string
           updated_at: string
           user_id: string
@@ -346,10 +348,12 @@ export type Database = {
           activity_level?: string
           age_years: number
           appetite_level?: string
+          calorie_target_kcal?: number | null
           created_at?: string
           diet_pattern?: string
           meal_size_difficulty?: boolean
           nutrition_mode?: string
+          protein_target_grams?: number | null
           status?: string
           updated_at?: string
           user_id: string
@@ -358,10 +362,12 @@ export type Database = {
           activity_level?: string
           age_years?: number
           appetite_level?: string
+          calorie_target_kcal?: number | null
           created_at?: string
           diet_pattern?: string
           meal_size_difficulty?: boolean
           nutrition_mode?: string
+          protein_target_grams?: number | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -371,6 +377,47 @@ export type Database = {
             foreignKeyName: "gain_mode_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gain_nutrition_entries: {
+        Row: {
+          calories_kcal: number
+          created_at: string
+          id: string
+          label: string
+          logged_on: string
+          protein_grams: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calories_kcal: number
+          created_at?: string
+          id?: string
+          label?: string
+          logged_on?: string
+          protein_grams?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calories_kcal?: number
+          created_at?: string
+          id?: string
+          label?: string
+          logged_on?: string
+          protein_grams?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gain_nutrition_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

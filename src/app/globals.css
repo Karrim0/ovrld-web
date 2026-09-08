@@ -2393,6 +2393,227 @@ html[data-gc-i18n-ready="true"] body {
   .gc-gain-summary {
     padding: 0.9rem;
   }
+
+  .gc-gain-dashboard,
+  .gc-nutrition-panel,
+  .gc-gain-review,
+  .gc-gain-progress-link {
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface-elevated);
+  }
+
+  .gc-gain-dashboard,
+  .gc-nutrition-panel,
+  .gc-gain-review {
+    padding: 0.9rem;
+  }
+
+  .gc-gain-mode-icon,
+  .gc-nutrition-icon {
+    display: grid;
+    width: 2.35rem;
+    height: 2.35rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, #34d399 11%, var(--surface-overlay));
+    color: #10b981;
+  }
+
+  .gc-nutrition-icon {
+    background: color-mix(in srgb, #f59e0b 10%, var(--surface-overlay));
+    color: #d97706;
+  }
+
+  .gc-gain-weight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 0.8rem;
+    background: var(--surface-overlay);
+  }
+
+  .gc-gain-weight-grid > div {
+    display: flex;
+    min-height: 4rem;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 0.35rem;
+    text-align: center;
+  }
+
+  .gc-gain-weight-grid > div + div {
+    border-inline-start: 1px solid var(--border);
+  }
+
+  .gc-gain-weight-grid span,
+  .gc-gain-progress-link small {
+    font-size: 0.58rem;
+    line-height: 0.75rem;
+    font-weight: 800;
+    color: var(--muted);
+  }
+
+  .gc-gain-weight-grid strong,
+  .gc-gain-progress-link strong {
+    margin-top: 0.16rem;
+    font-size: 0.9rem;
+    line-height: 1.15rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gc-gain-weight-grid small {
+    margin-top: 0.1rem;
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: #10b981;
+  }
+
+  .gc-gain-current {
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+  }
+
+  .gc-day-status {
+    display: inline-flex;
+    min-height: 1.55rem;
+    align-items: center;
+    border-radius: 999px;
+    background: var(--surface-overlay);
+    padding: 0.2rem 0.55rem;
+    font-size: 0.58rem;
+    font-weight: 900;
+    color: var(--muted-strong);
+  }
+
+  .gc-day-status-good {
+    background: color-mix(in srgb, #34d399 12%, var(--surface-overlay));
+    color: #059669;
+  }
+
+  .gc-nutrition-metric {
+    border-radius: 0.75rem;
+    background: var(--surface-overlay);
+    padding: 0.7rem 0.75rem;
+  }
+
+  .gc-progress-track {
+    height: 0.35rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  }
+
+  .gc-progress-track > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #f59e0b;
+    transition: width 220ms ease;
+  }
+
+  .gc-progress-track-protein > span {
+    background: #34d399;
+  }
+
+  .gc-food-entry {
+    display: flex;
+    min-height: 2.75rem;
+    min-width: 0;
+    align-items: center;
+    gap: 0.6rem;
+    border-radius: 0.7rem;
+    background: var(--surface-overlay);
+    padding: 0.45rem 0.55rem 0.45rem 0.7rem;
+  }
+
+  .gc-nutrition-week {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .gc-nutrition-week-day {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0.35rem 0.1rem;
+    font-size: 0.6rem;
+    font-weight: 900;
+    color: var(--muted);
+  }
+
+  .gc-nutrition-week-day small {
+    font-size: 0.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gc-nutrition-day-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--foreground) 12%, transparent);
+  }
+
+  .gc-nutrition-day-dot-partial {
+    background: #fbbf24;
+  }
+
+  .gc-nutrition-day-dot-good {
+    background: #34d399;
+  }
+
+  .gc-review-action {
+    display: flex;
+    min-height: 2.35rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    border-radius: 0.7rem;
+    background: var(--surface-overlay);
+    padding: 0.5rem 0.7rem;
+    font-size: 0.7rem;
+    font-weight: 900;
+  }
+
+  .gc-gain-progress-link {
+    display: block;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .gc-gain-progress-link > div:last-child > span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.2rem 0.35rem 0;
+  }
+
+  .gc-plan-inline-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .gc-plan-inline-stats > span {
+    border-radius: 999px;
+    background: var(--surface-overlay);
+    padding: 0.3rem 0.55rem;
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: var(--muted);
+  }
+
+  .gc-plan-inline-stats strong {
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @media (max-width: 767px) {

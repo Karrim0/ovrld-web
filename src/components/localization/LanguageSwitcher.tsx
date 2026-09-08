@@ -4,7 +4,7 @@ import { Languages } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 
 interface LanguageSwitcherProps {
-  variant?: "compact" | "panel";
+  variant?: "compact" | "panel" | "row";
   className?: string;
 }
 
@@ -44,6 +44,22 @@ export function LanguageSwitcher({ variant = "compact", className = "" }: Langua
           </button>
         </div>
       </section>
+    );
+  }
+
+
+  if (variant === "row") {
+    return (
+      <button
+        data-no-localize
+        type="button"
+        onClick={toggleLanguage}
+        className={`gc-list-row w-full text-start ${className}`}
+      >
+        <Languages className="h-4 w-4 shrink-0 text-indigo-400" aria-hidden />
+        <span className="min-w-0 flex-1 font-bold">{language === "ar" ? "لغة التطبيق" : "App language"}</span>
+        <span className="text-xs font-black text-neutral-500">{language === "ar" ? "العربية" : "English"}</span>
+      </button>
     );
   }
 
