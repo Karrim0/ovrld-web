@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowUpLeft,
-  Bell,
   BellRing,
   CalendarClock,
   Check,
@@ -278,11 +277,8 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
         <div className="absolute -left-12 -top-16 h-44 w-44 rounded-full bg-emerald-300/10 blur-3xl" />
         <div className="relative flex items-start justify-between gap-4">
           <div>
-            <p className="gc-eyebrow">متابعة الجسم · اختيارية</p>
+            <p className="gc-eyebrow">الوزن الحالي</p>
             <h2 className="mt-2 text-3xl font-black tracking-[-0.05em] sm:text-4xl">{formatWeight(snapshot?.latest?.weightKg ?? null)}</h2>
-            <p className="mt-2 max-w-md text-sm leading-6 text-neutral-400">
-              التمرين هو الأساس. هنا بنضيف وزن الجسم والمقاسات لو هدفك محتاجهم.
-            </p>
           </div>
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] bg-emerald-300/10 text-emerald-300"><Scale className="h-7 w-7" /></span>
         </div>
@@ -303,7 +299,7 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
 
       <section className="gc-card p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
-          <div><p className="gc-eyebrow">قراءة جديدة</p><h3 className="mt-1 text-xl font-bold">سجّلها في ثواني</h3></div>
+          <div><p className="gc-eyebrow">قياس جديد</p><h3 className="mt-1 text-lg font-black">الوزن</h3></div>
           <Gauge className="h-5 w-5 text-indigo-300" />
         </div>
 
@@ -337,7 +333,7 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
       </section>
 
       <section className="gc-card p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3"><div><p className="gc-eyebrow">الاتجاه</p><h3 className="mt-1 text-xl font-bold">خلي الأرقام تحكي القصة</h3></div>{totalDelta !== null && totalDelta !== 0 ? (totalDelta > 0 ? <TrendingUp className="h-5 w-5 text-emerald-300" /> : <TrendingDown className="h-5 w-5 text-sky-300" />) : <Sparkles className="h-5 w-5 text-indigo-300" />}</div>
+        <div className="flex items-center justify-between gap-3"><div><p className="gc-eyebrow">الاتجاه</p><h3 className="mt-1 text-lg font-black">تغير الوزن</h3></div>{totalDelta !== null && totalDelta !== 0 ? (totalDelta > 0 ? <TrendingUp className="h-5 w-5 text-emerald-300" /> : <TrendingDown className="h-5 w-5 text-sky-300" />) : <Sparkles className="h-5 w-5 text-indigo-300" />}</div>
         <div className="mt-4"><WeightSparkline snapshot={snapshot} /></div>
       </section>
 
@@ -345,12 +341,8 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-indigo-300/10 text-indigo-300"><Target className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
-            <p className="font-bold">{snapshot.goal?.goalType === "gain_weight" ? "Gain Mode شغال" : "متابعة الوزن بدون Goal Mode"}</p>
-            <p className="mt-1 text-xs leading-5 text-neutral-500">
-              {snapshot.goal?.goalType === "gain_weight"
-                ? "الهدف والطول واستراتيجية زيادة الوزن مكانهم في Gain Mode. هنا نسجل القياسات ونشوف الاتجاه بس."
-                : "OVRLD يقدر يسجل وزنك كقياس اختياري. هدف زيادة الوزن الوحيد المتاح حاليًا موجود في Gain Mode."}
-            </p>
+            <p className="font-bold">{snapshot.goal?.goalType === "gain_weight" ? "Gain Mode شغال" : "الهدف"}</p>
+            <p className="mt-0.5 text-xs text-neutral-500">{snapshot.goal?.goalType === "gain_weight" ? "زيادة الوزن" : "مفيش Goal Mode متفعل"}</p>
           </div>
         </div>
 
@@ -379,9 +371,8 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
       </section>
 
       <section className="gc-card p-4 sm:p-5">
-        <div className="flex items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-300/10 text-amber-300"><CalendarClock className="h-5 w-5" /></span><div className="min-w-0 flex-1"><p className="font-bold">ميعاد القراءة الجاية</p><p className="mt-1 text-sm leading-6 text-neutral-500">{dueInDays === null ? "سجّل أول قراءة وحدد فترة المتابعة." : dueInDays <= 0 ? "ميعاد المتابعة جه — قراءة سريعة كفاية." : `بعد ${dueInDays} يوم. مش محتاج توزن كل يوم.`}</p></div></div>
+        <div className="flex items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-300/10 text-amber-300"><CalendarClock className="h-5 w-5" /></span><div className="min-w-0 flex-1"><p className="font-bold">القياس الجاي</p><p className="mt-1 text-sm text-neutral-500">{dueInDays === null ? "حدد فترة المتابعة" : dueInDays <= 0 ? "النهارده" : `بعد ${dueInDays} يوم`}</p></div></div>
         <button type="button" onClick={() => void enableNotifications()} className="gc-secondary-button mt-4 w-full"><BellRing className="h-4 w-4" /> فعّل تذكير المتابعة</button>
-        <p className="mt-2 text-[10px] leading-4 text-neutral-600"><Bell className="me-1 inline h-3 w-3" /> النسخة دي بتطلع التذكير لما الـPWA/الموقع يكون متاح للمتصفح. Push مجدول بالكامل وهو مقفول هنوصله في مرحلة السيرفر.</p>
       </section>
     </div>
   );

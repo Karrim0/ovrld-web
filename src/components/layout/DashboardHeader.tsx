@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { BackButton } from "@/components/navigation/BackButton";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { SyncStatusIndicator } from "@/components/feedback/SyncStatusIndicator";
 import { ProfileAvatarLink } from "@/components/layout/ProfileAvatarLink";
 import { LanguageSwitcher } from "@/components/localization/LanguageSwitcher";
@@ -45,7 +46,7 @@ export async function DashboardHeader({ title, showBackButton, actions, showProf
     <header className="gc-topbar sticky top-0 z-30 px-3 py-3 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-6xl min-w-0 items-center justify-between gap-2.5">
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          {showBackButton ? <BackButton /> : null}
+          {showBackButton ? <BackButton /> : <span className="gc-header-brand" aria-hidden><BrandMark className="h-5 w-5" /></span>}
           <h1 className="min-w-0 truncate text-lg font-bold tracking-[-0.015em] sm:text-xl">{title}</h1>
         </div>
         <div className="gc-header-actions flex shrink-0 items-center gap-1.5 sm:gap-2">

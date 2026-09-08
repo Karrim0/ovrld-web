@@ -43,13 +43,15 @@ export function PersonalSplitOverviewClient({ userId, compact = false }: { userI
   if (status === "error") return <section className="gc-card p-5"><p className="gc-eyebrow">جدولك</p><h2 className="mt-1 text-xl font-bold">معرفناش نحمّل جدولك.</h2><p className="mt-2 text-sm text-neutral-500">افتح جدولي عشان تجرّب تاني أو تعدّل الأسبوع.</p><Link href="/split/personal" className="gc-secondary-button mt-4">افتح جدولي <ArrowLeft className="h-4 w-4" /></Link></section>;
 
   return (
-    <section className="gc-card p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div><p className="gc-eyebrow">جدولك</p><h2 className="mt-1 text-xl font-bold">{compact ? "الأسبوع ده" : "أسبوع التمرين ده"}</h2>{compact ? null : <p className="mt-1 text-sm text-neutral-500">هنا هتشوف أسماء أيامك وتعديلات الأسبوع ده.</p>}</div>
-        <Link href="/split/personal" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08] bg-white/[0.04] text-indigo-200" aria-label="عدّل جدولك الشخصي"><PencilLine className="h-4 w-4" /></Link>
-      </div>
+    <section className={compact ? "gc-week-overview" : "gc-card p-4 sm:p-5"}>
+      {compact ? null : (
+        <div className="flex items-start justify-between gap-3">
+          <div><p className="gc-eyebrow">جدولك</p><h2 className="mt-1 text-xl font-bold">أسبوع التمرين ده</h2><p className="mt-1 text-sm text-neutral-500">أيامك قدامك؛ افتح أي يوم لو محتاج تعدّله.</p></div>
+          <Link href="/split/personal" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08] bg-white/[0.04] text-indigo-200" aria-label="عدّل جدولك الشخصي"><PencilLine className="h-4 w-4" /></Link>
+        </div>
+      )}
 
-      <div className="gc-week-strip mt-4" aria-label="ملخص جدول الأسبوع">
+      <div className={`gc-week-strip ${compact ? "" : "mt-4"}`} aria-label="ملخص جدول الأسبوع">
         {orderedDays.map((day) => {
           const weekday = getWeekdayFromDate(parseISODateOnly(day.scheduleDate));
           const active = day.scheduleDate === today;

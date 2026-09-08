@@ -21,6 +21,13 @@ This release completes the Gym Crew → OVRLD migration, aligns the web client w
 - Light and dark themes.
 - Installable PWA with legacy cache and browser-storage migration.
 
+
+## Current product iteration
+
+**OVRLD V2 — Phase 7: Product Clarity & UX Polish**
+
+Phase 7 keeps the existing training and Gain Mode capabilities while simplifying how they are presented: a compact brand mark and PWA icon family, a Today-first Home, clearer Training/Body progress tabs, lighter plan editing, and a quieter Account surface. It adds no database migration. See [`docs/OVRLD_V2_PHASE_7_PRODUCT_CLARITY.md`](docs/OVRLD_V2_PHASE_7_PRODUCT_CLARITY.md).
+
 ## Stack
 
 - Next.js 16 and React 19
@@ -75,7 +82,7 @@ Open `http://localhost:3000`.
 Run the complete final gate:
 
 ```bash
-npm run phase5:check
+npm run phase7:check
 ```
 
 On Windows:
@@ -84,7 +91,7 @@ On Windows:
 VERIFY_OVRLD_WEB_FINAL.cmd
 ```
 
-The gate covers the Phase 1 backend contract, Phase 2 synchronization contract, final repository/release contract, TypeScript, ESLint, production build, and Git whitespace validation.
+The gate covers the cumulative Phase 1→7 product contracts, TypeScript, ESLint, and the production build. The Windows final verifier also runs Git whitespace validation.
 
 Validate production environment values before deployment:
 

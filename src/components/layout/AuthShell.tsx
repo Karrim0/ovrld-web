@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { Dumbbell, ShieldCheck, WifiOff } from "lucide-react";
-import { APP_CONFIG } from "@/config/app";
+import { ShieldCheck, WifiOff } from "lucide-react";
 import { LanguageSwitcher } from "@/components/localization/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
+import { BrandMark } from "@/components/brand/BrandMark";
 
 export interface AuthShellProps {
   children: ReactNode;
@@ -23,18 +23,15 @@ export function AuthShell({ children }: AuthShellProps) {
           <div>
             <div className="flex items-center gap-3">
               <span className="gc-brand-mark grid h-12 w-12 place-items-center rounded-2xl">
-                <Dumbbell className="h-6 w-6" />
+                <BrandMark className="h-7 w-7" />
               </span>
-              <div>
-                <p className="text-xl font-bold tracking-[-0.03em]">{APP_CONFIG.name}</p>
-                <p className="gc-eyebrow mt-0.5">اتمرّن. سجّل. طوّر.</p>
-              </div>
+              <p className="gc-eyebrow">TRAIN · LOG · PROGRESS</p>
             </div>
             <h2 className="mt-20 max-w-md text-5xl font-bold leading-[1.02] tracking-[-0.055em]">
-              أسبوع تمرينك كله من غير زحمة الجداول والنوتس.
+              تمرينك وأرقامك، من غير زحمة.
             </h2>
             <p className="gc-muted mt-5 max-w-lg text-base leading-7">
-              سجّل سِتاتك بسرعة، خلّي تايمر الراحة معاك، تابع تقدمك واتمرّن مع صحابك من مكان واحد.
+              جدول واضح، تسجيل سريع، وتقدم مبني على اللي بتعمله فعلًا.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -55,12 +52,9 @@ export function AuthShell({ children }: AuthShellProps) {
           <div className="mx-auto w-full min-w-0 max-w-md">
             <div className="mb-8 flex items-center gap-3 lg:hidden">
               <span className="gc-brand-mark grid h-11 w-11 place-items-center rounded-2xl">
-                <Dumbbell className="h-5 w-5" />
+                <BrandMark className="h-6 w-6" />
               </span>
-              <div className="min-w-0">
-                <p className="truncate text-lg font-bold">{APP_CONFIG.name}</p>
-                <p className="gc-muted text-xs font-bold uppercase tracking-[0.16em]">متعمل عشان الجيم</p>
-              </div>
+              <p className="gc-muted min-w-0 truncate text-xs font-black uppercase tracking-[0.16em]">TRAIN · LOG · PROGRESS</p>
             </div>
             {children}
           </div>

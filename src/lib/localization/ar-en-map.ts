@@ -7,6 +7,20 @@
  */
 
 export const AR_TO_EN: Readonly<Record<string, string>> = {
+  'أهلاً،': 'Hi,',
+  'حسابي': 'Account',
+  'نوع التقدم': 'Progress type',
+  'اختار اليوم وعدّله': 'Pick a day and edit it',
+  'اختار اليوم وعدّل تمارينه': 'Pick a day and edit its exercises',
+  'الأرقام القياسية': 'Personal records',
+  'التقدم مستقر': 'Progress is steady',
+  'الشهر': 'Month',
+  'القوة ماشية لفوق': 'Strength is trending up',
+  'بنجمع خط الأساس': 'Building your baseline',
+  'حدد فترة المتابعة': 'Set a check-in interval',
+  'في أرقام محتاجة عين': 'Some numbers need attention',
+  'معرفناش نحلّل تقدمك دلوقتي.': 'We could not analyze your progress right now.',
+  'مفيش Goal Mode متفعل': 'No Goal Mode is active',
   'العملية': 'Process',
   'إيه اللي يستاهل انتباهك دلوقتي؟': 'What deserves your attention right now?',
   'كل التقدم': 'All progress',

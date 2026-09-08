@@ -13,7 +13,6 @@ import {
   Check,
   ChevronDown,
   Dumbbell,
-  CalendarDays,
   Flame,
   Heart,
   Moon,
@@ -494,38 +493,22 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
     <div className="space-y-4 pb-20 pt-4">
       {mode === "personal" ? (
         <>
-          <section className="gc-plan-hero overflow-hidden p-4 min-[380px]:p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="gc-eyebrow">خطة التمرين</p>
-                <h2 className="mt-1 text-2xl font-black tracking-[-0.04em]">جدولك قدامك، والأسبوع مرن</h2>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-neutral-500">غيّر يوم، بدّل تمرين براحة، أو خُد راحة النهارده من غير ما تبوّظ الخطة الأساسية.</p>
-              </div>
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-indigo-300 text-[#11131a]"><CalendarDays className="h-5 w-5" /></span>
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <div className="gc-plan-stat"><strong>{activeTrainingDays}</strong><span>أيام تمرين</span></div>
-              <div className="gc-plan-stat"><strong>{7 - activeTrainingDays}</strong><span>أيام راحة</span></div>
-              <div className="gc-plan-stat"><strong>{baseExerciseCount}</strong><span>تمرين محفوظ</span></div>
+          <section className="gc-plan-summary">
+            <div className="grid grid-cols-3">
+              <div className="gc-number-cell"><span>تمرين</span><strong>{activeTrainingDays}</strong><small>أيام</small></div>
+              <div className="gc-number-cell border-x border-white/[0.055]"><span>راحة</span><strong>{7 - activeTrainingDays}</strong><small>أيام</small></div>
+              <div className="gc-number-cell"><span>التمارين</span><strong>{baseExerciseCount}</strong><small>محفوظ</small></div>
             </div>
           </section>
 
-          <details className="gc-card group overflow-hidden">
-            <summary className="flex min-h-14 list-none items-center gap-3 px-4 [&::-webkit-details-marker]:hidden">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-300/10 text-indigo-200"><WandSparkles className="h-4 w-4" /></span>
-              <span className="min-w-0 flex-1"><strong className="block text-sm">اعمل أو استورد جدول جديد</strong><span className="block truncate text-xs text-neutral-500">استخدمها لما تحب تغيّر الخطة من أساسها</span></span>
-              <ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="border-t border-white/[0.06] p-3"><SplitSetupChooser onChanged={loadAll} /></div>
+          <details className="gc-list-panel group">
+            <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><WandSparkles className="h-4 w-4 text-indigo-300" /><span className="min-w-0 flex-1 font-bold">إنشاء أو استيراد جدول</span><ChevronDown className="h-4 w-4 text-neutral-600 transition-transform group-open:rotate-180" /></summary>
+            <div className="border-t border-white/[0.055] p-3"><SplitSetupChooser onChanged={loadAll} /></div>
           </details>
 
-          <details className="gc-card group overflow-hidden">
-            <summary className="flex min-h-14 list-none items-center gap-3 px-4 [&::-webkit-details-marker]:hidden">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-300/10 text-indigo-200"><Target className="h-4 w-4" /></span>
-              <span className="min-w-0 flex-1"><strong className="block text-sm">تحليل الخطة</strong><span className="block truncate text-xs text-neutral-500">افتحه لما تحب تراجع توزيع العضلات والحجم</span></span>
-              <ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="border-t border-white/[0.06] p-2"><PlanAuditPanel userId={userId} revision={planRevision} /></div>
+          <details className="gc-list-panel group">
+            <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><Target className="h-4 w-4 text-indigo-300" /><span className="min-w-0 flex-1 font-bold">تحليل الخطة</span><ChevronDown className="h-4 w-4 text-neutral-600 transition-transform group-open:rotate-180" /></summary>
+            <div className="border-t border-white/[0.055] p-2"><PlanAuditPanel userId={userId} revision={planRevision} /></div>
           </details>
         </>
       ) : null}
@@ -542,9 +525,8 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
       <section className="gc-card p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="gc-eyebrow">{view === "week" ? "أسبوع التمرين ده" : mode === "group" ? "جدول الجروب الأساسي" : "جدولك الأساسي"}</p>
-            <h2 className="mt-1 text-xl font-bold">{view === "week" ? "حرّك أيام التمرين والراحة براحتك" : "خلّي كل يوم على مزاجك"}</h2>
-            <p className="mt-1 text-sm leading-5 text-neutral-500">{view === "week" ? "التعديلات دي على الأسبوع ده بس، وجدولك الأساسي مش هيتغير." : "اسم اليوم هو الأساسي. بوش وبول ورجل مجرد فلاتر اختيارية للمكتبة."}</p>
+            <p className="gc-eyebrow">{view === "week" ? "الأسبوع ده" : mode === "group" ? "جدول الجروب" : "الجدول الأساسي"}</p>
+            <h2 className="mt-1 text-lg font-black">{view === "week" ? "اختار اليوم وعدّله" : "اختار اليوم وعدّل تمارينه"}</h2>
           </div>
           {view === "week" ? <button type="button" disabled={busy} onClick={() => void resetCurrentWeek()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08]" aria-label="رجّع الأسبوع ده"><RotateCcw className="h-4 w-4" /></button> : mode === "personal" ? <button type="button" disabled={busy} onClick={() => void resetBase()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08]" aria-label="رجّع لجدول الجروب"><RotateCcw className="h-4 w-4" /></button> : null}
         </div>
@@ -568,7 +550,6 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
             );
           })}
         </div>
-        <p className="mt-3 text-xs leading-5 text-neutral-500"><strong className="text-neutral-300">قاعدة الراحة:</strong> خد عدد أيام الراحة اللي يناسب جدولك، بس بحد أقصى يومين ورا بعض.</p>
       </section>
 
       {error ? <p className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm font-semibold text-red-300">{error}</p> : null}
@@ -580,10 +561,10 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="gc-eyebrow">{view === "week" && selectedWeekday ? `${LONG_DAY[selectedWeekday]} · ${dateCaption(selectedWeek!.scheduleDate)}` : LONG_DAY[selectedBase.weekday]}</p>
-                <h2 className="mt-1 text-2xl font-bold">{formName || "يوم تمرين"}</h2>
-                <p className="mt-1 text-sm text-neutral-500">{formType === "rest" ? "الراحة المتخططلها بتكمّل سلسلة التزامك اليومية." : `${view === "week" ? selectedWeek?.exercises.length ?? 0 : selectedBase.exercises.length} تمارين · ${formFocus || "تركيز مخصص"}`}</p>
+                <h2 className="mt-1 text-xl font-black">{formName || "يوم تمرين"}</h2>
+                <p className="mt-1 text-xs font-semibold text-neutral-500">{formType === "rest" ? "راحة" : `${view === "week" ? selectedWeek?.exercises.length ?? 0 : selectedBase.exercises.length} تمارين`}</p>
               </div>
-              <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl border ${COLOR_TONES[formColor]}`}><SelectedIcon className="h-5 w-5" /></span>
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${COLOR_TONES[formColor]}`}><SelectedIcon className="h-4 w-4" /></span>
             </div>
 
             {canEdit ? (
@@ -658,7 +639,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
             <div className="border-t border-white/[0.06] p-4 sm:p-5"><div className="rounded-2xl border border-dashed border-white/[0.1] p-5 text-center"><Moon className="mx-auto h-5 w-5 text-sky-200" /><p className="mt-2 font-bold">يوم راحة</p><p className="mt-1 text-sm text-neutral-500">التمارين المحفوظة هتفضل موجودة وترجع لو اليوم بقى تمرين تاني.</p></div></div>
           ) : (
             <div className="border-t border-white/[0.06] p-4 sm:p-5">
-              <div className="mb-3 flex items-center justify-between gap-3"><div><h3 className="font-bold">التمارين</h3><p className="text-xs text-neutral-500">اضغط على التمرين عشان تعدّل السِتات والعدات المستهدفة.</p></div><span className="gc-chip">{selectedBase.exercises.length}</span></div>
+              <div className="mb-3 flex items-center justify-between gap-3"><h3 className="font-bold">التمارين</h3><span className="gc-chip">{selectedBase.exercises.length}</span></div>
               <ul className="space-y-2">{selectedBase.exercises.map((item, index) => <ExerciseEditor key={`${item.id}:${item.targetSets}:${item.targetRepsMin}:${item.targetRepsMax}`} item={item} index={index} count={selectedBase.exercises.length} canEdit={canEdit} onReload={loadAll} onError={setError} />)}</ul>
               {selectedBase.exercises.length === 0 ? <p className="rounded-2xl border border-dashed border-white/[0.1] p-5 text-center text-sm text-neutral-500">اليوم ده فاضي. ضيف التمارين اللي بتلعبها فعلًا في الجيم.</p> : null}
               {canEdit ? (

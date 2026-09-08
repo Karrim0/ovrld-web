@@ -111,11 +111,24 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   if (activeSession) {
     const totalSets = activeSession.exercises.reduce((total, exercise) => total + exercise.sets.length, 0);
     const completedSets = activeSession.exercises.reduce((total, exercise) => total + exercise.sets.filter((set) => set.isCompleted).length, 0);
+    if (compact) {
+      return (
+        <section className="gc-today-compact border-indigo-300/20">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-300 text-[#11131a]"><Play className="h-4 w-4" /></span>
+            <div className="min-w-0 flex-1"><span className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-300">تمرين شغال</span><h2 className="truncate text-lg font-black">كمّل تمرينتك</h2></div>
+            <strong className="text-sm tabular-nums">{completedSets}/{totalSets}</strong>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-indigo-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
+          <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-3 w-full min-h-11"><Play className="h-4 w-4" /> كمّل</Link>
+        </section>
+      );
+    }
     return (
       <section className="gc-card border-indigo-300/20 p-5 sm:p-6">
         <p className="gc-eyebrow">فيه تمرينة شغالة</p>
         <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">كمّل تمرينتك</h2>
-        <p className="mt-2 text-sm text-neutral-500">خلصت {completedSets} من {totalSets} سِتات. تمرينتك محفوظة على الجهاز.</p>
+        <p className="mt-2 text-sm text-neutral-500">خلصت {completedSets} من {totalSets} سِتات.</p>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-indigo-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
         <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-5 w-full sm:w-auto"><Play className="h-4 w-4" /> كمّل التمرينة</Link>
       </section>
@@ -134,16 +147,27 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   }
 
   if (today.workoutType === "rest") {
+    if (compact) {
+      return (
+        <section className="gc-today-compact">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-300/10 text-sky-300"><RotateCcw className="h-4 w-4" /></span>
+            <div className="min-w-0 flex-1"><span className="text-[10px] font-black uppercase tracking-[0.12em] text-neutral-500">النهارده</span><h2 className="truncate text-xl font-black">راحة</h2></div>
+            <Link href={`/split/personal?day=${weekday}`} className="gc-compact-link">تعديل</Link>
+          </div>
+        </section>
+      );
+    }
     return (
       <div className="space-y-4">
         <section className="gc-card p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-300/10 text-sky-200"><RotateCcw className="h-5 w-5" /></span>
-            <div className="min-w-0 flex-1"><p className="gc-eyebrow">{translateWorkoutLabel(today.displayName)}</p><h2 className="mt-1 text-xl font-bold">راحة متخططلها</h2><p className="mt-1 text-sm text-neutral-500">يوم الراحة بيكمّل سلسلة التزامك اليومية، ولسه تقدر تبدأ تمرينة زيادة من غير ما تغيّر جدول الأسبوع.</p></div>
+            <div className="min-w-0 flex-1"><p className="gc-eyebrow">{translateWorkoutLabel(today.displayName)}</p><h2 className="mt-1 text-xl font-bold">راحة</h2></div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2"><Link href={`/split/personal?day=${weekday}`} className="gc-secondary-button"><PencilLine className="h-4 w-4" /> عدّل الأسبوع</Link><a href="#alternate-workout" className="gc-secondary-button">اتمرّن برضه <ArrowLeft className="h-4 w-4" /></a></div>
         </section>
-        {!compact ? renderAlternateStarter() : null}
+        {renderAlternateStarter()}
       </div>
     );
   }
@@ -159,18 +183,15 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
       <section className={`gc-card overflow-hidden p-0 ${compact ? "gc-today-hero" : ""}`}>
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-indigo-300 text-[#11131a]"><Dumbbell className="h-6 w-6" /></span>
-            <div className="min-w-0 flex-1"><p className="gc-eyebrow">{WEEKDAY_LABELS_AR[weekday]} · النهارده</p><h2 className="mt-1 truncate text-2xl font-bold tracking-[-0.03em]">{title}</h2><p className="mt-1 text-sm text-neutral-500">{translateWorkoutLabel(today.focusLabel)} · {today.exercises.length} تمارين · حوالي {estimatedMinutes} دقيقة</p></div>
+            <span className={`grid shrink-0 place-items-center rounded-xl bg-indigo-300 text-[#11131a] ${compact ? "h-10 w-10" : "h-12 w-12"}`}><Dumbbell className={compact ? "h-5 w-5" : "h-6 w-6"} /></span>
+            <div className="min-w-0 flex-1"><p className="gc-eyebrow">{WEEKDAY_LABELS_AR[weekday]} · النهارده</p><h2 className={`mt-1 truncate font-black tracking-[-0.03em] ${compact ? "text-xl" : "text-2xl"}`}>{title}</h2><p className="mt-1 text-xs font-semibold text-neutral-500">{today.exercises.length} تمارين · {totalTargetSets} سِتات</p></div>
           </div>
-          {today.dayNotes ? <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3 text-sm leading-6 text-neutral-400">{today.dayNotes}</p> : null}
-          <button type="button" disabled={isStarting || today.exercises.length === 0 || !today.sourceDay} onClick={() => void startScheduled()} className="gc-primary-button mt-5 w-full disabled:opacity-50"><Play className="h-5 w-5" /> {isStarting ? "بنبدأ…" : "ابدأ التمرينة"}</button>
+          {!compact && today.dayNotes ? <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3 text-sm leading-6 text-neutral-400">{today.dayNotes}</p> : null}
+          <button type="button" disabled={isStarting || today.exercises.length === 0 || !today.sourceDay} onClick={() => void startScheduled()} className="gc-primary-button mt-5 w-full disabled:opacity-50"><Play className="h-5 w-5" /> {isStarting ? "بنبدأ…" : compact ? "ابدأ" : "ابدأ التمرينة"}</button>
         </div>
 
         {compact ? (
           <div className="border-t border-white/[0.06] px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
-            <div className="mb-3 flex items-center gap-2 text-[11px] font-bold text-neutral-500">
-              <span>{totalTargetSets} سِتات</span><span>•</span><span>{estimatedMinutes} دقيقة تقريبًا</span>
-            </div>
             <div className="gc-today-exercise-strip">
               {displayedExercises.map((item, index) => (
                 <span key={item.id} className="gc-today-exercise-pill">

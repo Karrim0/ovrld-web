@@ -84,7 +84,7 @@ assert.ok(dashboard.indexOf("<GainModeHomeCard") < dashboard.indexOf("<PersonalS
 
 const body = read("src/features/body-progress/components/BodyProgressClient.tsx");
 assert.doesNotMatch(body, /lose_weight|recomposition|muscle_gain|maintain_weight/);
-assert.match(body, /هدف زيادة الوزن الوحيد المتاح حاليًا موجود في Gain Mode/);
+assert.match(body, /Gain Mode شغال|زيادة الوزن/);
 assert.match(body, /saveTrackingCadence/);
 
 const split = read("src/features/splits/components/SplitManager.tsx");
@@ -96,7 +96,7 @@ assert.match(profilePage, /LanguageSwitcher variant="panel"/);
 assert.match(profilePage, /ThemeSwitcher variant="panel"/);
 
 const sw = read("public/sw.js");
-assert.match(sw, /CACHE_VERSION = "v10"/);
+assert.match(sw, /CACHE_VERSION = "v(?:1[0-9]|[2-9]\d+)"/);
 assert.match(sw, /ovrld-static-/);
 assert.match(sw, /ovrld-pages-/);
 assert.match(sw, /\/progress\/gain/);
@@ -111,12 +111,12 @@ for (const phrase of [
 }
 
 const workflow = read(".github/workflows/ovrld-web-ci.yml");
-assert.match(workflow, /npm run phase6:check/);
+assert.match(workflow, /npm run phase(?:6|7):check/);
 
 const packageJson = JSON.parse(read("package.json"));
 assert.ok(packageJson.scripts?.["verify:phase6"], "Missing verify:phase6 script.");
 assert.ok(packageJson.scripts?.["phase6:check"], "Missing phase6:check script.");
-assert.equal(packageJson.scripts?.check, "npm run phase6:check", "Default check must point to Phase 6.");
+assert.match(packageJson.scripts?.check ?? "", /npm run phase(?:6|7):check/, "Default check must point to Phase 6 or newer.");
 
 console.table({
   phase: "6 — optional Gain Mode foundation",

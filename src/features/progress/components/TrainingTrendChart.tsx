@@ -40,9 +40,8 @@ export function TrainingTrendChart({ userId }: { userId: UUID }) {
   return (
     <section className="gc-card p-4 sm:p-5">
       <div>
-        <p className="gc-eyebrow">حِمل التمرين</p>
-        <h3 className="mt-1 text-lg font-bold">تقدم 8 أسابيع</h3>
-        <p className="mt-1 text-sm text-neutral-500">الشغل المكتمل شامل التمرينات اللي اتسجلت من غير نت.</p>
+        <p className="gc-eyebrow">8 أسابيع</p>
+        <h3 className="mt-1 text-lg font-black">الاتجاه</h3>
       </div>
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
         {METRICS.map((item) => (

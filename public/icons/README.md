@@ -1,15 +1,9 @@
-# App icons
+# OVRLD app icons
 
-This folder is a placeholder. Add the following PWA icon files before shipping:
+Phase 7 replaces the legacy dumbbell artwork with the OVRLD angular mark.
 
-| File | Size | Purpose |
-| --- | --- | --- |
-| `icon-192x192.png` | 192×192 | Referenced by `src/app/manifest.ts`, Android home screen |
-| `icon-512x512.png` | 512×512 | Referenced by `src/app/manifest.ts`, splash screens |
-| `icon-maskable-192x192.png` | 192×192 | Optional, `purpose: "maskable"` variant for adaptive icons |
-| `icon-maskable-512x512.png` | 512×512 | Optional, `purpose: "maskable"` variant for adaptive icons |
-| `apple-touch-icon.png` | 180×180 | iOS home screen icon |
-
-All icons should be square PNGs with no transparency for the non-maskable
-variants. Maskable icons need at least 40% padding around the safe zone per
-the [maskable.app](https://maskable.app/) guidelines.
+- `icon-192x192.png` — standard PWA icon
+- `icon-512x512.png` — high-resolution PWA icon
+- `icon-maskable-512x512.png` — full-bleed maskable Android icon
+- `apple-touch-icon.png` — iOS home-screen icon
+- `/brand/ovrld-mark.svg` — vector brand mark used by the web UI

@@ -7,7 +7,7 @@ export const APP_CONFIG = {
   fullName: "OVRLD Web",
   version: "1.8.0",
   releaseChannel: "stable",
-  description: "نظّم تمرينك، سجّل السِتات، وتابع تقدمك من أي جهاز.",
+  description: "جدولك، تمرينك، وأرقامك في مكان واحد.",
   englishDescription:
-    "Offline-first workout planning, set logging, and progress tracking for serious training.",
+    "A focused workout planner, gym logger, and progress tracker built around real training data.",
 } as const;

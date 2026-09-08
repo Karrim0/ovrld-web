@@ -24,37 +24,36 @@ export function GainModeHomeCard({ userId }: { userId: UUID }) {
     return () => { active = false; };
   }, [userId]);
 
-  if (snapshot === undefined) return <div className="h-48 animate-pulse rounded-[24px] border border-white/[0.06] bg-white/[0.035]" />;
+  if (snapshot === undefined) return <div className="h-36 animate-pulse rounded-[20px] border border-white/[0.06] bg-white/[0.025]" />;
   if (!snapshot) return <SmartProcessLoop userId={userId} />;
 
   const latest = snapshot.body.latest;
-  const start = snapshot.body.start;
   const target = snapshot.body.goal?.targetWeightKg ?? null;
   const weighInDue = snapshot.review.tone === "collect" && snapshot.review.href === "/progress/body";
-  const gained = latest && start ? latest.weightKg - start.weightKg : null;
 
   return (
-    <section className="gc-card overflow-hidden border-emerald-300/15 p-0">
-      <div className="flex items-start gap-3.5 p-4 sm:p-5">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-300/10 text-emerald-300"><Sparkles className="h-5 w-5" /></span>
+    <section className="gc-daily-panel overflow-hidden border-emerald-300/15">
+      <div className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-300/10 text-emerald-300"><Sparkles className="h-4 w-4" /></span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2"><p className="gc-eyebrow text-emerald-300">GAIN MODE</p><span className="gc-chip">زيادة الوزن</span></div>
-          <h3 className="mt-1.5 text-xl font-black tracking-[-0.035em]">{snapshot.review.title}</h3>
-          <p className="mt-1.5 text-sm leading-6 text-neutral-500">{snapshot.review.detail}</p>
+          <div className="flex items-center gap-2"><strong className="text-sm">Gain Mode</strong><span className="gc-mini-badge">زيادة الوزن</span></div>
+          <p className="mt-0.5 truncate text-xs font-semibold text-neutral-500">{snapshot.review.title}</p>
         </div>
+        {weighInDue ? <BellRing className="h-4 w-4 shrink-0 text-amber-300" /> : null}
       </div>
 
-      <div className="grid grid-cols-3 gap-px border-y border-white/[0.055] bg-white/[0.055]">
-        <div className="gc-process-stat"><strong>{kg(latest?.weightKg)}</strong><span>دلوقتي</span><small>{gained == null ? "نقطة البداية" : `${gained >= 0 ? "+" : ""}${gained.toFixed(1)} كجم`}</small></div>
-        <div className="gc-process-stat"><strong>{target ? kg(target) : "—"}</strong><span>الهدف</span><small>{target ? "قابل للتعديل" : "اختياري"}</small></div>
-        <div className="gc-process-stat"><strong>{snapshot.proteinTargetGrams ? `${snapshot.proteinTargetGrams}g` : "—"}</strong><span>بروتين تقريبي</span><small>مرجع يومي بسيط</small></div>
+      <div className="grid grid-cols-3 border-y border-white/[0.055]">
+        <div className="gc-number-cell"><span>الوزن</span><strong>{kg(latest?.weightKg)}</strong></div>
+        <div className="gc-number-cell border-x border-white/[0.055]"><span>الهدف</span><strong>{kg(target)}</strong></div>
+        <div className="gc-number-cell"><span>البروتين</span><strong>{snapshot.proteinTargetGrams ? `${snapshot.proteinTargetGrams}g` : "—"}</strong></div>
       </div>
 
-      <div className="grid gap-2 p-3.5 min-[390px]:grid-cols-2 sm:p-4">
-        <Link href={snapshot.review.href} className="gc-process-action">
-          <span className="inline-flex items-center gap-2">{weighInDue ? <BellRing className="h-4 w-4" /> : <Utensils className="h-4 w-4" />}{snapshot.review.cta}</span><ArrowUpLeft className="h-4 w-4" />
+      <div className="grid grid-cols-2 gap-2 p-3">
+        <Link href={snapshot.review.href} className="gc-compact-action">
+          <span className="inline-flex items-center gap-1.5">{weighInDue ? <Scale className="h-4 w-4" /> : <Utensils className="h-4 w-4" />}{snapshot.review.cta}</span>
+          <ArrowUpLeft className="h-4 w-4" />
         </Link>
-        <Link href="/progress/body" className="gc-secondary-button"><Scale className="h-4 w-4" /> اتجاه الوزن <Target className="h-4 w-4" /></Link>
+        <Link href="/progress/gain" className="gc-compact-action gc-compact-action-muted"><Target className="h-4 w-4" /><span>التفاصيل</span><ArrowUpLeft className="h-4 w-4" /></Link>
       </div>
     </section>
   );

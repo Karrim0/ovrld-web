@@ -12,27 +12,12 @@ where npm >nul 2>nul || (
   exit /b 1
 )
 
-echo [1/7] Verify Phase 1 backend alignment
-call npm run verify:phase1 || exit /b 1
+echo [1/2] OVRLD V2 Phase 1-7 quality gate
+call npm run phase7:check || exit /b 1
 
-echo [2/7] Verify Phase 2 functional repair
-call npm run verify:phase2 || exit /b 1
-
-echo [3/7] Verify Phase 3 final release contract
-call npm run verify:phase3 || exit /b 1
-
-echo [4/7] TypeScript
-call npm run typecheck || exit /b 1
-
-echo [5/7] ESLint
-call npm run lint || exit /b 1
-
-echo [6/7] Next.js production build
-call npm run build || exit /b 1
-
-echo [7/7] Git whitespace check
+echo [2/2] Git whitespace check
 git diff --check || exit /b 1
 
 echo.
-echo [OK] OVRLD Web final release verification passed.
+echo [OK] OVRLD V2 Phase 7 verification passed.
 endlocal
