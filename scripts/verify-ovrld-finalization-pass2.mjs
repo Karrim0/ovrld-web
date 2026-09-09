@@ -5,12 +5,13 @@ const checks = [];
 const add = (name, ok, detail = "") => checks.push({ name, ok, detail });
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-const [css, brand, gainHub, gainTraining, setupChooser, activeWorkout, progress, manifest, map, runtime, sw] = await Promise.all([
+const [css, brand, gainHub, gainTraining, setupChooser, starterPlans, activeWorkout, progress, manifest, map, runtime, sw] = await Promise.all([
   read("src/app/globals.css"),
   read("src/components/brand/BrandMark.tsx"),
   read("src/features/gain-mode/components/GainModeHubClient.tsx"),
   read("src/features/gain-mode/components/GainTrainingIntegrationClient.tsx"),
   read("src/features/splits/components/SplitSetupChooser.tsx"),
+  read("src/features/splits/constants/starter-plans.ts"),
   read("src/features/workouts/components/ActiveWorkoutClient.tsx"),
   read("src/features/progress/components/ProgressDashboardClient.tsx"),
   read("src/app/manifest.ts"),
@@ -24,8 +25,8 @@ add("New progression brand mark", brand.includes("var(--brand-accent") && brand.
 add("Gain Mode uses one top options control", (gainHub.match(/MoreHorizontal/g) ?? []).length === 2, "One import + one rendered icon expected");
 add("Gain options sheet exists", gainHub.includes("gc-gain-options-sheet"));
 add("Gain training screen is language-aware", gainTraining.includes("useLanguage") && gainTraining.includes("Use recommended plan"));
-add("Gain plan is exposed in plan selection", setupChooser.includes('key: "gain_glutes_4"') && setupChooser.includes("Recommended for Gain Mode"));
-add("Ready plan chooser includes all starter templates", setupChooser.includes("STARTERS.map") && !setupChooser.includes("filter((starter) => starter.key !== \"gain_glutes_4\")"));
+add("Gain plan is exposed in shared plan selection", starterPlans.includes('key: "gain_glutes_4"') && starterPlans.includes("recommendedForGain: true") && setupChooser.includes("STARTER_PLANS"));
+add("Ready plan chooser includes all shared starter templates", setupChooser.includes("STARTERS.map") && setupChooser.includes("const STARTERS = STARTER_PLANS"));
 add("Plan selection offers import + manual paths", setupChooser.includes("Import your plan") && setupChooser.includes("Build from scratch"));
 add("Workout logging keeps rest timing without set-timer clutter", activeWorkout.includes("useRestTimer") && !activeWorkout.includes("gc-set-timer-button"));
 add("Workout options no duplicate add-exercise row", !activeWorkout.includes('<strong>{ar ? "ضيف تمرين" : "Add exercise"}</strong><small>{ar ? "للجلسة دي أو للجدول الأساسي"'));

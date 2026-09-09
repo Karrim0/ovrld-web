@@ -16,7 +16,7 @@ const files = [
   "src/features/gain-mode/services/review.service.ts",
   "src/features/gain-mode/components/GainTrainingCard.tsx",
   "src/features/gain-mode/components/GainModeHubClient.tsx",
-  "src/features/onboarding/components/GoalSetupClient.tsx",
+  "src/features/onboarding/components/OnboardingWizard.tsx",
   "src/features/workouts/components/ActiveWorkoutClient.tsx",
   "src/features/splits/components/SplitManager.tsx",
   "src/lib/supabase/types.ts",
@@ -71,13 +71,10 @@ assert.doesNotMatch(gym, /اختار أي تمرين\. اسحب ورتّب/);
 assert.match(gym, /draggable=\{queueEditing && !busy\}/);
 assert.match(gym, /gc-gym-context-next/);
 
-const goal = read("src/features/onboarding/components/GoalSetupClient.tsx");
-assert.match(goal, /Gain Mode · زيادة الوزن/);
-assert.doesNotMatch(goal, /للبنات/);
-assert.match(goal, /equationSex/);
-assert.match(goal, /useState<GainEquationSex \| null>\(null\)/, "Fresh Gain onboarding must not silently assume female or male for the calorie equation.");
 const activation = read("src/features/gain-mode/components/GainModeActivationClient.tsx");
 assert.match(activation, /useState<GainEquationSex \| null>\(null\)/, "Fresh Gain activation must require an explicit equation-sex choice.");
+const onboarding = read("src/features/onboarding/components/OnboardingWizard.tsx");
+assert.doesNotMatch(onboarding, /equationSex|GainEquationSex/, "General onboarding must not silently choose a Gain calorie equation profile.");
 
 const activeGainFiles = [
   "src/features/gain-mode/services/gain-mode.service.ts",
@@ -86,7 +83,6 @@ const activeGainFiles = [
   "src/features/gain-mode/components/GainModeActivationClient.tsx",
   "src/features/gain-mode/components/GainModeHomeCard.tsx",
   "src/features/gain-mode/components/GainAiFoodLogger.tsx",
-  "src/features/onboarding/components/GoalSetupClient.tsx",
   "src/features/body-progress/components/BodyMeasurementsPanel.tsx",
   "src/app/api/gain/food/estimate/route.ts",
 ].map(read).join("\n");

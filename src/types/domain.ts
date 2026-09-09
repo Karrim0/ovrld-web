@@ -10,6 +10,7 @@
 export type UUID = string;
 export type ISODateString = string;
 export type ISODateOnlyString = string;
+export type TrainingLevel = "beginner" | "intermediate" | "advanced";
 
 // ---------------------------------------------------------------------------
 // User & group
@@ -19,6 +20,9 @@ export interface UserProfile {
   id: UUID;
   displayName: string;
   avatarUrl: string | null;
+  ageYears: number | null;
+  trainingLevel: TrainingLevel | null;
+  weeklyTrainingDays: number | null;
   /** Legacy compatibility only. Rest days are defined by split_days.workoutType. */
   additionalRestDays: Weekday[];
   shareWorkoutSummary: boolean;

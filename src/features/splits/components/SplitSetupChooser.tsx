@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import type { StarterPlanKey } from "../types";
+import { STARTER_PLANS } from "../constants/starter-plans";
 import { applySplitTemplate } from "../services/split.service";
 import { SplitImportWizard } from "./SplitImportWizard";
 
@@ -22,61 +23,7 @@ interface SplitSetupChooserProps {
   onChanged: () => Promise<void>;
 }
 
-type ReadyPlan = {
-  key: Exclude<StarterPlanKey, "manual">;
-  titleAr: string;
-  titleEn: string;
-  detailAr: string;
-  detailEn: string;
-  days: number;
-  recommended?: boolean;
-  womenFocused?: boolean;
-};
-
-const STARTERS: ReadyPlan[] = [
-  {
-    key: "gain_glutes_4",
-    titleAr: "Gain · Glutes + Legs",
-    titleEn: "Gain · Glutes + Legs",
-    detailAr: "السبت Lower A · الأحد Upper · الاثنين Lower B · الأربعاء Lower C",
-    detailEn: "Sat Lower A · Sun Upper · Mon Lower B · Wed Lower C",
-    days: 4,
-    recommended: true,
-    womenFocused: true,
-  },
-  {
-    key: "full_body_3",
-    titleAr: "فل بادي",
-    titleEn: "Full Body",
-    detailAr: "3 أيام متوازنة وسهلة في الاستشفاء",
-    detailEn: "3 balanced days with simple recovery",
-    days: 3,
-  },
-  {
-    key: "upper_lower_4",
-    titleAr: "أبر / لوور",
-    titleEn: "Upper / Lower",
-    detailAr: "يومين Upper + يومين Lower",
-    detailEn: "2 Upper + 2 Lower days",
-    days: 4,
-  },
-  {
-    key: "ppl_ul_5",
-    titleAr: "PPL + Upper / Lower",
-    titleEn: "PPL + Upper / Lower",
-    detailAr: "تكرار أعلى مع يومين راحة",
-    detailEn: "Higher frequency with two rest days",
-    days: 5,
-  },
-  {
-    key: "ppl_6",
-    titleAr: "Push / Pull / Legs",
-    titleEn: "Push / Pull / Legs",
-    detailAr: "دورة كاملة من 6 أيام",
-    detailEn: "A full 6-day training cycle",
-    days: 6,
-  },
-];
+const STARTERS = STARTER_PLANS;
 
 export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
   const { language } = useLanguage();
@@ -86,7 +33,7 @@ export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
   const [busyKey, setBusyKey] = useState<StarterPlanKey | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const gainPlan = STARTERS[0];
+  const gainPlan = STARTERS.find((plan) => plan.recommendedForGain) ?? STARTERS[0];
 
   async function apply(key: StarterPlanKey) {
     const selected = STARTERS.find((plan) => plan.key === key);
@@ -217,13 +164,13 @@ export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
                   type="button"
                   disabled={Boolean(busyKey)}
                   onClick={() => void apply(starter.key)}
-                  className={`gc-ready-plan-row ${starter.recommended ? "gc-ready-plan-row-recommended" : ""}`}
+                  className={`gc-ready-plan-row ${starter.recommendedForGain ? "gc-ready-plan-row-recommended" : ""}`}
                 >
                   <span className="gc-ready-plan-days"><strong>{starter.days}</strong><small>{ar ? "أيام" : "days"}</small></span>
                   <span className="min-w-0 flex-1 text-start">
                     <span className="flex flex-wrap items-center gap-1.5">
                       <strong className="text-sm">{ar ? starter.titleAr : starter.titleEn}</strong>
-                      {starter.recommended ? <span className="gc-plan-recommended-badge">Gain Mode</span> : null}
+                      {starter.recommendedForGain ? <span className="gc-plan-recommended-badge">Gain Mode</span> : null}
                       {starter.womenFocused ? <span className="gc-plan-women-badge">{ar ? "للبنات" : "Women"}</span> : null}
                     </span>
                     <small className="mt-1 block text-xs leading-5 text-neutral-500">{ar ? starter.detailAr : starter.detailEn}</small>

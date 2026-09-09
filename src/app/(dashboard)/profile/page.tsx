@@ -5,17 +5,22 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { LanguageSwitcher } from "@/components/localization/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { LogoutButton } from "@/features/auth/components/LogoutButton";
+import { ProfileCompletenessCard } from "@/features/profile/components/ProfileCompletenessCard";
+import { getProfileCompleteness } from "@/features/profile/services/profile-completeness.server";
 import { requireCurrentUser } from "@/features/auth/services/auth.server";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ProfilePage() {
   const user = await requireCurrentUser();
   const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name, avatar_url")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: profile }, completeness] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle(),
+    getProfileCompleteness(user.id),
+  ]);
   const displayName = profile?.display_name ?? user.email?.split("@")[0] ?? "لاعب";
 
   return (
@@ -31,6 +36,8 @@ export default async function ProfilePage() {
           )}
           <div className="min-w-0 flex-1"><h2 className="truncate text-xl font-black">{displayName}</h2><p className="mt-0.5 truncate text-xs text-neutral-500">{user.email}</p></div>
         </section>
+
+        <ProfileCompletenessCard snapshot={completeness} />
 
         <section className="gc-list-panel">
           <Link href="/profile/settings" className="gc-list-row"><Settings className="h-4 w-4 text-emerald-300" /><span className="min-w-0 flex-1 font-bold">الحساب</span><ArrowUpLeft className="h-4 w-4 text-neutral-600" /></Link>

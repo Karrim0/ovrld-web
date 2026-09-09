@@ -31,7 +31,7 @@ export function JoinGroupForm({ onSubmit }: JoinGroupFormProps) {
         await joinGroupByInviteCode(data.inviteCode);
       }
 
-      router.replace("/body-goal");
+      router.replace("/onboarding");
       router.refresh();
     } catch (error) {
       setSubmitError(getArabicErrorMessage(error, "معرفناش ندخّلك الجروب."));

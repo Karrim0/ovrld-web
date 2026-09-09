@@ -40,7 +40,7 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const authRoutes = ["/login", "/register", "/forgot-password"];
   const recoveryRoutes = ["/update-password"];
-  const onboardingRoutes = ["/onboarding", "/create-group", "/join-group"];
+  const onboardingRoutes = ["/onboarding", "/body-goal", "/create-group", "/join-group"];
   const dashboardRoutes = [
     "/dashboard",
     "/workout",

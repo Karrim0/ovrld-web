@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { requireCurrentUser } from "@/features/auth/services/auth.server";
-import { getGroupMembershipForUser } from "@/features/groups/services/group.server";
 import { createClient } from "@/lib/supabase/server";
 import { PersonalSplitOverviewClient } from "@/features/dashboard/components/PersonalSplitOverviewClient";
 import { HomeLogDataAction } from "@/features/dashboard/components/HomeLogDataAction";
@@ -13,18 +11,14 @@ import { LocalizedText } from "@/components/localization/LocalizedText";
 
 export default async function DashboardPage() {
   const user = await requireCurrentUser();
-  const membership = await getGroupMembershipForUser(user.id);
-  if (!membership) redirect("/onboarding");
-
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, onboarding_completed_at")
+    .select("display_name")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.onboarding_completed_at) redirect("/body-goal");
-  const displayName = profile.display_name ?? "لاعب";
+  const displayName = profile?.display_name ?? "لاعب";
 
   return (
     <>

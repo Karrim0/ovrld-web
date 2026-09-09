@@ -3,8 +3,8 @@ import path from "node:path";
 
 const root = process.cwd();
 const checks = [
-  ["src/app/(onboarding)/body-goal/page.tsx", "GoalSetupClient"],
-  ["src/features/onboarding/components/GoalSetupClient.tsx", "training_only"],
+  ["src/app/(onboarding)/body-goal/page.tsx", "redirect(\"/onboarding\")"],
+  ["src/features/onboarding/components/OnboardingWizard.tsx", "saveOnboardingSetup"],
   ["src/features/splits/components/SplitManager.tsx", "swapSelectedWeekDay"],
   ["src/features/splits/services/split.service.ts", "swap_week_schedule_days"],
   ["src/features/workouts/components/ActiveWorkoutClient.tsx", "isFinalPlannedSet"],

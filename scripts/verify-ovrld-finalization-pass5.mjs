@@ -23,6 +23,7 @@ const runtimeI18n = read("src/lib/localization/runtime.ts");
 const nutrition = read("src/features/gain-mode/components/GainNutritionPanel.tsx");
 const aiFood = read("src/features/gain-mode/components/GainAiFoodLogger.tsx");
 const splitChooser = read("src/features/splits/components/SplitSetupChooser.tsx");
+const starterPlans = read("src/features/splits/constants/starter-plans.ts");
 const workoutService = read("src/features/workouts/services/workout-session.service.ts");
 
 add("home restores Today workout first", /<TodaysWorkoutClient userId=\{user\.id\} compact \/>/.test(dashboard));
@@ -61,7 +62,7 @@ add("Food manual log is promoted before premium AI", nutrition.indexOf("gc-food-
 add("Food manual log is immediately visible", !nutrition.includes("showForm") && nutrition.includes("سجّل أكلك دلوقتي") && nutrition.includes("gc-primary-button"));
 add("Saved meals appear before the premium upsell", aiFood.indexOf("gc-saved-meals-box") > -1 && aiFood.indexOf("gc-saved-meals-box") < aiFood.indexOf("gc-ai-premium-lock"));
 add("Premium AI is secondary and collapsible", aiFood.includes('<details className="gc-ai-premium-lock gc-ai-premium-secondary group">'));
-add("Gain plan carries a women-focused hint", splitChooser.includes("womenFocused: true") && splitChooser.includes("gc-plan-women-badge"));
+add("Gain plan carries a women-focused hint", starterPlans.includes("womenFocused: true") && splitChooser.includes("gc-plan-women-badge"));
 add("Women-focused hint uses muted blush styling", css.includes(".gc-plan-women-badge") && css.includes("#c68fa5"));
 
 add("Quick log hides app navigation", shell.includes("quickLogMode") && bottom.includes("/workout/quick") && desktop.includes("/workout/quick"));

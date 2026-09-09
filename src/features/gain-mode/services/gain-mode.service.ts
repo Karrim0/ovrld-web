@@ -76,6 +76,7 @@ export interface SaveGainModeProfileInput {
 
 export async function saveGainModeProfile(userId: UUID, input: SaveGainModeProfileInput): Promise<GainModeProfile> {
   const supabase = createClient();
+
   const payload = {
     status: "active" as const,
     age_years: input.ageYears,
@@ -116,15 +117,6 @@ export async function fetchGainModeProfile(userId: UUID): Promise<GainModeProfil
     .maybeSingle();
   if (error) throw new Error(error.message);
   return data ? mapProfile(data as GainModeRow) : null;
-}
-
-export async function completeOnboarding(userId: UUID): Promise<void> {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("profiles")
-    .update({ onboarding_completed_at: new Date().toISOString() })
-    .eq("id", userId);
-  if (error) throw new Error(error.message);
 }
 
 /**

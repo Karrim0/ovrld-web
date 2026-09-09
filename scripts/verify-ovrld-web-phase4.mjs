@@ -46,7 +46,7 @@ assert.match(splitManager, /<PlanAuditPanel userId=\{userId\}/);
 const packageJson = JSON.parse(read("package.json"));
 assert.ok(packageJson.scripts?.["verify:phase4"], "Missing verify:phase4 script.");
 assert.ok(packageJson.scripts?.["phase4:check"], "Missing phase4:check script.");
-assert.match(packageJson.scripts?.check ?? "", /^npm run phase(?:[4-9]|[1-9]\d+):check$/, "Default check must point to Phase 4 or a later cumulative gate.");
+assert.match(packageJson.scripts?.check ?? "", /^npm run (?:phase(?:[4-9]|[1-9]\d+):check|pass\d+:check)$/, "Default check must point to Phase 4 or a later cumulative/finalization gate.");
 
 console.table({
   phase: "4 — process intelligence",

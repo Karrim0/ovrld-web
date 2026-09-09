@@ -18,7 +18,7 @@ const phaseFiles = [
   "src/features/gain-mode/components/GainModeProgressCard.tsx",
   "src/features/gain-mode/components/GainModeActivationClient.tsx",
   "src/features/gain-mode/components/GainModeHubClient.tsx",
-  "src/features/onboarding/components/GoalSetupClient.tsx",
+  "src/features/onboarding/components/OnboardingWizard.tsx",
   "src/features/onboarding/services/onboarding.service.ts",
   "src/app/(dashboard)/progress/gain/page.tsx",
   "src/app/(dashboard)/progress/body/page.tsx",
@@ -46,16 +46,14 @@ assert.match(migration, /auth\.uid\(\) = user_id/);
 
 const onboardingService = read("src/features/onboarding/services/onboarding.service.ts");
 assert.match(onboardingService, /onboarding_completed_at/);
-assert.match(onboardingService, /\/body-goal/);
+assert.match(onboardingService, /\/onboarding/);
 
-const goalSetup = read("src/features/onboarding/components/GoalSetupClient.tsx");
-assert.match(goalSetup, /جدول · Gym Mode · تقدم/);
-assert.match(goalSetup, /Gain Mode · زيادة الوزن/);
-assert.match(goalSetup, /goalType: "gain_weight"/);
-assert.match(goalSetup, /saveGainModeProfile/);
-assert.match(goalSetup, /completeOnboarding/);
-assert.match(goalSetup, /Math\.abs\(existingBody\.latest\.weightKg - currentWeight\) >= 0\.05/);
-assert.doesNotMatch(goalSetup, /خسارة وزن|إعادة تشكيل الجسم|زيادة عضل/);
+const onboardingWizard = read("src/features/onboarding/components/OnboardingWizard.tsx");
+assert.match(onboardingWizard, /saveOnboardingSetup/);
+assert.match(onboardingWizard, /completeOnboarding/);
+assert.match(onboardingWizard, /ready_plan/);
+assert.match(onboardingWizard, /own_split/);
+assert.match(onboardingWizard, /STARTER_PLANS/);
 
 const gainService = read("src/features/gain-mode/services/gain-mode.service.ts");
 assert.match(gainService, /Math\.round\(weightKg \* 1\.6\)/);
@@ -120,7 +118,7 @@ assert.match(workflow, /npm run (?:check|phase(?:[6-9]|1[0-9]|[2-9]\d+):check)/)
 const packageJson = JSON.parse(read("package.json"));
 assert.ok(packageJson.scripts?.["verify:phase6"], "Missing verify:phase6 script.");
 assert.ok(packageJson.scripts?.["phase6:check"], "Missing phase6:check script.");
-assert.match(packageJson.scripts?.check ?? "", /npm run phase(?:[6-9]|1[0-9]|[2-9]\d+):check/, "Default check must point to Phase 6 or newer.");
+assert.match(packageJson.scripts?.check ?? "", /^npm run (?:phase(?:[6-9]|1[0-9]|[2-9]\d+):check|pass\d+:check)$/, "Default check must point to Phase 6 or a newer cumulative/finalization gate.");
 
 console.table({
   phase: "6 — optional Gain Mode foundation",

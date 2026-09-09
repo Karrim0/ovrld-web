@@ -72,7 +72,7 @@ assert.match(service, /startedAt: now/);
 const packageJson = JSON.parse(read("package.json"));
 assert.ok(packageJson.scripts?.["verify:phase5"], "Missing verify:phase5 script.");
 assert.ok(packageJson.scripts?.["phase5:check"], "Missing phase5:check script.");
-assert.match(packageJson.scripts?.check ?? "", /^npm run phase(?:[5-9]|[1-9]\d+):check$/, "Default check must point to Phase 5 or a later cumulative gate.");
+assert.match(packageJson.scripts?.check ?? "", /^npm run (?:phase(?:[5-9]|[1-9]\d+):check|pass\d+:check)$/, "Default check must point to Phase 5 or a later cumulative/finalization gate.");
 
 console.table({
   phase: "5 — smart process loop",

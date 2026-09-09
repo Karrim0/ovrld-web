@@ -24,6 +24,9 @@ This release completes the Gym Crew → OVRLD migration, aligns the web client w
 
 ## Current product iteration
 
+**Finalization Pass 6 — Onboarding & Progressive Profile**
+
+Pass 6 consolidates new-user setup into one five-step onboarding flow, adds only the missing general fitness basics to `profiles`, and computes contextual profile completeness from the existing body, goal, split, and Gain data sources. Missing details are requested progressively with direct CTAs instead of blocking popups. See `docs/OVRLD_FINALIZATION_PASS_6.md`.
 
 **OVRLD V2 — Phase 14: Recommended Gain Plan**
 
@@ -104,7 +107,7 @@ On Windows:
 VERIFY_OVRLD_WEB_FINAL.cmd
 ```
 
-The gate covers the cumulative Phase 1→14 product contracts, Finalization Passes 2–5.1, TypeScript, ESLint, and the production build. The Windows final verifier also runs Git whitespace validation.
+The gate covers the cumulative Phase 1→14 product contracts, Finalization Passes 2–6, TypeScript, ESLint, and the production build. The Windows final verifier also runs Git whitespace validation.
 
 Validate production environment values before deployment:
 

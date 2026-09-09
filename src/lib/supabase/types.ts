@@ -550,6 +550,7 @@ export type Database = {
       profiles: {
         Row: {
           additional_rest_days: Database["public"]["Enums"]["weekday"][]
+          age_years: number | null
           avatar_url: string | null
           created_at: string
           display_name: string
@@ -560,10 +561,13 @@ export type Database = {
           share_workout_summary: boolean
           split_setup_completed_at: string | null
           split_setup_method: string | null
+          training_level: string | null
           updated_at: string
+          weekly_training_days: number | null
         }
         Insert: {
           additional_rest_days?: Database["public"]["Enums"]["weekday"][]
+          age_years?: number | null
           avatar_url?: string | null
           created_at?: string
           display_name: string
@@ -574,10 +578,13 @@ export type Database = {
           share_workout_summary?: boolean
           split_setup_completed_at?: string | null
           split_setup_method?: string | null
+          training_level?: string | null
           updated_at?: string
+          weekly_training_days?: number | null
         }
         Update: {
           additional_rest_days?: Database["public"]["Enums"]["weekday"][]
+          age_years?: number | null
           avatar_url?: string | null
           created_at?: string
           display_name?: string
@@ -588,7 +595,9 @@ export type Database = {
           share_workout_summary?: boolean
           split_setup_completed_at?: string | null
           split_setup_method?: string | null
+          training_level?: string | null
           updated_at?: string
+          weekly_training_days?: number | null
         }
         Relationships: []
       }

@@ -49,6 +49,7 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
   const [targetCalories, setTargetCalories] = useState(snapshot.calorieTargetKcal ? String(snapshot.calorieTargetKcal) : "");
   const [targetProtein, setTargetProtein] = useState(snapshot.proteinTargetGrams ? String(snapshot.proteinTargetGrams) : "");
   const [busy, setBusy] = useState(false);
+  const [targetsOpen, setTargetsOpen] = useState(false);
   const [targetsCustomized, setTargetsCustomized] = useState(!snapshot.calorieTargetIsEstimate && !snapshot.proteinTargetIsEstimate);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
@@ -62,6 +63,12 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
     setToday(nextToday);
     setWeek(nextWeek);
   }, [snapshot.calorieTargetKcal, snapshot.nutritionAvailable, snapshot.proteinTargetGrams, userId]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#nutrition-targets") {
+      setTargetsOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!snapshot.nutritionAvailable) return;
@@ -231,7 +238,12 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
         </div>
       </div>
 
-      <details className="mt-4 border-t border-[var(--border)] pt-3 group">
+      <details
+        id="nutrition-targets"
+        open={targetsOpen}
+        onToggle={(event) => setTargetsOpen(event.currentTarget.open)}
+        className="mt-4 scroll-mt-24 border-t border-[var(--border)] pt-3 group"
+      >
         <summary className="flex min-h-9 list-none items-center gap-2 text-xs font-black [&::-webkit-details-marker]:hidden"><SlidersHorizontal className="h-4 w-4 text-neutral-500" /><span className="min-w-0 flex-1">أهداف الأكل</span><span className="text-[10px] font-semibold text-neutral-500">{targetsCustomized ? "مخصص" : "تقدير بداية"}</span><ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" /></summary>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <label className="text-[10px] font-black text-neutral-500">kcal / يوم<input value={targetCalories} onChange={(event) => setTargetCalories(event.target.value)} inputMode="numeric" className="gc-input mt-1" /></label>

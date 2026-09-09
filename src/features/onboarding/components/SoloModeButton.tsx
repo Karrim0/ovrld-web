@@ -1,50 +1,41 @@
 "use client";
 
-import { getArabicErrorMessage } from "@/lib/localization";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Dumbbell } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import { createSoloWorkspace } from "@/features/groups/services/group.service";
+import { getArabicErrorMessage } from "@/lib/localization";
 
+/**
+ * Legacy compatibility shim. New onboarding creates the solo workspace from
+ * OnboardingWizard; this button only routes into that same canonical flow.
+ */
 export function SoloModeButton() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function enableSoloMode() {
-    setIsLoading(true);
+  async function continueToOnboarding() {
+    setBusy(true);
     setError(null);
     try {
       await createSoloWorkspace();
-      router.replace("/body-goal");
+      router.replace("/onboarding");
       router.refresh();
     } catch (caught) {
-      setError(getArabicErrorMessage(caught, "معرفناش نبدأ الوضع الفردي."));
+      setError(getArabicErrorMessage(caught, "معرفناش نجهّز وضع Solo."));
     } finally {
-      setIsLoading(false);
+      setBusy(false);
     }
   }
 
   return (
     <div className="space-y-2">
-      <button
-        type="button"
-        onClick={() => void enableSoloMode()}
-        disabled={isLoading}
-        className="gc-card-interactive flex w-full items-center gap-4 p-4 text-start disabled:opacity-50"
-      >
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-300 text-neutral-950">
-          <Dumbbell className="h-5 w-5" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-bold">ابدأ مساحتك الشخصية</span>
-          <span className="mt-0.5 block text-sm text-neutral-400">
-            {isLoading ? "بنجهّزلك مكانك…" : "ظبّط جدولك، سجّل كل سِت، وخلي تقدمك يتجمع تلقائيًا."}
-          </span>
-        </span>
-        <ArrowLeft className="h-5 w-5 text-neutral-500" />
+      <button type="button" className="gc-primary-button w-full" disabled={busy} onClick={() => void continueToOnboarding()}>
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        {busy ? "بنجهّز…" : "كمّل الإعداد"}
       </button>
-      {error ? <p className="rounded-xl bg-red-400/10 px-3 py-2 text-sm font-semibold text-red-300">{error}</p> : null}
+      {error ? <p className="text-xs font-semibold text-red-400">{error}</p> : null}
     </div>
   );
 }

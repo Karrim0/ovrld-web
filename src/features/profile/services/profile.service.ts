@@ -11,6 +11,9 @@ export function mapProfile(row: ProfileRow): UserProfile {
     id: row.id,
     displayName: row.display_name,
     avatarUrl: row.avatar_url,
+    ageYears: row.age_years,
+    trainingLevel: row.training_level as UserProfile["trainingLevel"],
+    weeklyTrainingDays: row.weekly_training_days,
     additionalRestDays: row.additional_rest_days,
     shareWorkoutSummary: row.share_workout_summary,
     sharePersonalRecords: row.share_personal_records,
@@ -103,3 +106,53 @@ export async function updateSharingPreferences(
   await cacheProfile(profile);
   return profile;
 }
+
+export interface TrainingProfileBasicsInput {
+  ageYears: number;
+  trainingLevel: NonNullable<UserProfile["trainingLevel"]>;
+  weeklyTrainingDays: number;
+}
+
+/**
+ * Profiles are the canonical home for general fitness basics introduced in Pass 6.
+ * gain_mode_profiles.age_years is kept in sync by the Pass 6 database trigger as
+ * a compatibility mirror for the existing Gain schema.
+ */
+export async function updateTrainingProfileBasics(
+  userId: UUID,
+  input: TrainingProfileBasicsInput,
+): Promise<UserProfile> {
+  const ageYears = Math.round(input.ageYears);
+  const weeklyTrainingDays = Math.round(input.weeklyTrainingDays);
+  if (ageYears < 13 || ageYears > 100) throw new Error("راجع السن.");
+  if (!["beginner", "intermediate", "advanced"].includes(input.trainingLevel)) throw new Error("راجع مستوى التدريب.");
+  if (weeklyTrainingDays < 1 || weeklyTrainingDays > 7) throw new Error("راجع عدد أيام التمرين.");
+
+  const supabase = createClient();
+  const { data: gainProfile, error: gainLookupError } = await supabase
+    .from("gain_mode_profiles")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (gainLookupError) throw new Error(gainLookupError.message);
+  if (gainProfile && (ageYears < 18 || ageYears > 80)) {
+    throw new Error("Gain Mode الحالي بيدعم سن من 18 لـ80.");
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      age_years: ageYears,
+      training_level: input.trainingLevel,
+      weekly_training_days: weeklyTrainingDays,
+    })
+    .eq("id", userId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+
+  const profile = mapProfile(data);
+  await cacheProfile(profile);
+  return profile;
+}
+
