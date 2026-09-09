@@ -16,7 +16,6 @@ import {
   ArrowUp,
   Check,
   ChevronLeft,
-  Dumbbell,
   GripVertical,
   History,
   List,
@@ -41,10 +40,10 @@ import { useRestTimer } from "@/contexts/rest-timer-context";
 import { useLanguage } from "@/contexts/language-context";
 import { fetchExerciseLibrary } from "@/features/exercises/services/exercise.service";
 import { CustomExerciseForm } from "@/features/exercises/components/CustomExerciseForm";
-import { addSplitExercise } from "@/features/splits/services/split.service";
+import { addSplitExercise, fetchPersonalSplit } from "@/features/splits/services/split.service";
 import type { Exercise, WorkoutSet } from "@/types";
 import { formatDuration } from "@/lib/utils/format";
-import { formatDateArEg, muscleLabelAr, translateExerciseName } from "@/lib/localization";
+import { formatDateArEg, muscleLabelAr, translateExerciseName, translateWorkoutLabel } from "@/lib/localization";
 import { useActiveWorkout } from "../hooks/use-active-workout";
 import { usePreviousPerformances } from "../hooks/use-previous-performance";
 import {
@@ -230,10 +229,36 @@ export function ActiveWorkoutClient() {
   const [showExerciseNotes, setShowExerciseNotes] = useState(false);
   const [queueEditing, setQueueEditing] = useState(false);
   const [showWorkoutOptions, setShowWorkoutOptions] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [showQueue, setShowQueue] = useState(false);
+  const [workoutTitle, setWorkoutTitle] = useState<string>(language === "ar" ? "التمرين" : "Workout");
+  const [keepAwake, setKeepAwake] = useState(false);
+  const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const [showCustomWeight, setShowCustomWeight] = useState(false);
   const [showCustomReps, setShowCustomReps] = useState(false);
   const [selectedWeight, setSelectedWeight] = useState("");
   const [selectedReps, setSelectedReps] = useState("");
+  const [selectedRir, setSelectedRir] = useState<"" | "0" | "1" | "2" | "3+" | "failure">("");
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("ovrld:haptics");
+    if (stored === null) return;
+
+    const timer = window.setTimeout(() => {
+      setHapticsEnabled(stored !== "off");
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("ovrld:haptics", hapticsEnabled ? "on" : "off");
+  }, [hapticsEnabled]);
+
+  function feedback(pattern: number | number[] = 8) {
+    if (hapticsEnabled) tapFeedback(pattern);
+  }
   const [weightStep, setWeightStep] = useState<number>(2.5);
   const [setStartedAt, setSetStartedAt] = useState<number | null>(null);
   const [lastLogged, setLastLogged] = useState<LoggedSetSnapshot | null>(null);
@@ -247,6 +272,35 @@ export function ActiveWorkoutClient() {
   useEffect(() => {
     void fetchExerciseLibrary().then(setLibrary).catch(() => setLibrary([]));
   }, []);
+
+  useEffect(() => {
+    if (!session?.userId || !session.splitDayId) return;
+    void fetchPersonalSplit(session.userId)
+      .then((days) => {
+        const source = days.find((day) => day.id === session.splitDayId);
+        if (source) setWorkoutTitle(t(translateWorkoutLabel(source.displayName)) || (ar ? "التمرين" : "Workout"));
+      })
+      .catch(() => undefined);
+  }, [ar, session?.splitDayId, session?.userId, t]);
+
+  useEffect(() => {
+    const wakeLock = typeof navigator !== "undefined" ? (navigator as Navigator & { wakeLock?: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> } }).wakeLock : undefined;
+    if (!keepAwake || !wakeLock) {
+      void wakeLockRef.current?.release().catch(() => undefined);
+      wakeLockRef.current = null;
+      return;
+    }
+    let cancelled = false;
+    void wakeLock.request("screen").then((lock) => {
+      if (cancelled) { void lock.release(); return; }
+      wakeLockRef.current = lock;
+    }).catch(() => undefined);
+    return () => {
+      cancelled = true;
+      void wakeLockRef.current?.release().catch(() => undefined);
+      wakeLockRef.current = null;
+    };
+  }, [keepAwake]);
 
   useEffect(() => {
     if (!session || initializedSession.current === session.id) return;
@@ -287,6 +341,16 @@ export function ActiveWorkoutClient() {
     : null;
 
   useEffect(() => {
+    if (!currentExercise || restTimer.isRunning) return;
+    const stored = Number(window.localStorage.getItem(`ovrld:rest-duration:${currentExercise.exerciseId}`));
+    if (Number.isFinite(stored) && stored >= 15 && stored <= 900 && stored !== restTimer.durationSeconds) {
+      restTimer.setDuration(stored);
+    }
+  // rest default should change only when moving to another exercise.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentExercise?.exerciseId]);
+
+  useEffect(() => {
     if (!session || !currentExercise || previousPerformanceLoading || phase !== "ready") return;
     const nextIndex = currentExercise.sets.findIndex((set) => !set.isCompleted);
     if (nextIndex < 0) return;
@@ -296,6 +360,9 @@ export function ActiveWorkoutClient() {
     const previous = performances[currentExercise.exerciseId]?.sets[nextIndex];
     setSelectedWeight(set.weightKg?.toString() ?? previous?.weightKg?.toString() ?? "");
     setSelectedReps(set.reps?.toString() ?? previous?.reps?.toString() ?? String(currentExercise.targetRepsMin));
+    const note = set.notes ?? "";
+    const rirMatch = note.match(/RIR:(0|1|2|3\+)/i);
+    setSelectedRir(/FAILURE/i.test(note) ? "failure" : (rirMatch?.[1] as "0" | "1" | "2" | "3+" | undefined) ?? "");
     setWeightStep(readWeightStep(currentExercise.exerciseId, performances[currentExercise.exerciseId]?.sets ?? []));
     setShowCustomWeight(false);
     setShowCustomReps(false);
@@ -333,6 +400,11 @@ export function ActiveWorkoutClient() {
 
   const progress = totals.totalSets > 0 ? (totals.completedSets / totals.totalSets) * 100 : 0;
   const workoutComplete = totals.totalSets > 0 && totals.completedSets === totals.totalSets;
+  const nextExercisePreview = (() => {
+    if (!session) return null;
+    const after = session.exercises.find((exercise, index) => index > currentIndex && exercise.sets.some((set) => !set.isCompleted));
+    return after ?? session.exercises.find((exercise, index) => index !== currentIndex && exercise.sets.some((set) => !set.isCompleted)) ?? null;
+  })();
   const availableExercises = library.filter(
     (exercise) =>
       !session?.exercises.some((item) => item.exerciseId === exercise.id),
@@ -368,6 +440,9 @@ export function ActiveWorkoutClient() {
     setCurrentIndex(safeIndex);
     setSelectedWeight(set?.weightKg?.toString() ?? previous?.weightKg?.toString() ?? "");
     setSelectedReps(set?.reps?.toString() ?? previous?.reps?.toString() ?? "");
+    const note = set?.notes ?? "";
+    const rirMatch = note.match(/RIR:(0|1|2|3\+)/i);
+    setSelectedRir(/FAILURE/i.test(note) ? "failure" : (rirMatch?.[1] as "0" | "1" | "2" | "3+" | undefined) ?? "");
     setWeightStep(readWeightStep(exercise.exerciseId, performance?.sets ?? []));
     preparedSet.current = set ? `${session.id}:${set.id}` : null;
     setShowCustomWeight(false);
@@ -429,7 +504,7 @@ export function ActiveWorkoutClient() {
     const next = Math.max(0, Math.round((base + delta) * 100) / 100);
     setSelectedWeight(formatNumber(next));
     setShowCustomWeight(false);
-    tapFeedback();
+    feedback();
   }
 
   function nudgeReps(delta: number) {
@@ -439,7 +514,7 @@ export function ActiveWorkoutClient() {
       : previousSet?.reps ?? activeSet?.reps ?? 8;
     setSelectedReps(String(Math.max(1, base + delta)));
     setShowCustomReps(false);
-    tapFeedback();
+    feedback();
   }
 
   function prepareSetValues(setIndex: number) {
@@ -448,6 +523,9 @@ export function ActiveWorkoutClient() {
     const previous = previousSets[setIndex];
     setSelectedWeight(set?.weightKg?.toString() ?? previous?.weightKg?.toString() ?? "");
     setSelectedReps(set?.reps?.toString() ?? previous?.reps?.toString() ?? "");
+    const note = set?.notes ?? "";
+    const rirMatch = note.match(/RIR:(0|1|2|3\+)/i);
+    setSelectedRir(/FAILURE/i.test(note) ? "failure" : (rirMatch?.[1] as "0" | "1" | "2" | "3+" | undefined) ?? "");
     setWeightStep(readWeightStep(currentExercise.exerciseId, previousSets));
     preparedSet.current = set ? `${session?.id ?? "session"}:${set.id}` : null;
     setShowCustomWeight(false);
@@ -485,6 +563,7 @@ export function ActiveWorkoutClient() {
     // Start inside the user's tap so mobile browsers unlock the completion sound.
     // The final planned set does not need a rest timer; it should flow straight to workout completion.
     if (!isFinalPlannedSet) {
+      window.localStorage.setItem(`ovrld:rest-duration:${currentExercise.exerciseId}`, String(restTimer.durationSeconds));
       restTimer.start(restTimer.durationSeconds);
       restTimer.open();
     }
@@ -494,6 +573,8 @@ export function ActiveWorkoutClient() {
         weightKg,
         reps,
         isCompleted: true,
+        isWarmup: activeSet.isWarmup,
+        notes: selectedRir === "" ? activeSet.notes : selectedRir === "failure" ? "FAILURE" : `RIR:${selectedRir}`,
       });
       setLastLogged({
         exerciseId: currentExercise.exerciseId,
@@ -505,7 +586,7 @@ export function ActiveWorkoutClient() {
         previousReps: previousSet?.reps ?? null,
       });
       setSetStartedAt(null);
-      tapFeedback(isFinalPlannedSet ? [18, 35, 18] : 14);
+      feedback(isFinalPlannedSet ? [18, 35, 18] : 14);
       await reload();
       setPhase("post");
     } catch (caught) {
@@ -514,6 +595,28 @@ export function ActiveWorkoutClient() {
         restTimer.close();
       }
       setError(t(getArabicErrorMessage(caught, "معرفناش نسجّل السِت دي.")));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function undoLastSet() {
+    if (!currentExercise || !lastLogged) return;
+    const set = currentExercise.sets.find((item) => item.setNumber === lastLogged.setNumber);
+    if (!set) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await updateWorkoutSet(set.id, { weightKg: lastLogged.weightKg, reps: lastLogged.reps, isCompleted: false, isWarmup: set.isWarmup, notes: set.notes });
+      restTimer.reset();
+      restTimer.close();
+      setLastLogged(null);
+      preparedSet.current = null;
+      await reload();
+      setPhase("ready");
+      feedback();
+    } catch (caught) {
+      setError(t(getArabicErrorMessage(caught, "معرفناش نرجّع السِت.")));
     } finally {
       setBusy(false);
     }
@@ -602,7 +705,7 @@ export function ActiveWorkoutClient() {
     try {
       await resumeStaleWorkoutSession(session.id);
       await reload();
-      tapFeedback([8, 30, 8]);
+      feedback([8, 30, 8]);
     } catch (caught) {
       setError(t(getArabicErrorMessage(caught, "معرفناش نعيد تشغيل مؤقت التمرينة.")));
     } finally {
@@ -681,19 +784,15 @@ export function ActiveWorkoutClient() {
     <div className="gc-gym-mode mx-auto w-full min-w-0 space-y-3 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] pt-1">
       <header className="gc-workout-header gc-gym-sticky sticky z-30 rounded-b-[18px] px-1 pb-2.5 pt-2">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-300 text-[#11131a]">
-            <Dumbbell className="h-4.5 w-4.5" />
-          </span>
+          <button type="button" onClick={() => setShowExitDialog(true)} className="gc-gym-back-button" aria-label={ar ? "اخرج من وضع التمرين" : "Exit workout mode"}><ChevronLeft className="h-5 w-5 rtl:rotate-180" /></button>
           <button
             type="button"
             onClick={() => { setPhase("overview"); setQueueEditing(false); }}
             className="min-w-0 flex-1 text-start"
-            aria-label={ar ? "افتح تمارين النهارده" : "Open today’s exercises"}
+            aria-label={ar ? "افتح قائمة التمرين" : "Open workout queue"}
           >
-            <span className="block truncate text-[10px] font-bold uppercase tracking-[0.13em] text-emerald-200">Gym Mode</span>
-            <span className="block truncate text-sm font-black">
-              {phase === "overview" ? (ar ? "تمارين النهارده" : "Today’s exercises") : t(translateExerciseName(currentExercise.exercise.name))}
-            </span>
+            <span className="block truncate text-sm font-black">{workoutTitle}</span>
+            <span className="block truncate text-[10px] font-bold text-neutral-500">{ar ? `تمرين ${currentIndex + 1} من ${session.exercises.length} · ${totals.completedSets}/${totals.totalSets} سِت` : `Exercise ${currentIndex + 1} of ${session.exercises.length} · ${totals.completedSets}/${totals.totalSets} sets`}</span>
           </button>
           <span className="hidden rounded-lg bg-white/[0.04] px-2 py-1.5 text-[11px] font-bold text-neutral-400 min-[375px]:block">
             <SessionElapsedTime startedAt={session.startedAt} compact />
@@ -825,10 +924,27 @@ export function ActiveWorkoutClient() {
             {previousPerformanceLoading ? (
               <span>{ar ? "بنجيب آخر أرقام…" : "Loading previous numbers…"}</span>
             ) : previousPerformance ? (
-              <span>{ar ? "آخر مرة" : "Last time"} {t(formatWorkoutDate(previousPerformance.scheduledDate))}{previousSet ? ` · ${previousSet.weightKg ?? 0} ${ar ? "كجم" : "kg"} × ${previousSet.reps ?? 0}` : ""}</span>
+              <span className="min-w-0"><strong>{ar ? "آخر مرة" : "Last time"}</strong> · {t(formatWorkoutDate(previousPerformance.scheduledDate))}<span className="ms-1">{previousSets.filter((set) => !set.isWarmup).map((set) => `${set.weightKg ?? 0}${ar ? "كجم" : "kg"}×${set.reps ?? 0}`).join(" · ")}</span></span>
             ) : (
               <span>{ar ? "أول مرة · هنثبت نقطة البداية" : "First time · setting your baseline"}</span>
             )}
+          </div>
+
+          <div className="gc-gym-set-rows" aria-label={ar ? "سِتات التمرين" : "Exercise sets"}>
+            {currentExercise.sets.map((set, index) => {
+              const isCurrent = activeSet?.id === set.id;
+              const previous = previousSets[index];
+              return (
+                <button key={set.id} type="button" disabled={set.isCompleted} onClick={() => { prepareSetValues(index); setPhase("ready"); }} className={`gc-gym-set-row ${set.isCompleted ? "gc-gym-set-row-done" : isCurrent ? "gc-gym-set-row-current" : ""}`}>
+                  <span className="gc-gym-set-number">{set.setNumber}</span>
+                  <span className="min-w-0 flex-1 text-start">
+                    <strong className="block text-sm tabular-nums">{set.weightKg ?? (isCurrent ? selectedWeight : previous?.weightKg) ?? "—"} {ar ? "كجم" : "kg"} · {set.reps ?? (isCurrent ? selectedReps : previous?.reps) ?? "—"} {ar ? "عدات" : "reps"}</strong>
+                    <small className="flex items-center gap-1 text-[10px] font-semibold text-neutral-500">{set.isWarmup ? (ar ? "إحماء" : "Warm-up") : (ar ? "Working set" : "Working set")}{set.isPersonalRecord ? <span className="gc-pr-badge">PR ↑</span> : null}</small>
+                  </span>
+                  <span className={`gc-gym-set-state ${set.isCompleted ? "gc-gym-set-state-done" : ""}`}>{set.isCompleted ? <Check className="h-3.5 w-3.5" /> : isCurrent ? "●" : "○"}</span>
+                </button>
+              );
+            })}
           </div>
 
           {currentComplete && !lastLogged ? (
@@ -864,7 +980,7 @@ export function ActiveWorkoutClient() {
                     onClick={() => {
                       if (progressionSuggestion.weightKg !== null) setSelectedWeight(formatNumber(progressionSuggestion.weightKg));
                       setSelectedReps(String(progressionSuggestion.reps));
-                      tapFeedback();
+                      feedback();
                     }}
                     className="gc-gym-suggestion-action"
                   >
@@ -892,9 +1008,22 @@ export function ActiveWorkoutClient() {
                 </div>
               </div>
 
+              <details className="gc-gym-effort mt-3">
+                <summary className="gc-gym-effort-summary">{ar ? "RIR / Failure (اختياري)" : "RIR / Failure (optional)"}<span>{selectedRir ? (selectedRir === "failure" ? "Failure" : `RIR ${selectedRir}`) : (ar ? "بدون" : "Skip")}</span></summary>
+                <div className="mt-2 grid grid-cols-5 gap-1.5">
+                  {(["0", "1", "2", "3+", "failure"] as const).map((value) => <button key={value} type="button" onClick={() => setSelectedRir((current) => current === value ? "" : value)} className={`gc-rir-chip ${selectedRir === value ? "gc-rir-chip-active" : ""}`}>{value === "failure" ? "Failure" : `RIR ${value}`}</button>)}
+                </div>
+              </details>
+
+              <label className="gc-gym-warmup-toggle mt-3">
+                <input type="checkbox" checked={activeSet.isWarmup} onChange={(event) => void updateWorkoutSet(activeSet.id, { weightKg: parseOptionalNumber(selectedWeight), reps: parseOptionalNumber(selectedReps), isCompleted: false, isWarmup: event.target.checked }).then(reload).catch((caught: Error) => setError(t(getArabicErrorMessage(caught, "معرفناش نغيّر نوع السِت."))))} />
+                <span><strong>{ar ? "Warm-up" : "Warm-up"}</strong><small>{ar ? "تتسجل، لكن مش تدخل في الحجم أو الـPR" : "Logged, but excluded from working volume and PRs"}</small></span>
+              </label>
+
               <button type="button" disabled={busy || selectedReps === ""} onClick={() => void logSet()} className="gc-primary-button gc-gym-log-button mt-3 w-full min-h-14 text-base disabled:opacity-40">
-                <Check className="h-5 w-5" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : ar ? `سجّل ${selectedWeight || "0"} كجم × ${selectedReps || "—"}` : `Log ${selectedWeight || "0"} kg × ${selectedReps || "—"}`}
+                <Check className="h-5 w-5" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : (ar ? "أكمل السِت" : "Complete Set")}
               </button>
+              {nextExercisePreview ? <button type="button" onClick={goToNextExercise} className="gc-gym-text-action mt-1 w-full"><SkipForward className="h-3.5 w-3.5" /> {ar ? "اعمله بعدين" : "Do later"}</button> : null}
 
             </div>
           ) : null}
@@ -947,7 +1076,7 @@ export function ActiveWorkoutClient() {
               </div>
 
               <button type="button" disabled={busy || selectedReps === ""} onClick={() => void logSet()} className="gc-primary-button gc-gym-log-button mt-4 w-full text-base disabled:opacity-40">
-                <Check className="h-5 w-5" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : ar ? `سجّل ${selectedWeight || "0"} كجم × ${selectedReps || "—"}` : `Log ${selectedWeight || "0"} kg × ${selectedReps || "—"}`}
+                <Check className="h-5 w-5" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : (ar ? "أكمل السِت" : "Complete Set")}
               </button>
             </div>
           ) : null}
@@ -956,7 +1085,10 @@ export function ActiveWorkoutClient() {
             <div className="gc-gym-post-strip" aria-live="polite">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-400 text-[#101319]"><Check className="h-5 w-5" /></span>
               <div className="min-w-0 flex-1"><strong className="block text-base tabular-nums">{lastLogged.weightKg ?? 0} {ar ? "كجم" : "kg"} × {lastLogged.reps}</strong><span className="block truncate text-xs font-semibold text-neutral-500">{getComparison(lastLogged, language)}</span></div>
-              {restTimer.isRunning ? <button type="button" onClick={restTimer.open} className="gc-compact-action"><TimerReset className="h-3.5 w-3.5" /> {formatDuration(restTimer.remainingSeconds)}</button> : null}
+              <div className="flex shrink-0 items-center gap-1">
+                {restTimer.isRunning ? <button type="button" onClick={restTimer.open} className="gc-compact-action"><TimerReset className="h-3.5 w-3.5" /> {formatDuration(restTimer.remainingSeconds)}</button> : null}
+                <button type="button" disabled={busy} onClick={() => void undoLastSet()} className="gc-compact-action">{ar ? "تراجع" : "Undo"}</button>
+              </div>
             </div>
           ) : null}
 
@@ -973,6 +1105,30 @@ export function ActiveWorkoutClient() {
             </div>
           ) : null}
 
+          {nextExercisePreview ? (
+            <button type="button" onClick={() => { const index = session.exercises.findIndex((item) => item.id === nextExercisePreview.id); if (index >= 0) selectExercise(index); }} className="gc-gym-next-card">
+              <span className="text-[10px] font-black uppercase tracking-[0.12em] text-neutral-500">{ar ? "التمرين اللي بعده" : "Next Exercise"}</span>
+              <strong className="mt-1 block truncate text-sm">{t(translateExerciseName(nextExercisePreview.exercise.name))}</strong>
+              <small className="mt-0.5 block text-xs font-semibold text-neutral-500">{nextExercisePreview.sets.length} {ar ? "سِتات" : "sets"} · {nextExercisePreview.targetRepsMin}–{nextExercisePreview.targetRepsMax} {ar ? "عدات" : "reps"}</small>
+            </button>
+          ) : null}
+
+          <div className="gc-gym-collapsed-queue">
+            <button type="button" onClick={() => setShowQueue((value) => !value)} className="gc-gym-queue-toggle">
+              <span>{ar ? "قائمة التمرين" : "Workout Queue"} · {session.exercises.filter((exercise) => !exerciseIsComplete(exercise.sets)).length} {ar ? "متبقي" : "remaining"}</span>
+              <ChevronLeft className={`h-4 w-4 transition-transform ${showQueue ? "-rotate-90" : "rotate-90"}`} />
+            </button>
+            {showQueue ? (
+              <div className="mt-2 space-y-1.5">
+                {session.exercises.map((exercise, index) => {
+                  const done = exerciseIsComplete(exercise.sets);
+                  const current = index === currentIndex;
+                  return <button key={exercise.id} type="button" onClick={() => selectExercise(index)} className={`gc-gym-mini-queue-row ${current ? "gc-gym-mini-queue-row-current" : ""}`}><span>{done ? "✓" : current ? "●" : "○"}</span><span className="min-w-0 flex-1 truncate text-start">{t(translateExerciseName(exercise.exercise.name))}</span><small>{exercise.sets.length} {ar ? "سِت" : "sets"}</small></button>;
+                })}
+              </div>
+            ) : null}
+          </div>
+
           {previousPerformance?.exerciseNotes ? (
             <button type="button" onClick={() => setShowExerciseNotes((value) => !value)} className="gc-gym-note-row">
               <MessageSquareText className="h-4 w-4 shrink-0 text-emerald-200" />
@@ -981,6 +1137,24 @@ export function ActiveWorkoutClient() {
           ) : null}
         </section>
       )}
+
+      {showExitDialog ? (
+        <div className="gc-workout-options-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowExitDialog(false); }}>
+          <section className="gc-workout-options-sheet" role="dialog" aria-modal="true" aria-label={ar ? "التمرين لسه شغال" : "Workout still in progress"}>
+            <div className="gc-workout-options-handle" />
+            <div className="text-center">
+              <p className="gc-eyebrow">Gym Mode</p>
+              <h2 className="mt-1 text-xl font-black">{ar ? "التمرين لسه شغال" : "Workout still in progress"}</h2>
+              <p className="mx-auto mt-2 max-w-sm text-sm font-semibold text-neutral-500">{ar ? "كل السِتات متحفظة. تقدر تكمل، تنهي الجلسة، أو تخرج وترجع لها من Home." : "Every set is autosaved. Resume, end the session, or leave it active and return from Home."}</p>
+            </div>
+            <div className="mt-5 grid gap-2">
+              <button type="button" onClick={() => setShowExitDialog(false)} className="gc-primary-button w-full"><Play className="h-4 w-4" /> {ar ? "كمّل التمرين" : "Resume workout"}</button>
+              <button type="button" disabled={busy} onClick={() => { setShowExitDialog(false); void finish(); }} className="gc-secondary-button w-full disabled:opacity-50"><Check className="h-4 w-4" /> {ar ? "أنهي التمرين" : "End workout"}</button>
+              <button type="button" disabled={busy} onClick={() => { setShowExitDialog(false); void leaveWorkout(); }} className="gc-secondary-button w-full disabled:opacity-50"><LogOut className="h-4 w-4" /> {ar ? "اخرج من غير إنهاء" : "Exit without ending"}</button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       {showWorkoutOptions ? (
         <div className="gc-workout-options-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowWorkoutOptions(false); }}>
@@ -1032,13 +1206,23 @@ export function ActiveWorkoutClient() {
               </label>
             ) : null}
 
+            <div className="gc-timer-sound mt-4 flex min-w-0 items-center justify-between gap-3 p-3 text-start">
+              <div className="min-w-0"><p className="text-sm font-bold">{ar ? "خلّي الشاشة شغالة" : "Keep screen awake"}</p><p className="mt-0.5 text-xs font-semibold text-neutral-500">{ar ? "اختياري أثناء التمرين" : "Optional during workouts"}</p></div>
+              <button type="button" role="switch" aria-checked={keepAwake} onClick={() => setKeepAwake((value) => !value)} className={`gc-switch ${keepAwake ? "gc-switch-active" : ""}`}><span className="gc-switch-thumb" /></button>
+            </div>
+
+            <div className="gc-timer-sound mt-3 flex min-w-0 items-center justify-between gap-3 p-3 text-start">
+              <div className="min-w-0"><p className="text-sm font-bold">{ar ? "اهتزازات التمرين" : "Workout haptics"}</p><p className="mt-0.5 text-xs font-semibold text-neutral-500">{ar ? "عند تسجيل السِت وانتهاء الخطوات المهمة" : "Feedback on set completion and key actions"}</p></div>
+              <button type="button" role="switch" aria-checked={hapticsEnabled} onClick={() => setHapticsEnabled((value) => !value)} className={`gc-switch ${hapticsEnabled ? "gc-switch-active" : ""}`}><span className="gc-switch-thumb" /></button>
+            </div>
+
             <label className="mt-4 block text-xs font-bold text-neutral-500">
               {ar ? "ملاحظة الجلسة" : "Session note"}
               <textarea value={sessionNotes} onChange={(event) => setSessionNotes(event.target.value)} onBlur={() => void updateWorkoutSessionNotes(session.id, sessionNotes)} rows={2} className="gc-input mt-2 font-normal" placeholder={ar ? "أي حاجة محتاج تفتكرها…" : "Anything you want to remember…"} />
             </label>
 
             <div className="mt-4 grid gap-2 border-t border-[var(--border)] pt-4">
-              <button type="button" disabled={busy} onClick={() => void leaveWorkout()} className="gc-secondary-button w-full disabled:opacity-50"><LogOut className="h-4 w-4" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : (ar ? "احفظ واخرج" : "Save & exit")}</button>
+              <button type="button" disabled={busy} onClick={() => { setShowWorkoutOptions(false); setShowExitDialog(true); }} className="gc-secondary-button w-full disabled:opacity-50"><LogOut className="h-4 w-4" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : (ar ? "اخرج وسيب التمرين شغال" : "Exit without ending")}</button>
               <button type="button" disabled={busy} onClick={() => void discard()} className="gc-danger-button w-full disabled:opacity-40"><XCircle className="h-4 w-4" /> {ar ? "امسح الجلسة" : "Discard session"}</button>
             </div>
           </section>

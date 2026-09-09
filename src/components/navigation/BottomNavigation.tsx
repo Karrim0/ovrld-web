@@ -17,15 +17,14 @@ export function BottomNavigation() {
         {MAIN_NAVIGATION_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = item.activePrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) && !(item.id === "workout" && pathname.startsWith("/workout/history"));
-          const isWorkout = item.id === "workout";
           return (
             <Link
               key={item.id}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`gc-bottom-nav-item ${isWorkout ? "gc-bottom-nav-workout" : active ? "gc-bottom-nav-active" : ""}`}
+              className={`gc-bottom-nav-item ${active ? "gc-bottom-nav-active" : ""}`}
             >
-              <Icon className={`h-5 w-5 ${active || isWorkout ? "stroke-[2.4]" : ""}`} aria-hidden />
+              <Icon className={`h-5 w-5 ${active ? "stroke-[2.4]" : ""}`} aria-hidden />
               <span className="max-w-full truncate">{item.label}</span>
             </Link>
           );

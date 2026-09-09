@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { formatDuration } from "@/lib/utils/format";
+import { useLanguage } from "@/contexts/language-context";
 import { formatDateArEg, muscleLabelAr, translateExerciseName } from "@/lib/localization";
 import type { UUID } from "@/types";
 import type { PreviousPerformanceMap, WorkoutSessionWithDetails } from "../types";
@@ -24,6 +25,8 @@ import { compareExercisePerformance } from "../utils/performance-comparison";
 import { DeleteWorkoutSessionButton } from "./DeleteWorkoutSessionButton";
 
 export function WorkoutDetailsClient({ sessionId }: { sessionId: UUID }) {
+  const { language, t } = useLanguage();
+  const ar = language === "ar";
   const [session, setSession] = useState<WorkoutSessionWithDetails | null>(null);
   const [previousPerformances, setPreviousPerformances] = useState<PreviousPerformanceMap>({});
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +80,9 @@ export function WorkoutDetailsClient({ sessionId }: { sessionId: UUID }) {
   const completedSets = session.exercises
     .flatMap((item) => item.sets)
     .filter((set) => set.isCompleted).length;
+  const workingSets = session.exercises.flatMap((item) => item.sets).filter((set) => set.isCompleted && !set.isWarmup);
+  const totalVolumeKg = workingSets.reduce((sum, set) => sum + ((set.weightKg ?? 0) * (set.reps ?? 0)), 0);
+  const prCount = workingSets.filter((set) => set.isPersonalRecord).length;
   const improvedCount = comparisons.filter((item) => item.comparison.trend === "improved").length;
   const matchedCount = comparisons.filter((item) => item.comparison.trend === "matched").length;
   const adjustedCount = comparisons.filter((item) => item.comparison.trend === "adjusted").length;
@@ -85,32 +91,37 @@ export function WorkoutDetailsClient({ sessionId }: { sessionId: UUID }) {
   return (
     <div className="space-y-4 pb-8">
       <section className="gc-card p-5 sm:p-6">
-        <p className="gc-eyebrow">تمرينة خلصت</p>
-        <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">ملخص التمرينة</h2>
-        <div className="mt-4 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
+        <p className="gc-eyebrow">{ar ? "التمرين خلص" : "Workout Complete"}</p>
+        <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">{ar ? "ملخص التمرين" : "Workout Summary"}</h2>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div className="gc-stat">
             <CalendarDays className="h-4 w-4 text-emerald-200" />
             <strong className="mt-2 block text-sm">
               {formatDateArEg(session.scheduledDate)}
             </strong>
-            <span className="text-[11px] text-neutral-500">التاريخ</span>
+            <span className="text-[11px] text-neutral-500">{ar ? "التاريخ" : "Date"}</span>
           </div>
           <div className="gc-stat">
             <Clock3 className="h-4 w-4 text-emerald-200" />
             <strong className="mt-2 block text-sm">{formatDuration(session.durationSeconds)}</strong>
-            <span className="text-[11px] text-neutral-500">المدة</span>
+            <span className="text-[11px] text-neutral-500">{ar ? "المدة" : "Duration"}</span>
           </div>
           <div className="gc-stat">
             <Dumbbell className="h-4 w-4 text-emerald-200" />
             <strong className="mt-2 block text-sm">{completedSets}</strong>
-            <span className="text-[11px] text-neutral-500">السِتات</span>
+            <span className="text-[11px] text-neutral-500">{ar ? "السِتات" : "Sets"}</span>
+          </div>
+          <div className="gc-stat">
+            <TrendingUp className="h-4 w-4 text-emerald-200" />
+            <strong className="mt-2 block text-sm tabular-nums">{Math.round(totalVolumeKg).toLocaleString()}</strong>
+            <span className="text-[11px] text-neutral-500">{ar ? "كجم حجم" : "kg volume"}</span>
           </div>
         </div>
 
         <div className="mt-4 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-emerald-200" />
-            <p className="text-sm font-bold">مقارنة بآخر تمرينة</p>
+            <p className="text-sm font-bold">{ar ? "مقارنة بآخر تمرين" : "Compared with last workout"}{prCount > 0 ? ` · ${prCount} PR` : ""}</p>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
             <div className="rounded-xl bg-emerald-400/[0.08] p-2.5">
@@ -144,9 +155,9 @@ export function WorkoutDetailsClient({ sessionId }: { sessionId: UUID }) {
           <section key={item.id} className="gc-card p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-bold">{translateExerciseName(item.exercise.name)}</h3>
+                <h3 className="font-bold">{t(translateExerciseName(item.exercise.name))}</h3>
                 <p className="mt-0.5 text-xs capitalize text-neutral-500">
-                  {muscleLabelAr(item.exercise.primaryMuscle)}
+                  {t(muscleLabelAr(item.exercise.primaryMuscle))}
                 </p>
               </div>
               {comparison ? (

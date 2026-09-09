@@ -1,15 +1,18 @@
 "use client";
 
-import { Bell, BellOff, Minus, Pause, Play, Plus, RotateCcw, TimerReset, X } from "lucide-react";
+import { Bell, BellOff, Pause, Play, Plus, TimerReset, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useRestTimer } from "@/contexts/rest-timer-context";
 import { useVirtualKeyboard } from "@/hooks/use-virtual-keyboard";
 import { formatDuration } from "@/lib/utils/format";
+import { useLanguage } from "@/contexts/language-context";
 
-const PRESETS = [60, 90, 120, 180] as const;
+const PRESETS = [60, 90, 120, 180, 300] as const;
 
 export function RestTimerPanel() {
   const timer = useRestTimer();
+  const { language } = useLanguage();
+  const ar = language === "ar";
   if (!timer.isOpen) return null;
 
   const remainingRatio = timer.durationSeconds > 0
@@ -19,14 +22,14 @@ export function RestTimerPanel() {
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <div className="gc-modal-backdrop fixed inset-0 z-[80] flex items-end overflow-y-auto p-2 pb-[max(.5rem,env(safe-area-inset-bottom,0px))] sm:items-center sm:justify-center sm:p-3" role="dialog" aria-modal="true" aria-label="تايمر الراحة">
+    <div className="gc-modal-backdrop fixed inset-0 z-[80] flex items-end overflow-y-auto p-2 pb-[max(.5rem,env(safe-area-inset-bottom,0px))] sm:items-center sm:justify-center sm:p-3" role="dialog" aria-modal="true" aria-label={ar ? "تايمر الراحة" : "Rest timer"}>
       <section className="gc-timer-card max-h-[calc(100vh-1rem)] max-h-[calc(100svh-1rem)] w-full max-w-md overflow-y-auto rounded-[24px] min-[380px]:rounded-[30px]">
         <div className="flex min-w-0 items-start justify-between gap-3 px-4 pt-5 min-[380px]:px-5">
           <div className="min-w-0">
-            <p className="gc-eyebrow">تايمر الراحة</p>
-            <h2 className="mt-1 text-lg font-bold leading-7 min-[380px]:text-xl">خد نفسك وادخل السِت اللي جاية جاهز.</h2>
+            <p className="gc-eyebrow">{ar ? "تايمر الراحة" : "Rest Timer"}</p>
+            <h2 className="mt-1 text-lg font-bold leading-7 min-[380px]:text-xl">{ar ? "خد نفسك وادخل السِت اللي جاية جاهز." : "Recover, then hit the next set ready."}</h2>
           </div>
-          <button type="button" onClick={timer.close} className="gc-icon-button rounded-full" aria-label="اقفل تايمر الراحة"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={timer.close} className="gc-icon-button rounded-full" aria-label={ar ? "اقفل تايمر الراحة" : "Close rest timer"}><X className="h-5 w-5" /></button>
         </div>
 
         <div className="px-3 py-4 text-center min-[380px]:px-5 min-[380px]:py-6">
@@ -49,13 +52,13 @@ export function RestTimerPanel() {
               <p className="gc-timer-digits font-mono text-4xl font-bold tracking-[-0.05em] min-[380px]:text-5xl">{formatDuration(timer.remainingSeconds)}</p>
               <p className="gc-muted mt-2 text-sm font-semibold">
                 {timer.completedAt && timer.remainingSeconds === 0
-                  ? "الراحة خلصت · السِت اللي جاية جاهزة"
-                  : timer.isRunning ? "خد نفسك وركّز" : "ابدأ لما السِت تخلص"}
+                  ? (ar ? "الراحة خلصت · السِت اللي جاية جاهزة" : "Rest complete · next set is ready")
+                  : timer.isRunning ? (ar ? "خد نفسك وركّز" : "Recover and focus") : (ar ? "ابدأ لما السِت تخلص" : "Start when the set ends")}
               </p>
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-4 gap-1.5 min-[380px]:gap-2">
+          <div className="mt-5 grid grid-cols-3 gap-1.5 min-[380px]:grid-cols-5 min-[380px]:gap-2">
             {PRESETS.map((seconds) => (
               <button
                 key={seconds}
@@ -63,28 +66,27 @@ export function RestTimerPanel() {
                 onClick={() => timer.setDuration(seconds)}
                 className={`gc-timer-preset ${timer.durationSeconds === seconds ? "gc-timer-preset-active" : ""}`}
               >
-                {seconds < 120 ? `${seconds} ث` : `${seconds / 60} د`}
+                {seconds === 60 ? "1m" : seconds === 90 ? "1:30" : `${seconds / 60}m`}
               </button>
             ))}
           </div>
 
           <div className="mt-4 flex items-center justify-center gap-2 min-[380px]:gap-3">
-            <button type="button" onClick={() => timer.addTime(-15)} className="gc-timer-adjust"><Minus className="h-4 w-4" /> 15 ث</button>
-            <button type="button" onClick={timer.isRunning ? timer.pause : () => timer.start()} className="gc-timer-play" aria-label={timer.isRunning ? "وقّف تايمر الراحة" : "شغّل تايمر الراحة"}>
+            <button type="button" onClick={timer.isRunning ? timer.pause : () => timer.start()} className="gc-timer-play" aria-label={timer.isRunning ? "Pause rest timer" : "Start rest timer"}>
               {timer.isRunning ? <Pause className="h-7 w-7" /> : <Play className="ms-1 h-7 w-7" />}
             </button>
-            <button type="button" onClick={() => timer.addTime(15)} className="gc-timer-adjust"><Plus className="h-4 w-4" /> 15 ث</button>
+            <button type="button" onClick={() => timer.addTime(30)} className="gc-timer-adjust"><Plus className="h-4 w-4" /> 30s</button>
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-2">
-            <button type="button" onClick={timer.reset} className="gc-secondary-button"><RotateCcw className="h-4 w-4" /> ابدأ من الأول</button>
-            <button type="button" onClick={timer.skip} className="gc-secondary-button">عدّي الراحة</button>
+            <button type="button" onClick={() => { const value = window.prompt(ar ? "وقت الراحة بالثواني" : "Custom rest in seconds", String(timer.durationSeconds)); const seconds = Number(value); if (Number.isFinite(seconds) && seconds >= 15) timer.setDuration(seconds); }} className="gc-secondary-button">{ar ? "مخصص" : "Custom"}</button>
+            <button type="button" onClick={timer.skip} className="gc-primary-button">{ar ? "إنهاء الراحة" : "End rest"}</button>
           </div>
 
           <div className="gc-timer-sound mt-4 flex min-w-0 items-center justify-between gap-3 p-3 text-start">
             <div className="flex min-w-0 items-center gap-3">
               <span className="gc-settings-icon h-9 w-9">{timer.soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}</span>
-              <div className="min-w-0"><p className="truncate text-sm font-bold">صوت انتهاء الراحة</p><button type="button" onClick={timer.testSound} className="text-xs font-semibold text-emerald-600 dark:text-emerald-200">جرّب الصوت</button></div>
+              <div className="min-w-0"><p className="truncate text-sm font-bold">{ar ? "صوت انتهاء الراحة" : "Rest-end sound"}</p><button type="button" onClick={timer.testSound} className="text-xs font-semibold text-emerald-600 dark:text-emerald-200">{ar ? "جرّب الصوت" : "Test sound"}</button></div>
             </div>
             <button type="button" role="switch" aria-checked={timer.soundEnabled} onClick={() => timer.setSoundEnabled(!timer.soundEnabled)} className={`gc-switch ${timer.soundEnabled ? "gc-switch-active" : ""}`}>
               <span className="gc-switch-thumb" />
@@ -98,6 +100,8 @@ export function RestTimerPanel() {
 
 export function RestTimerLauncher() {
   const timer = useRestTimer();
+  const { language } = useLanguage();
+  const ar = language === "ar";
   const pathname = usePathname();
   const keyboardOpen = useVirtualKeyboard();
   if (!timer.scopeId || keyboardOpen) return null;
@@ -107,15 +111,14 @@ export function RestTimerLauncher() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={timer.open}
-        className={`gc-timer-launcher fixed z-50 flex min-h-14 max-w-[calc(100vw-1.5rem)] items-center gap-3 rounded-2xl px-4 transition ${activeWorkout ? "bottom-3" : "bottom-[5.35rem] md:bottom-6"} ${timer.isRunning ? "gc-timer-launcher-running" : ""}`}
-        aria-label="افتح تايمر الراحة"
-      >
-        <span className="gc-settings-icon h-9 w-9"><TimerReset className={`h-5 w-5 ${timer.isRunning ? "animate-pulse" : ""}`} /></span>
-        <span className="text-start"><span className="block text-[9px] font-bold uppercase tracking-[0.14em] opacity-60">{timer.isRunning ? "وقت الراحة" : "تايمر الراحة"}</span><span className="block font-mono text-base font-bold tabular-nums">{active ? formatDuration(timer.remainingSeconds) : "جاهز"}</span></span>
-      </button>
+      <div className={`gc-timer-launcher fixed z-50 flex min-h-14 max-w-[calc(100vw-1.5rem)] items-center gap-2 rounded-2xl px-3 transition ${activeWorkout ? "bottom-3" : "bottom-[5.35rem] md:bottom-6"} ${timer.isRunning ? "gc-timer-launcher-running" : ""}`}>
+        <button type="button" onClick={timer.open} className="flex min-w-0 flex-1 items-center gap-2 text-start" aria-label={ar ? "افتح تايمر الراحة" : "Open rest timer"}>
+          <span className="gc-settings-icon h-9 w-9"><TimerReset className={`h-5 w-5 ${timer.isRunning ? "animate-pulse" : ""}`} /></span>
+          <span className="min-w-0"><span className="block text-[9px] font-bold uppercase tracking-[0.14em] opacity-60">{ar ? "راحة" : "Rest"}</span><span className="block font-mono text-base font-bold tabular-nums">{active ? formatDuration(timer.remainingSeconds) : (ar ? "جاهز" : "Ready")}</span></span>
+        </button>
+        {activeWorkout && active ? <button type="button" onClick={() => timer.addTime(30)} className="gc-timer-compact-action">+30s</button> : null}
+        {activeWorkout && active ? <button type="button" onClick={timer.skip} className="gc-timer-compact-action">{ar ? "انهِ" : "End"}</button> : null}
+      </div>
       <RestTimerPanel />
     </>
   );

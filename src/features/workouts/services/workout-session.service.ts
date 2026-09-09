@@ -286,7 +286,7 @@ export async function startWorkoutSession(
 
 export async function updateWorkoutSet(
   setId: UUID,
-  values: { weightKg: number | null; reps: number | null; isCompleted: boolean; isWarmup?: boolean },
+  values: { weightKg: number | null; reps: number | null; isCompleted: boolean; isWarmup?: boolean; notes?: string },
 ): Promise<WorkoutSet> {
   if (values.weightKg !== null && (!Number.isFinite(values.weightKg) || values.weightKg < 0 || values.weightKg > 5000)) {
     throw new Error("اكتب وزن صحيح.");
@@ -306,6 +306,7 @@ export async function updateWorkoutSet(
     reps: values.reps,
     isCompleted: values.isCompleted,
     ...(values.isWarmup !== undefined ? { isWarmup: values.isWarmup } : {}),
+    ...(values.notes !== undefined ? { notes: values.notes } : {}),
     updatedAt: new Date().toISOString(),
   };
   await db.workoutSets.put(updated);

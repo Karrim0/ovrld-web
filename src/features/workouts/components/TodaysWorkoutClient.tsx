@@ -3,8 +3,9 @@
 import { getArabicErrorMessage } from "@/lib/localization";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
-import { ArrowLeft, Dumbbell, PencilLine, Play, RotateCcw } from "lucide-react";
+import { ArrowLeft, Dumbbell, Play, RotateCcw } from "lucide-react";
 import type { UUID, Weekday } from "@/types";
 import { WEEKDAY_LABELS_AR, translateExerciseName, translateWorkoutLabel } from "@/lib/localization";
 import type { SplitDayWithDetails, WeeklyScheduleDayWithDetails } from "@/features/splits/types";
@@ -29,6 +30,8 @@ interface TodaysWorkoutClientProps { userId: UUID; compact?: boolean }
 
 export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutClientProps) {
   const router = useRouter();
+  const { language, t } = useLanguage();
+  const ar = language === "ar";
   const [baseDays, setBaseDays] = useState<SplitDayWithDetails[]>([]);
   const [weekDays, setWeekDays] = useState<WeeklyScheduleDayWithDetails[]>([]);
   const [activeSession, setActiveSession] = useState<WorkoutSessionWithDetails | null>(null);
@@ -108,14 +111,17 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
     const completedSets = activeSession.exercises.reduce((total, exercise) => total + exercise.sets.filter((set) => set.isCompleted).length, 0);
     if (compact) {
       return (
-        <section className="gc-today-compact border-emerald-300/20">
-          <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-300 text-[#11131a]"><Play className="h-4 w-4" /></span>
-            <div className="min-w-0 flex-1"><span className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-300">تمرين شغال</span><h2 className="truncate text-lg font-black">كمّل تمرينتك</h2></div>
-            <strong className="text-sm tabular-nums">{completedSets}/{totalSets}</strong>
+        <section className="gc-home-train-card gc-home-train-card-active">
+          <div className="flex items-start gap-3">
+            <span className="gc-home-train-icon"><Play className="h-5 w-5" /></span>
+            <div className="min-w-0 flex-1">
+              <span className="gc-home-action-label">{ar ? "تدرّب" : "Train"}</span>
+              <h2 className="mt-1 truncate text-2xl font-black tracking-[-0.04em]">{ar ? "كمّل تمرينتك" : "Resume workout"}</h2>
+              <p className="mt-1 text-sm font-semibold text-neutral-500">{completedSets}/{totalSets} {ar ? "سِتات مكتملة" : "sets completed"}</p>
+            </div>
           </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-emerald-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
-          <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-3 w-full min-h-11"><Play className="h-4 w-4" /> كمّل</Link>
+          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.07]"><div className="h-full rounded-full bg-emerald-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
+          <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-4 w-full min-h-12"><Play className="h-4 w-4" /> {ar ? "كمّل التمرينة" : "Resume workout"}</Link>
         </section>
       );
     }
@@ -132,24 +138,30 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
 
   if (!today) {
     return (
-      <section className="gc-card p-5 sm:p-6">
-        <p className="gc-eyebrow">الجدول محتاج يتظبط</p>
-        <h2 className="mt-2 text-xl font-bold">النهارده مش موجود في جدول الأسبوع ده.</h2>
-        <p className="mt-2 text-sm text-neutral-500">افتح جدولي وظبّط أسبوع التمرين ده.</p>
-        <Link href={`/split/personal?day=${weekday}`} className="gc-primary-button mt-5 w-full sm:w-auto"><PencilLine className="h-4 w-4" /> ظبّط الأسبوع ده</Link>
-      </section>
+      <div className="space-y-4">
+        <section className="gc-card p-5 sm:p-6">
+          <p className="gc-eyebrow">{ar ? "تمرين النهارده" : "Today’s Workout"}</p>
+          <h2 className="mt-2 text-xl font-bold">{ar ? "مفيش تمرين متحدد للنهارده" : "No workout scheduled today"}</h2>
+          <p className="mt-2 text-sm text-neutral-500">{ar ? "اختار تمرينة من خطتك وابدأ على طول." : "Choose a workout from your plan and start right away."}</p>
+        </section>
+        {renderAlternateStarter()}
+      </div>
     );
   }
 
   if (today.workoutType === "rest") {
     if (compact) {
       return (
-        <section className="gc-today-compact">
-          <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-300/10 text-sky-300"><RotateCcw className="h-4 w-4" /></span>
-            <div className="min-w-0 flex-1"><span className="text-[10px] font-black uppercase tracking-[0.12em] text-neutral-500">النهارده</span><h2 className="truncate text-xl font-black">راحة</h2></div>
-            <Link href={`/split/personal?day=${weekday}`} className="gc-compact-link">تعديل</Link>
+        <section className="gc-home-train-card">
+          <div className="flex items-start gap-3">
+            <span className="gc-home-train-icon gc-home-train-icon-rest"><RotateCcw className="h-5 w-5" /></span>
+            <div className="min-w-0 flex-1">
+              <span className="gc-home-action-label">{ar ? "تدرّب" : "Train"}</span>
+              <h2 className="mt-1 text-2xl font-black tracking-[-0.04em]">{ar ? "النهارده راحة" : "Rest day"}</h2>
+              <p className="mt-1 text-sm font-semibold text-neutral-500">{ar ? "لو عايز تتمرن، اختار تمرينة من جدولك." : "If you want to train, choose a workout from your plan."}</p>
+            </div>
           </div>
+          <Link href="/workout/today#alternate-workout" className="gc-secondary-button mt-4 w-full min-h-12">{ar ? "اختار تمرينة من جدولك" : "Choose workout from your plan"}</Link>
         </section>
       );
     }
@@ -160,7 +172,7 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-300/10 text-sky-200"><RotateCcw className="h-5 w-5" /></span>
             <div className="min-w-0 flex-1"><p className="gc-eyebrow">{translateWorkoutLabel(today.displayName)}</p><h2 className="mt-1 text-xl font-bold">راحة</h2></div>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2"><Link href={`/split/personal?day=${weekday}`} className="gc-secondary-button"><PencilLine className="h-4 w-4" /> عدّل الأسبوع</Link><a href="#alternate-workout" className="gc-secondary-button">اتمرّن برضه <ArrowLeft className="h-4 w-4" /></a></div>
+          <a href="#alternate-workout" className="gc-secondary-button mt-4 w-full">{ar ? "تمرّن حاجة تانية" : "Train another workout"} <ArrowLeft className="h-4 w-4" /></a>
         </section>
         {renderAlternateStarter()}
       </div>
@@ -174,14 +186,14 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   return (
     <div className="space-y-4">
       {error ? <p className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-300">{error}</p> : null}
-      <section className={`gc-card overflow-hidden p-0 ${compact ? "gc-today-hero" : ""}`}>
+      <section className={`${compact ? "gc-home-train-card" : "gc-card overflow-hidden p-0"}`}>
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <span className={`grid shrink-0 place-items-center rounded-xl bg-emerald-300 text-[#11131a] ${compact ? "h-10 w-10" : "h-12 w-12"}`}><Dumbbell className={compact ? "h-5 w-5" : "h-6 w-6"} /></span>
-            <div className="min-w-0 flex-1"><p className="gc-eyebrow">{WEEKDAY_LABELS_AR[weekday]} · النهارده</p><h2 className={`mt-1 truncate font-black tracking-[-0.03em] ${compact ? "text-xl" : "text-2xl"}`}>{title}</h2><p className="mt-1 text-xs font-semibold text-neutral-500">{today.exercises.length} تمارين · {totalTargetSets} سِتات</p></div>
+            <div className="min-w-0 flex-1"><p className="gc-eyebrow">{compact ? (ar ? "تدرّب" : "Train") : `${t(WEEKDAY_LABELS_AR[weekday])} · ${ar ? "النهارده" : "Today"}`}</p><h2 className={`mt-1 truncate font-black tracking-[-0.03em] ${compact ? "text-2xl" : "text-2xl"}`}>{t(title)}</h2><p className="mt-1 text-xs font-semibold text-neutral-500">{today.exercises.length} {ar ? "تمارين" : "exercises"} · {totalTargetSets} {ar ? "سِتات" : "sets"}</p></div>
           </div>
           {!compact && today.dayNotes ? <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3 text-sm leading-6 text-neutral-400">{today.dayNotes}</p> : null}
-          <button type="button" disabled={isStarting || today.exercises.length === 0 || !today.sourceDay} onClick={() => void startScheduled()} className="gc-primary-button mt-5 w-full disabled:opacity-50"><Play className="h-5 w-5" /> {isStarting ? "بنبدأ…" : compact ? "ابدأ" : "ابدأ التمرينة"}</button>
+          <button type="button" disabled={isStarting || today.exercises.length === 0 || !today.sourceDay} onClick={() => void startScheduled()} className="gc-primary-button mt-5 w-full disabled:opacity-50"><Play className="h-5 w-5" /> {isStarting ? (ar ? "بنبدأ…" : "Starting…") : compact ? (ar ? "ابدأ التمرينة" : "Start workout") : (ar ? "ابدأ التمرينة" : "Start workout")}</button>
         </div>
 
         {compact ? (
@@ -190,7 +202,7 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
               {displayedExercises.map((item, index) => (
                 <span key={item.id} className="gc-today-exercise-pill">
                   <span className="gc-today-exercise-index">{index + 1}</span>
-                  <span className="min-w-0 truncate">{translateExerciseName(item.exercise.name)}</span>
+                  <span className="min-w-0 truncate">{t(translateExerciseName(item.exercise.name))}</span>
                 </span>
               ))}
               {today.exercises.length > displayedExercises.length ? <span className="gc-today-exercise-more">+{today.exercises.length - displayedExercises.length}</span> : null}
@@ -198,8 +210,8 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
           </div>
         ) : (
           <div className="border-t border-white/[0.06] p-4 sm:p-5">
-            <div className="mb-3 flex items-center justify-between gap-3"><h3 className="font-semibold">تمارين النهارده</h3><Link href={`/split/personal?day=${weekday}`} className="text-xs font-semibold text-emerald-200">عدّل الأسبوع</Link></div>
-            <ol className="space-y-2">{displayedExercises.map((item, index) => <li key={item.id} className="flex items-center gap-3 rounded-xl border border-white/[0.055] bg-white/[0.02] p-3"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.055] text-xs font-bold">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{translateExerciseName(item.exercise.name)}</p><p className="mt-0.5 text-xs text-neutral-500">{item.targetSets} سِتات · {item.targetRepsMin}–{item.targetRepsMax} عدات</p></div></li>)}</ol>
+            <div className="mb-3 flex items-center justify-between gap-3"><h3 className="font-semibold">{ar ? "أهم التمارين" : "Key exercises"}</h3><span className="text-xs font-semibold text-neutral-500">{today.exercises.length} {ar ? "تمارين" : "exercises"}</span></div>
+            <ol className="space-y-2">{displayedExercises.map((item, index) => <li key={item.id} className="flex items-center gap-3 rounded-xl border border-white/[0.055] bg-white/[0.02] p-3"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.055] text-xs font-bold">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{t(translateExerciseName(item.exercise.name))}</p><p className="mt-0.5 text-xs text-neutral-500">{item.targetSets} سِتات · {item.targetRepsMin}–{item.targetRepsMax} عدات</p></div></li>)}</ol>
           </div>
         )}
       </section>
@@ -210,9 +222,9 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   function renderAlternateStarter() {
     return (
       <section id="alternate-workout" className="gc-card scroll-mt-24 p-4 sm:p-5">
-        <h3 className="font-semibold">اختار تمرينة تانية من جدولك</h3>
-        <p className="mt-1 text-sm text-neutral-500">ده هيبدأ تمرينة زيادة النهارده من غير ما يغيّر جدول الأسبوع.</p>
-        <div className="mt-3 flex gap-2"><select value={alternateDayId} onChange={(event) => setAlternateDayId(event.target.value)} className="gc-input min-w-0 flex-1"><option value="">اختار تمرينة…</option>{trainableDays.map((day) => <option key={day.id} value={day.id}>{getDayTitle(day)}</option>)}</select><button type="button" disabled={!alternateDay || isStarting} onClick={() => void startExtra(alternateDay)} className="gc-secondary-button shrink-0 disabled:opacity-40">ابدأ</button></div>
+        <h3 className="font-semibold">{ar ? "تمرّن حاجة تانية" : "Train another workout"}</h3>
+        <p className="mt-1 text-sm text-neutral-500">{ar ? "اختار تمرينة من خطتك من غير ما تغيّر الجدول." : "Choose a workout from your plan without changing the schedule."}</p>
+        <div className="mt-3 flex gap-2"><select value={alternateDayId} onChange={(event) => setAlternateDayId(event.target.value)} className="gc-input min-w-0 flex-1"><option value="">{ar ? "اختار تمرينة…" : "Choose a workout…"}</option>{trainableDays.map((day) => <option key={day.id} value={day.id}>{getDayTitle(day)}</option>)}</select><button type="button" disabled={!alternateDay || isStarting} onClick={() => void startExtra(alternateDay)} className="gc-secondary-button shrink-0 disabled:opacity-40">{ar ? "ابدأ" : "Start"}</button></div>
       </section>
     );
   }
