@@ -7,7 +7,6 @@ import { Activity, Award, ArrowUpLeft, BarChart3, Dumbbell, Flame, ScanLine, Tar
 import { translateExerciseName } from "@/lib/localization";
 import { formatWeight } from "@/lib/utils/format";
 import { formatAdherencePercentage } from "@/features/progress/utils/format-adherence";
-import { GainModeProgressCard } from "@/features/gain-mode/components/GainModeProgressCard";
 import type { UUID } from "@/types";
 import { fetchPersonalProgressSummary, type PersonalProgressSummary } from "../services/progress.service";
 import { TrainingTrendChart } from "./TrainingTrendChart";
@@ -35,7 +34,6 @@ export function ProgressDashboardClient({ userId }: ProgressDashboardClientProps
   if (summary.totalSessions === 0) {
     return (
       <div className="space-y-4 pb-24 pt-4">
-        <GainModeProgressCard userId={userId} />
         <section className="gc-empty-state">
           <Dumbbell className="h-6 w-6 text-indigo-300" />
           <h2 className="mt-3 text-2xl font-black tracking-[-0.04em]">ابدأ أول تمرينة</h2>
@@ -48,8 +46,6 @@ export function ProgressDashboardClient({ userId }: ProgressDashboardClientProps
 
   return (
     <div className="space-y-4 pb-24 pt-4">
-      <GainModeProgressCard userId={userId} />
-
       <section className="gc-progress-summary">
         <div className="min-w-0 flex-1">
           <span className="text-[10px] font-black uppercase tracking-[0.12em] text-neutral-500">الأسبوع ده</span>

@@ -407,6 +407,8 @@ export type Database = {
           nutrition_mode: string
           protein_target_grams: number | null
           physique_focus: string
+          support_name: string | null
+          support_note: string | null
           status: string
           updated_at: string
           user_id: string
@@ -423,6 +425,8 @@ export type Database = {
           nutrition_mode?: string
           protein_target_grams?: number | null
           physique_focus?: string
+          support_name?: string | null
+          support_note?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -439,6 +443,8 @@ export type Database = {
           nutrition_mode?: string
           protein_target_grams?: number | null
           physique_focus?: string
+          support_name?: string | null
+          support_note?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -998,6 +1004,7 @@ export type Database = {
       apply_girls_strength_4_template_v2: { Args: never; Returns: Json }
       apply_girls_strength_4_template_v3: { Args: never; Returns: Json }
       apply_imported_split: { Args: { target_plan: Json }; Returns: undefined }
+      apply_gain_glutes_plan: { Args: never; Returns: undefined }
       apply_split_template: {
         Args: { target_template_key: string }
         Returns: undefined

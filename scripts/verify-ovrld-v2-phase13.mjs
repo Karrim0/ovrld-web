@@ -66,10 +66,10 @@ assert.match(planAudit, /item\.targetSets \* 0\.5/);
 
 
 const packageJson = JSON.parse(read("package.json"));
-assert.equal(packageJson.scripts.check, "npm run phase13:check");
+assert.ok(["npm run phase13:check", "npm run phase14:check"].includes(packageJson.scripts.check));
 assert.ok(packageJson.scripts["phase13:check"]?.includes("verify:phase13"));
-assert.match(read(".github/workflows/ovrld-web-ci.yml"), /npm run phase13:check/);
-assert.match(read("VERIFY_OVRLD_WEB_FINAL.cmd"), /phase13:check/);
+assert.match(read(".github/workflows/ovrld-web-ci.yml"), /npm run phase1[34]:check/);
+assert.match(read("VERIFY_OVRLD_WEB_FINAL.cmd"), /phase1[34]:check/);
 assert.match(read("README.md"), /Phase 13: Gain Architecture Cleanup/);
 
 const localization = read("src/lib/localization/ar-en-map.ts");
@@ -79,7 +79,7 @@ for (const token of ["Premium · قريبًا", "خريطة القياسات", "
 
 const css = read("src/app/globals.css");
 for (const className of ["gc-gain-section-grid", "gc-ai-premium-lock", "gc-gain-plan-score", "gc-history-event", "gc-shape-layout"]) assert.ok(css.includes(`.${className}`), `Missing Phase 13 CSS class ${className}`);
-assert.match(read("public/sw.js"), /CACHE_VERSION = "v17"/);
+assert.match(read("public/sw.js"), /CACHE_VERSION = "v1[78]"/);
 
 console.table({
   phase: "13 — Gain Architecture Cleanup",

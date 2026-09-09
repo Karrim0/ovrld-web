@@ -32,6 +32,8 @@ type GainModeRow = {
   nutrition_mode: GainNutritionMode;
   equation_sex: GainEquationSex | null | undefined;
   physique_focus: GainPhysiqueFocus | null | undefined;
+  support_name: string | null | undefined;
+  support_note: string | null | undefined;
   calorie_target_kcal: number | null;
   protein_target_grams: number | string | null;
   created_at: string;
@@ -50,6 +52,8 @@ function mapProfile(row: GainModeRow): GainModeProfile {
     nutritionMode: row.nutrition_mode,
     equationSex: row.equation_sex === "male" ? "male" : "female",
     physiqueFocus: row.physique_focus === "lower_body" || row.physique_focus === "glutes_legs" ? row.physique_focus : "balanced",
+    supportName: row.support_name?.trim() || null,
+    supportNote: row.support_note?.trim() || null,
     calorieTargetKcal: row.calorie_target_kcal == null ? null : Number(row.calorie_target_kcal),
     proteinTargetGrams: row.protein_target_grams == null ? null : Number(row.protein_target_grams),
     createdAt: row.created_at,
@@ -65,6 +69,8 @@ export interface SaveGainModeProfileInput {
   dietPattern: GainDietPattern;
   equationSex: GainEquationSex;
   physiqueFocus?: GainPhysiqueFocus;
+  supportName?: string | null;
+  supportNote?: string | null;
   nutritionMode?: GainNutritionMode;
 }
 
@@ -79,6 +85,8 @@ export async function saveGainModeProfile(userId: UUID, input: SaveGainModeProfi
     diet_pattern: input.dietPattern,
     equation_sex: input.equationSex,
     physique_focus: input.physiqueFocus ?? "balanced",
+    support_name: input.supportName?.trim().slice(0, 40) || null,
+    support_note: input.supportNote?.trim().slice(0, 240) || null,
     nutrition_mode: input.nutritionMode ?? "simple",
   };
 

@@ -10,6 +10,7 @@ import {
   Flame,
   History,
   Ruler,
+
   Settings2,
   Sparkles,
   Utensils,
@@ -134,6 +135,19 @@ export function GainModeHubClient({ userId }: { userId: UUID }) {
           );
         })}
       </section>
+
+      {snapshot.profile.supportNote ? (
+        <section className="gc-card border-rose-300/15 bg-rose-300/[0.04] p-4">
+          <p className="gc-eyebrow">رسالة خاصة{snapshot.profile.supportName ? ` · من ${snapshot.profile.supportName}` : ""}</p>
+          <p className="mt-2 text-sm font-bold leading-6 text-neutral-200">{snapshot.profile.supportNote}</p>
+        </section>
+      ) : null}
+
+      {snapshot.training.improvingExercises > 0 ? (
+        <section className="gc-list-panel overflow-hidden">
+          <div className="gc-list-row"><Sparkles className="h-4 w-4 text-emerald-400" /><span className="min-w-0 flex-1 text-sm font-bold">أيوه كده — {snapshot.training.improvingExercises} تمرين بيتحسن. ثبّت النوم والأكل وسيب الأرقام تكمل شغلها.</span></div>
+        </section>
+      ) : null}
 
       <GainReviewPreview userId={userId} />
 

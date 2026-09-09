@@ -54,6 +54,7 @@ import {
   resetWeekSchedule,
   swapWeeklyScheduleDays,
   updateSplitDaySettings,
+  replaceSplitExercise,
   updateSplitExerciseTargets,
   updateWeeklyScheduleDay,
 } from "../services/split.service";
@@ -140,16 +141,18 @@ interface ExerciseEditorProps {
   index: number;
   count: number;
   canEdit: boolean;
+  alternatives: Exercise[];
   onReload: () => Promise<void>;
   onError: (message: string) => void;
 }
 
-function ExerciseEditor({ item, index, count, canEdit, onReload, onError }: ExerciseEditorProps) {
+function ExerciseEditor({ item, index, count, canEdit, alternatives, onReload, onError }: ExerciseEditorProps) {
   const [sets, setSets] = useState(item.targetSets);
   const [min, setMin] = useState(item.targetRepsMin);
   const [max, setMax] = useState(item.targetRepsMax);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [replacementId, setReplacementId] = useState("");
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -205,11 +208,26 @@ function ExerciseEditor({ item, index, count, canEdit, onReload, onError }: Exer
       ) : null}
 
       {editing ? (
-        <div className="mt-3 grid grid-cols-1 gap-2 border-t border-white/[0.06] pt-3 min-[360px]:grid-cols-3">
-          <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">السِتات<input type="number" inputMode="numeric" min={1} max={20} value={sets} onChange={(event) => setSets(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
-          <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">أقل عدات<input type="number" inputMode="numeric" min={1} max={100} value={min} onChange={(event) => setMin(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
-          <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">أعلى عدات<input type="number" inputMode="numeric" min={1} max={100} value={max} onChange={(event) => setMax(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
-          <button type="button" disabled={busy} onClick={() => void saveTargets()} className="gc-primary-button min-h-11 min-[360px]:col-span-3"><Save className="h-4 w-4" /> احفظ الأهداف</button>
+        <div className="mt-3 space-y-3 border-t border-white/[0.06] pt-3">
+          <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
+            <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">السِتات<input type="number" inputMode="numeric" min={1} max={20} value={sets} onChange={(event) => setSets(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
+            <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">أقل عدات<input type="number" inputMode="numeric" min={1} max={100} value={min} onChange={(event) => setMin(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
+            <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">أعلى عدات<input type="number" inputMode="numeric" min={1} max={100} value={max} onChange={(event) => setMax(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
+            <button type="button" disabled={busy} onClick={() => void saveTargets()} className="gc-primary-button min-h-11 min-[360px]:col-span-3"><Save className="h-4 w-4" /> احفظ الأهداف</button>
+          </div>
+          {alternatives.length ? (
+            <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">بديل لنفس العضلة</p>
+              <div className="mt-2 flex gap-2">
+                <select value={replacementId} onChange={(event) => setReplacementId(event.target.value)} className="gc-input min-w-0 flex-1 text-sm">
+                  <option value="">اختار بديل…</option>
+                  {alternatives.map((exercise) => <option key={exercise.id} value={exercise.id}>{translateExerciseName(exercise.name)}</option>)}
+                </select>
+                <button type="button" disabled={!replacementId || busy} onClick={() => void run(async () => { await replaceSplitExercise(item.id, replacementId as UUID); setReplacementId(""); })} className="gc-secondary-button shrink-0 px-3 disabled:opacity-40">بدّل</button>
+              </div>
+              <p className="mt-1.5 text-[10px] leading-4 text-neutral-600">بنحافظ على السِتات والعدات، والبدائل المعروضة لنفس العضلة الأساسية عشان هدف الخطة مايتغيرش.</p>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </li>
@@ -597,9 +615,10 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                   <legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">خطة اليوم ده</legend>
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <button type="button" onClick={setAsTrainingDay} className={`min-h-11 rounded-xl border text-sm font-bold ${formType !== "rest" ? "border-indigo-300/50 bg-indigo-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>تمرين</button>
-                    <button type="button" onClick={() => { setFormType("rest"); setFormName("راحة"); setFormFocus("راحة"); setFormIcon("moon"); setFormColor("blue"); }} className={`min-h-11 rounded-xl border text-sm font-bold ${formType === "rest" ? "border-indigo-300/50 bg-indigo-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>راحة</button>
+                    <button type="button" onClick={() => { setFormType("rest"); setFormName("راحة"); setFormFocus("راحة"); setFormIcon("moon"); setFormColor("blue"); }} className={`min-h-11 rounded-xl border text-sm font-bold ${formType === "rest" ? "border-indigo-300/50 bg-indigo-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>{view === "week" ? "راحة / إجازة" : "راحة"}</button>
                   </div>
                 </fieldset>
+                {view === "week" ? <p className="text-[10px] leading-4 text-neutral-600">تغيير اليوم هنا للأسبوع ده بس. لو عندك مشوار أو محتاجة راحة، سجّليها عادي وGain Mode هيحسب الالتزام على الواقع بدل ما يمنعك.</p> : null}
 
                 <label className="text-xs font-bold uppercase tracking-wide text-neutral-500">اسم اليوم<input value={formName} onChange={(event) => setFormName(event.target.value)} maxLength={40} placeholder="مثال: أبر A" className="gc-input mt-1 normal-case" /></label>
 
@@ -635,7 +654,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
           ) : (
             <div className="border-t border-white/[0.06] p-4 sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-3"><h3 className="font-bold">التمارين</h3><span className="gc-chip">{selectedBase.exercises.length}</span></div>
-              <ul className="space-y-2">{selectedBase.exercises.map((item, index) => <ExerciseEditor key={`${item.id}:${item.targetSets}:${item.targetRepsMin}:${item.targetRepsMax}`} item={item} index={index} count={selectedBase.exercises.length} canEdit={canEdit} onReload={loadAll} onError={setError} />)}</ul>
+              <ul className="space-y-2">{selectedBase.exercises.map((item, index) => <ExerciseEditor key={`${item.id}:${item.targetSets}:${item.targetRepsMin}:${item.targetRepsMax}`} item={item} index={index} count={selectedBase.exercises.length} canEdit={canEdit} alternatives={library.filter((exercise) => exercise.primaryMuscle === item.exercise.primaryMuscle && exercise.id !== item.exerciseId && !selectedBase.exercises.some((saved) => saved.exerciseId === exercise.id))} onReload={loadAll} onError={setError} />)}</ul>
               {selectedBase.exercises.length === 0 ? <p className="rounded-2xl border border-dashed border-white/[0.1] p-5 text-center text-sm text-neutral-500">اليوم ده فاضي. ضيف التمارين اللي بتلعبها فعلًا في الجيم.</p> : null}
               {canEdit ? (
                 <div className="mt-4 space-y-3">

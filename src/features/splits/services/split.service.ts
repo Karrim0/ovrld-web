@@ -196,7 +196,9 @@ export async function swapWeeklyScheduleDays(
 
 export async function applySplitTemplate(templateKey: StarterPlanKey): Promise<void> {
   const supabase = createClient();
-  const { error } = await supabase.rpc("apply_split_template", { target_template_key: templateKey });
+  const { error } = templateKey === "gain_glutes_4"
+    ? await supabase.rpc("apply_gain_glutes_plan")
+    : await supabase.rpc("apply_split_template", { target_template_key: templateKey });
   if (error) throw new Error(error.message);
 }
 
@@ -271,6 +273,18 @@ export async function addSplitExercise({
     targetRepsMax: data.target_reps_max,
     isPersonalAddition: data.is_personal_addition,
   };
+}
+
+export async function replaceSplitExercise(splitExerciseId: UUID, exerciseId: UUID): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("split_exercises")
+    .update({ exercise_id: exerciseId })
+    .eq("id", splitExerciseId);
+  if (error) {
+    if (error.code === "23505") throw new Error("التمرين البديل موجود في اليوم بالفعل.");
+    throw new Error(error.message);
+  }
 }
 
 export async function updateSplitExerciseTargets(

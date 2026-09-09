@@ -12,6 +12,7 @@ interface SplitSetupChooserProps {
 }
 
 const STARTERS: Array<{ key: Exclude<StarterPlanKey, "manual">; title: string; detail: string }> = [
+  { key: "gain_glutes_4", title: "Recommended Gain · Glutes + Legs", detail: "4 أيام · السبت Lower A · الأحد Upper · الاثنين Lower B · الأربعاء Lower C" },
   { key: "full_body_3", title: "فل بادي · 3 أيام", detail: "بسيط ومتوازن والراحة فيه سهلة" },
   { key: "upper_lower_4", title: "أبر / لوور · 4 أيام", detail: "تمرينتين أبر وتمرينتين لوور" },
   { key: "ppl_ul_5", title: "بوش بول رجل + أبر لوور · 5 أيام", detail: "تكرار أعلى ومعاه يومين راحة" },
@@ -51,7 +52,13 @@ export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
           <h2 className="mt-2 text-xl font-bold">عايز تعمل جدولك إزاي؟</h2>
           <p className="mt-1 text-sm leading-6 text-neutral-500">ابدأ من الصفر، اختار نظام جاهز، أو خلّي OVRLD يقرا الجدول اللي بتتمرّن عليه.</p>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <button type="button" disabled={Boolean(busyKey)} onClick={() => void apply("gain_glutes_4")} className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-emerald-300/25 bg-emerald-300/[0.08] p-4 text-start transition hover:border-emerald-300/45">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-300/12 text-emerald-200"><Sparkles className="h-5 w-5" /></span>
+            <span className="min-w-0 flex-1"><strong className="block">Recommended Gain · Glutes + Legs</strong><span className="mt-1 block text-xs leading-5 text-neutral-400">4 أيام · الخميس والجمعة راحة ثابتة · متوصل تلقائي بـGain Mode.</span></span>
+            {busyKey === "gain_glutes_4" ? <Loader2 className="h-5 w-5 animate-spin text-emerald-200" /> : <ChevronLeft className="h-5 w-5 text-emerald-200" />}
+          </button>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <button type="button" disabled={Boolean(busyKey)} onClick={() => void apply("manual")} className="group rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4 text-start transition hover:border-indigo-300/30 hover:bg-indigo-300/[0.07]">
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.06] text-indigo-200"><PencilRuler className="h-5 w-5" /></span>
               <strong className="mt-3 flex items-center justify-between">اعمل جدولك بنفسك {busyKey === "manual" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronLeft className="h-4 w-4 text-neutral-600 group-hover:text-indigo-200" />}</strong>
@@ -77,7 +84,7 @@ export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
           <section className="gc-modal-card w-full max-w-lg rounded-[24px] p-4 sm:rounded-[26px] sm:p-5">
             <div className="flex items-start justify-between gap-3"><div><p className="gc-eyebrow">جداول جاهزة</p><h3 className="mt-1 text-xl font-bold">اختار عدد أيام تمرينك</h3><p className="mt-1 text-sm text-neutral-500">تقدر تعدّل كل اسم ويوم وتمرين وهدف براحتك.</p></div><button type="button" onClick={() => setStarterOpen(false)} className="gc-icon-button rounded-full"><X className="h-5 w-5" /></button></div>
             <div className="mt-4 space-y-2">
-              {STARTERS.map((starter) => (
+              {STARTERS.filter((starter) => starter.key !== "gain_glutes_4").map((starter) => (
                 <button key={starter.key} type="button" disabled={Boolean(busyKey)} onClick={() => void apply(starter.key)} className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-start transition hover:border-indigo-300/30">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-300/10 text-indigo-200"><LayoutTemplate className="h-5 w-5" /></span>
                   <span className="min-w-0 flex-1"><strong className="block">{starter.title}</strong><span className="mt-0.5 block text-xs text-neutral-500">{starter.detail}</span></span>

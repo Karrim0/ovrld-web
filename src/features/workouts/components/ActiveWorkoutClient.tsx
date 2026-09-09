@@ -698,28 +698,11 @@ export function ActiveWorkoutClient() {
           </span>
           <button
             type="button"
-            onClick={() => { setPhase("overview"); setQueueEditing(false); }}
-            className="gc-icon-button"
-            aria-label="قائمة التمارين"
-          >
-            <List className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
             onClick={() => setShowWorkoutOptions(true)}
-            className="gc-icon-button"
+            className="gc-gym-menu-button"
             aria-label="خيارات التمرينة"
           >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void leaveWorkout()}
-            className="gc-icon-button disabled:opacity-40"
-            aria-label="احفظ واخرج"
-          >
-            <LogOut className="h-4 w-4" />
+            <MoreHorizontal className="h-5 w-5" />
           </button>
         </div>
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
@@ -833,7 +816,6 @@ export function ActiveWorkoutClient() {
               </div>
               <h1 className="mt-1 truncate text-xl font-black tracking-[-0.025em]">{translateExerciseName(currentExercise.exercise.name)}</h1>
             </div>
-            <button type="button" onClick={() => setPhase("overview")} className="gc-icon-button" aria-label="اختار تمرين"><List className="h-4 w-4" /></button>
           </div>
 
           <div className="gc-gym-history-line">
@@ -889,7 +871,7 @@ export function ActiveWorkoutClient() {
                 </div>
               ) : null}
 
-              <div className="mt-3 grid grid-cols-2 gap-2" aria-label="تسجيل السِت">
+              <div className="gc-gym-set-grid mt-3 grid grid-cols-2 gap-2" aria-label="تسجيل السِت">
                 <div className="gc-quick-set-control">
                   <span className="gc-quick-set-label">الوزن · كجم</span>
                   <div className="mt-2 grid grid-cols-[2.6rem_1fr_2.6rem] items-center gap-1">
@@ -1008,28 +990,37 @@ export function ActiveWorkoutClient() {
           <section className="gc-workout-options-sheet" role="dialog" aria-modal="true" aria-label="خيارات التمرينة">
             <div className="gc-workout-options-handle" />
             <div className="flex items-center justify-between gap-3">
-              <div><p className="gc-eyebrow">التمرينة</p><h2 className="mt-0.5 text-lg font-black">خيارات</h2></div>
+              <div>
+                <p className="gc-eyebrow">Gym Mode</p>
+                <h2 className="mt-0.5 text-xl font-black">خيارات التمرينة</h2>
+                <p className="mt-1 text-xs font-semibold text-neutral-500">الإعدادات الثانوية هنا عشان شاشة التسجيل تفضل مركزة.</p>
+              </div>
               <button type="button" onClick={() => setShowWorkoutOptions(false)} className="gc-icon-button" aria-label="اقفل"><X className="h-4 w-4" /></button>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => { setPhase("overview"); setQueueEditing(true); setShowWorkoutOptions(false); }} className="gc-secondary-button"><List className="h-4 w-4" /> ترتيب التمارين</button>
-              {phase !== "overview" ? <button type="button" disabled={busy} onClick={() => { setShowWorkoutOptions(false); void removeCurrentExercise(); }} className="gc-secondary-button"><Trash2 className="h-4 w-4" /> شيل التمرين</button> : <button type="button" onClick={() => setShowExercisePicker((value) => !value)} className="gc-secondary-button"><ListPlus className="h-4 w-4" /> ضيف تمرين</button>}
+            <div className="gc-workout-options-list mt-4">
+              <button type="button" onClick={() => { setPhase("overview"); setQueueEditing(true); setShowWorkoutOptions(false); }} className="gc-workout-option-row">
+                <span className="gc-workout-option-icon"><List className="h-4 w-4" /></span>
+                <span className="min-w-0 flex-1 text-start"><strong>إدارة التمارين</strong><small>ترتيب القائمة وتعديلها</small></span>
+                <ChevronLeft className="h-4 w-4 text-neutral-600" />
+              </button>
+
+              <button type="button" onClick={() => setShowExercisePicker((value) => !value)} className="gc-workout-option-row">
+                <span className="gc-workout-option-icon"><ListPlus className="h-4 w-4" /></span>
+                <span className="min-w-0 flex-1 text-start"><strong>ضيف تمرين</strong><small>للجلسة دي أو للجدول الأساسي</small></span>
+                <ChevronDown className={`h-4 w-4 text-neutral-500 transition ${showExercisePicker ? "rotate-180" : ""}`} />
+              </button>
+
+              {phase !== "overview" ? (
+                <button type="button" disabled={busy} onClick={() => { setShowWorkoutOptions(false); void removeCurrentExercise(); }} className="gc-workout-option-row">
+                  <span className="gc-workout-option-icon"><Trash2 className="h-4 w-4" /></span>
+                  <span className="min-w-0 flex-1 text-start"><strong>شيل التمرين الحالي</strong><small>من الجلسة الحالية</small></span>
+                </button>
+              ) : null}
             </div>
 
-            {phase !== "overview" ? (
-              <label className="mt-4 block text-xs font-bold text-neutral-500">
-                ملاحظة التمرين
-                <textarea defaultValue={currentExercise.notes} onBlur={(event) => void updateWorkoutExerciseNotes(currentExercise.id, event.target.value).catch((caught: Error) => setError(caught.message))} rows={2} placeholder="مسكة، وضع جهاز، ملاحظة…" className="gc-input mt-2 font-normal" />
-              </label>
-            ) : null}
-
-            <button type="button" onClick={() => setShowExercisePicker((value) => !value)} className="gc-list-row mt-3 w-full text-start">
-              <ListPlus className="h-4 w-4 text-indigo-200" /><span className="min-w-0 flex-1 font-bold">ضيف تمرين</span><ChevronDown className={`h-4 w-4 text-neutral-500 transition ${showExercisePicker ? "rotate-180" : ""}`} />
-            </button>
-
             {showExercisePicker ? (
-              <div className="mt-2 space-y-2 rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+              <div className="mt-3 space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-3">
                 <select value={selectedExercise} onChange={(event) => setSelectedExercise(event.target.value)} className="gc-input text-sm">
                   <option value="">اختار تمرين…</option>
                   {availableExercises.map((exercise) => <option key={exercise.id} value={exercise.id}>{translateExerciseName(exercise.name)}</option>)}
@@ -1042,13 +1033,20 @@ export function ActiveWorkoutClient() {
               </div>
             ) : null}
 
+            {phase !== "overview" ? (
+              <label className="mt-4 block text-xs font-bold text-neutral-500">
+                ملاحظة التمرين
+                <textarea defaultValue={currentExercise.notes} onBlur={(event) => void updateWorkoutExerciseNotes(currentExercise.id, event.target.value).catch((caught: Error) => setError(caught.message))} rows={2} placeholder="مسكة، وضع جهاز، ملاحظة…" className="gc-input mt-2 font-normal" />
+              </label>
+            ) : null}
+
             <label className="mt-4 block text-xs font-bold text-neutral-500">
               ملاحظة الجلسة
               <textarea value={sessionNotes} onChange={(event) => setSessionNotes(event.target.value)} onBlur={() => void updateWorkoutSessionNotes(session.id, sessionNotes)} rows={2} className="gc-input mt-2 font-normal" placeholder="أي حاجة محتاج تفتكرها…" />
             </label>
 
-            <div className="mt-4 grid gap-2">
-              <button type="button" disabled={busy} onClick={() => void finish()} className="gc-primary-button w-full disabled:opacity-50"><Save className="h-4 w-4" /> {busy ? "بنخلّص…" : "خلّص التمرينة"}</button>
+            <div className="mt-4 grid gap-2 border-t border-[var(--border)] pt-4">
+              <button type="button" disabled={busy} onClick={() => void leaveWorkout()} className="gc-secondary-button w-full disabled:opacity-50"><LogOut className="h-4 w-4" /> {busy ? "بنحفظ…" : "احفظ واخرج"}</button>
               <button type="button" disabled={busy} onClick={() => void discard()} className="gc-danger-button w-full disabled:opacity-40"><XCircle className="h-4 w-4" /> امسح الجلسة</button>
             </div>
           </section>

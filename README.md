@@ -24,6 +24,11 @@ This release completes the Gym Crew → OVRLD migration, aligns the web client w
 
 ## Current product iteration
 
+
+**OVRLD V2 — Phase 14: Recommended Gain Plan**
+
+Phase 14 adds the built-in 4-day Glutes + Legs plan, week-level day-off flexibility, same-muscle exercise swaps, private support notes, and tighter Gain Mode coaching. See [`docs/OVRLD_V2_PHASE_14_RECOMMENDED_GAIN_PLAN.md`](docs/OVRLD_V2_PHASE_14_RECOMMENDED_GAIN_PLAN.md).
+
 **OVRLD V2 — Phase 13: Gain Architecture Cleanup**
 
 Phase 13 turns Gain Mode into a compact control center with dedicated Nutrition, Body, Training, and History sections. Body progress now has a measurement map and trend view, the training section scores plan compatibility against the selected physique focus, and AI food logging is shown honestly as a Premium coming-soon capability while manual logging and saved meals remain available. See [`docs/OVRLD_V2_PHASE_13_GAIN_ARCHITECTURE.md`](docs/OVRLD_V2_PHASE_13_GAIN_ARCHITECTURE.md).
@@ -85,7 +90,7 @@ Open `http://localhost:3000`.
 Run the complete final gate:
 
 ```bash
-npm run phase13:check
+npm run phase14:check
 ```
 
 On Windows:
@@ -191,3 +196,7 @@ See `docs/OVRLD_V2_PHASE_12_PREMIUM_INTEGRATION.md`.
 - Split analysis can use balanced, lower-body, or glutes-and-legs physique focus and reports plan compatibility separately from nutrition.
 - AI food logging is presented as an honest Premium coming-soon capability; manual logging and saved meals remain available.
 - One additive migration adds `physique_focus` to the private Gain Mode profile.
+
+## OVRLD V2 Phase 14
+
+Recommended Gain plan + flexible weekly execution + private support notes.

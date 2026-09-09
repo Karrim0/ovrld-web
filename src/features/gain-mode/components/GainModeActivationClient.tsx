@@ -24,6 +24,8 @@ export function GainModeActivationClient({ userId, compact = false }: { userId: 
   const [equationSex, setEquationSex] = useState<GainEquationSex | null>(null);
   const [activityLevel, setActivityLevel] = useState<GainActivityLevel>("moderate");
   const [physiqueFocus, setPhysiqueFocus] = useState<GainPhysiqueFocus>("balanced");
+  const [supportName, setSupportName] = useState("");
+  const [supportNote, setSupportNote] = useState("");
   const [appetiteLevel, setAppetiteLevel] = useState<GainAppetiteLevel>("average");
   const [mealSizeDifficulty, setMealSizeDifficulty] = useState(false);
   const [dietPattern, setDietPattern] = useState<GainDietPattern>("mixed");
@@ -41,6 +43,8 @@ export function GainModeActivationClient({ userId, compact = false }: { userId: 
         setEquationSex(profile.equationSex);
         setActivityLevel(profile.activityLevel);
         setPhysiqueFocus(profile.physiqueFocus);
+        setSupportName(profile.supportName ?? "");
+        setSupportNote(profile.supportNote ?? "");
         setAppetiteLevel(profile.appetiteLevel);
         setMealSizeDifficulty(profile.mealSizeDifficulty);
         setDietPattern(profile.dietPattern);
@@ -70,7 +74,7 @@ export function GainModeActivationClient({ userId, compact = false }: { userId: 
       const before = await fetchBodyProgress(userId);
       await Promise.all([
         saveBodyGoal(userId, { goalType: "gain_weight", targetWeightKg: target, heightCm, targetDate: null, weighInIntervalDays: intervalDays }),
-        saveGainModeProfile(userId, { ageYears: Math.round(ageYears), activityLevel, appetiteLevel, mealSizeDifficulty, dietPattern, equationSex, physiqueFocus, nutritionMode: "simple" }),
+        saveGainModeProfile(userId, { ageYears: Math.round(ageYears), activityLevel, appetiteLevel, mealSizeDifficulty, dietPattern, equationSex, physiqueFocus, supportName, supportNote, nutritionMode: "simple" }),
       ]);
       if (!before.latest || Math.abs(before.latest.weightKg - currentWeight) >= 0.05) await addBodyMeasurement(userId, { weightKg: currentWeight });
       setMessage("Gain Mode اتحفظ.");
@@ -100,6 +104,14 @@ export function GainModeActivationClient({ userId, compact = false }: { userId: 
           <fieldset><legend className="text-xs font-bold text-neutral-500">الشهية</legend><div className="mt-2 grid grid-cols-3 gap-2">{([['low','ضعيفة'],['average','عادية'],['good','كويسة']] as Array<[GainAppetiteLevel,string]>).map(([v,l]) => <button key={v} type="button" onClick={() => setAppetiteLevel(v)} className={`gc-choice-button ${appetiteLevel===v?'gc-choice-button-active':''}`}>{l}</button>)}</div></fieldset>
           <label className="text-xs font-bold text-neutral-500">نمط الأكل<select value={dietPattern} onChange={(e) => setDietPattern(e.target.value as GainDietPattern)} className="gc-input mt-1"><option value="mixed">متنوع</option><option value="vegetarian">Vegetarian</option><option value="vegan">Vegan</option><option value="other">غير كده</option></select></label>
           <label className="flex min-h-12 items-center gap-3 rounded-xl border border-white/[0.07] px-3 text-sm font-bold lg:col-span-2"><input type="checkbox" checked={mealSizeDifficulty} onChange={(e) => setMealSizeDifficulty(e.target.checked)} /><span>الوجبات الكبيرة بتشبعني بسرعة</span></label>
+          <div className="lg:col-span-2 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+            <p className="text-xs font-bold text-neutral-500">رسالة دعم اختيارية</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-[120px_1fr]">
+              <input value={supportName} onChange={(e) => setSupportName(e.target.value)} maxLength={40} className="gc-input" placeholder="من: كريم" />
+              <input value={supportNote} onChange={(e) => setSupportNote(e.target.value)} maxLength={240} className="gc-input" placeholder="مثال: أنا شايف تعبك وتطورك، كملي واحدة واحدة ❤️" />
+            </div>
+            <p className="mt-1 text-[10px] text-neutral-600">بتظهر كرسالة خاصة جوه Gain Mode. سيبها فاضية لو مش محتاجها.</p>
+          </div>
           <fieldset className="lg:col-span-2"><legend className="text-xs font-bold text-neutral-500">ميعاد قياس الوزن</legend><div className="mt-2 grid grid-cols-3 gap-2">{[3,7,14].map((d) => <button key={d} type="button" onClick={() => setIntervalDays(d)} className={`gc-choice-button ${intervalDays===d?'gc-choice-button-active':''}`}>{d} أيام {intervalDays===d?<Check className="ms-1 inline h-3 w-3"/>:null}</button>)}</div></fieldset>
         </div>
       </section>

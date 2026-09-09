@@ -13,11 +13,11 @@ where npm >nul 2>nul || (
 )
 
 echo [1/2] OVRLD V2 Phase 1-13 quality gate
-call npm run phase13:check || exit /b 1
+call npm run phase14:check || exit /b 1
 
 echo [2/2] Git whitespace check
 git diff --check || exit /b 1
 
 echo.
-echo [OK] OVRLD V2 Phase 13 verification passed.
+echo [OK] OVRLD V2 Phase 14 verification passed.
 endlocal

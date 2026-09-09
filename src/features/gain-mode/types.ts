@@ -20,6 +20,8 @@ export interface GainModeProfile {
   nutritionMode: GainNutritionMode;
   equationSex: GainEquationSex;
   physiqueFocus: GainPhysiqueFocus;
+  supportName: string | null;
+  supportNote: string | null;
   calorieTargetKcal: number | null;
   proteinTargetGrams: number | null;
   createdAt: ISODateString;

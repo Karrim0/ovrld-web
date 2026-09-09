@@ -93,10 +93,10 @@ npx supabase migration list
 npx supabase db push --dry-run
 ```
 
-When Phases 1–11 are already applied, only this migration should be pending:
+For the current finalization snapshot, apply any pending migrations in order. The newest Gain-plan correction is:
 
 ```text
-202609090002_gain_mode_training_integration_v1.sql
+202609090005_gain_recommended_plan_v2.sql
 ```
 
 Then run the app on a real phone and smoke-test:

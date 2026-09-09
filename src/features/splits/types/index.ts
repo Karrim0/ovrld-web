@@ -55,7 +55,7 @@ export interface WeeklyScheduleDayInput {
   dayNotes: string;
 }
 
-export type StarterPlanKey = "manual" | "full_body_3" | "upper_lower_4" | "ppl_ul_5" | "ppl_6";
+export type StarterPlanKey = "manual" | "gain_glutes_4" | "full_body_3" | "upper_lower_4" | "ppl_ul_5" | "ppl_6";
 
 export interface ImportedPlanExercise {
   name: string;
