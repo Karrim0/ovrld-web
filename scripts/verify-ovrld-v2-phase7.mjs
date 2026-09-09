@@ -52,8 +52,9 @@ assert.match(nav, /id: "profile"/);
 assert.doesNotMatch(nav, /id: "group"/);
 
 const dashboard = read("src/app/(dashboard)/dashboard/page.tsx");
-assert.ok(dashboard.indexOf("<TodaysWorkoutClient") < dashboard.indexOf("<GainModeHomeCard"));
-assert.ok(dashboard.indexOf("<GainModeHomeCard") < dashboard.indexOf("<PersonalSplitOverviewClient"));
+assert.match(dashboard, /<TodaysWorkoutClient[^>]*compact/, "Home must prioritize Train / Today.");
+assert.match(dashboard, /<HomeLogDataAction \/>/, "Home must expose Log Data as the second primary action.");
+assert.doesNotMatch(dashboard, /<GainModeHomeCard|<PersonalSplitOverviewClient/, "Home should not reintroduce process or split-management clutter.");
 assert.doesNotMatch(dashboard, /أهم خطوة في الـprocess|إيه عليك دلوقتي/);
 
 const gainHome = read("src/features/gain-mode/components/GainModeHomeCard.tsx");
@@ -77,8 +78,9 @@ assert.doesNotMatch(progress, /StatCard/);
 
 const split = read("src/features/splits/components/SplitManager.tsx");
 assert.match(split, /gc-plan-(?:summary|inline-stats)/);
-assert.match(split, /إنشاء أو استيراد جدول/);
-assert.match(split, /خيارات متقدمة/);
+assert.match(split, /أدوات الخطة|Plan tools/);
+assert.match(split, /إنشاء · استيراد · تحليل|Create · Import · Analyze/);
+assert.match(split, /خيارات إضافية|More options/);
 assert.doesNotMatch(split, /جدولك قدامك، والأسبوع مرن/);
 
 const profile = read("src/app/(dashboard)/profile/page.tsx");

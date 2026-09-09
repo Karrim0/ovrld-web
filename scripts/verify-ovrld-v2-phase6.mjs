@@ -78,9 +78,12 @@ assert.match(bodyService, /ascending: true/);
 assert.match(bodyService, /true first measurement/);
 
 const dashboard = read("src/app/(dashboard)/dashboard/page.tsx");
-assert.match(dashboard, /GainModeHomeCard/);
-assert.ok(dashboard.indexOf("<TodaysWorkoutClient") < dashboard.indexOf("<GainModeHomeCard"), "Today's workout must remain the first Home action.");
-assert.ok(dashboard.indexOf("<GainModeHomeCard") < dashboard.indexOf("<PersonalSplitOverviewClient"), "Process action must appear before the compact weekly plan.");
+assert.match(dashboard, /<TodaysWorkoutClient[^>]*compact/, "Home must keep Train / Today as the first primary action.");
+assert.match(dashboard, /<HomeLogDataAction \/>/, "Home must keep Log Data as the second primary action.");
+assert.doesNotMatch(dashboard, /<GainModeHomeCard|<PersonalSplitOverviewClient/, "Home must remain execution-first; Gain Mode and split management belong in their dedicated surfaces.");
+
+const gainHome = read("src/features/gain-mode/components/GainModeHomeCard.tsx");
+assert.match(gainHome, /Gain Mode|زيادة الوزن/, "Gain Mode home/process capability must remain available outside the simplified Home surface.");
 
 const body = read("src/features/body-progress/components/BodyProgressClient.tsx");
 assert.doesNotMatch(body, /lose_weight|recomposition|muscle_gain|maintain_weight/);
@@ -88,7 +91,7 @@ assert.match(body, /Gain Mode شغال|زيادة الوزن/);
 assert.match(body, /saveTrackingCadence/);
 
 const split = read("src/features/splits/components/SplitManager.tsx");
-assert.match(split, /خيارات متقدمة/);
+assert.match(split, /خيارات إضافية|More options/, "Split day cosmetics/settings must remain secondary under More options.");
 assert.match(split, /تحليل الخطة/);
 
 const profilePage = read("src/app/(dashboard)/profile/page.tsx");

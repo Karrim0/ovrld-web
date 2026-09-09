@@ -11,6 +11,7 @@ const exists = (file) => fs.existsSync(path.join(root, file));
 
 const files = [
   "src/features/dashboard/components/SmartProcessLoop.tsx",
+  "src/features/gain-mode/components/GainModeHomeCard.tsx",
   "src/features/dashboard/services/process-loop.service.ts",
   "src/features/workouts/utils/session-time.ts",
   "src/features/workouts/components/SessionElapsedTime.tsx",
@@ -40,12 +41,12 @@ assert.match(loop, /status === "plateau"/);
 assert.doesNotMatch(loop, /OpenAI|chat completion|responses\.create/i, "Phase 5 loop must remain deterministic.");
 
 const dashboard = read("src/app/(dashboard)/dashboard/page.tsx");
-assert.ok(/<SmartProcessLoop userId=\{user\.id\}|<GainModeHomeCard userId=\{user\.id\}/.test(dashboard), "Home must render the Phase 5 process loop directly or through the Gain Mode wrapper.");
-const processIndex = dashboard.includes("<GainModeHomeCard") ? dashboard.indexOf("<GainModeHomeCard") : dashboard.indexOf("<SmartProcessLoop");
-assert.ok(
-  processIndex < dashboard.indexOf("<PersonalSplitOverviewClient"),
-  "Process loop should appear before the weekly plan on Home.",
-);
+assert.match(dashboard, /<TodaysWorkoutClient userId=\{user\.id\} compact \/>/, "Home must keep Train as the primary action.");
+assert.match(dashboard, /<HomeLogDataAction \/>/, "Home must keep Log Data as the second primary action.");
+assert.doesNotMatch(dashboard, /<PersonalSplitOverviewClient|<SmartProcessLoop|<GainModeHomeCard/, "Home should remain execution-first and must not reintroduce plan/process clutter.");
+
+const gainHomeCard = read("src/features/gain-mode/components/GainModeHomeCard.tsx");
+assert.match(gainHomeCard, /<SmartProcessLoop userId=\{userId\} \/>/, "Gain Mode wrapper must preserve the Phase 5 deterministic process-loop fallback.");
 
 const timing = read("src/features/workouts/utils/session-time.ts");
 assert.match(timing, /18 \* 60 \* 60/);

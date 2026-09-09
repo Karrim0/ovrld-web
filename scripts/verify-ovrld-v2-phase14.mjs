@@ -47,6 +47,6 @@ const training = read("src/features/gain-mode/components/GainTrainingIntegration
 for (const token of ["Recommended Gain Plan", "gain_glutes_4", "قواعد التطور", "1–2 RIR"]) assert.ok(training.includes(token), `Training integration missing ${token}`);
 const hub = read("src/features/gain-mode/components/GainModeHubClient.tsx");
 for (const token of ["supportNote", "رسالة خاصة", "improvingExercises"]) assert.ok(hub.includes(token), `Support/progress UI missing ${token}`);
-assert.match(read("public/sw.js"), /CACHE_VERSION = "v18"/);
+assert.match(read("public/sw.js"), /CACHE_VERSION = "v(?:1[8-9]|[2-9]\d+)"/);
 console.table({ phase: "14 — Recommended Gain Plan", plan: "4-day Glutes + Legs", flexibility: "week overrides + same-muscle swaps", coaching: "RIR/rest/warm-up/sleep", support: "private optional note" });
 console.log("\n[OK] OVRLD V2 Phase 14 contract passed.");

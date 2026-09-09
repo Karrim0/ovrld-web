@@ -74,7 +74,7 @@ assert.match(profile, /LanguageSwitcher variant="row"/);
 assert.match(profile, /ThemeSwitcher variant="row"/);
 
 const split = read("src/features/splits/components/SplitManager.tsx");
-assert.match(split, /أدوات الجدول/);
+assert.ok(/أدوات الخطة|Plan tools/.test(split), "Plan tools must remain available as a secondary action.");
 assert.match(split, /بدّل اليوم مع يوم تاني/);
 
 const css = read("src/app/globals.css");
