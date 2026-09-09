@@ -267,7 +267,7 @@ export function BodyMeasurementsPanel({
 
       <section className="gc-list-panel">
         <details className="group">
-          <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><CalendarClock className="h-4 w-4 text-indigo-400" /><span className="min-w-0 flex-1 font-bold">ميعاد القياسات</span><span className="text-[10px] font-bold text-neutral-500">{cadence === "28" ? "كل 4 أسابيع" : `كل ${cadence} يوم`}</span><ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" /></summary>
+          <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><CalendarClock className="h-4 w-4 text-emerald-400" /><span className="min-w-0 flex-1 font-bold">ميعاد القياسات</span><span className="text-[10px] font-bold text-neutral-500">{cadence === "28" ? "كل 4 أسابيع" : `كل ${cadence} يوم`}</span><ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" /></summary>
           <div className="border-t border-[var(--border)] p-3">
             <div className="grid grid-cols-4 gap-2">
               {[14, 28, 42, 56].map((days) => <button key={days} type="button" onClick={() => setCadence(String(days))} className={`gc-choice-button ${cadence === String(days) ? "gc-choice-button-active" : ""}`}>{days === 14 ? "أسبوعين" : days === 28 ? "4 أسابيع" : days === 42 ? "6 أسابيع" : "8 أسابيع"}</button>)}

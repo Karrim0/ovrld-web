@@ -14,8 +14,8 @@ function regionClass(
   primary: MuscleGroup,
   secondary: MuscleGroup[],
 ) {
-  if (muscle === primary) return "fill-indigo-300 stroke-indigo-100";
-  if (secondary.includes(muscle)) return "fill-indigo-300/35 stroke-indigo-200/50";
+  if (muscle === primary) return "fill-emerald-300 stroke-emerald-100";
+  if (secondary.includes(muscle)) return "fill-emerald-300/35 stroke-emerald-200/50";
   return "fill-white/[0.045] stroke-white/[0.09]";
 }
 
@@ -39,8 +39,8 @@ export function MuscleFocusGraphic({
       >
         <defs>
           <linearGradient id="bodyGlow" x1="0" x2="1">
-            <stop offset="0" stopColor="rgba(154,168,255,.05)" />
-            <stop offset="1" stopColor="rgba(154,168,255,.16)" />
+            <stop offset="0" stopColor="rgba(52,211,153,.05)" />
+            <stop offset="1" stopColor="rgba(52,211,153,.16)" />
           </linearGradient>
         </defs>
         <ellipse cx="110" cy="74" rx="73" ry="65" fill="url(#bodyGlow)" />
@@ -61,7 +61,7 @@ export function MuscleFocusGraphic({
         <path d="M91 43 Q110 35 129 43 L130 83 Q111 92 90 83 Z" className={regionClass("back", primary, secondary)} opacity={primary === "back" || secondary.includes("back") ? 0.72 : 0.16} />
       </svg>
       <div className="gc-muscle-caption pointer-events-none absolute inset-x-2 bottom-2 rounded-xl px-2.5 py-1.5 text-center">
-        <p className="truncate text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-100">
+        <p className="truncate text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-100">
           {MUSCLE_LABELS[primary]}
         </p>
       </div>

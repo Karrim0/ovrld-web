@@ -48,7 +48,7 @@ export function BodyMapClient({ userId }: { userId: UUID }) {
       <div className="flex items-center justify-between gap-3 overflow-x-auto">
         <div className="flex rounded-xl border bg-white p-1 dark:bg-neutral-950">
           {RANGES.map((value) => (
-            <button key={value} type="button" onClick={() => setRange(value)} className={`rounded-lg px-3 py-2 text-xs font-bold ${range === value ? "bg-indigo-300 text-neutral-950" : "text-neutral-500"}`}>
+            <button key={value} type="button" onClick={() => setRange(value)} className={`rounded-lg px-3 py-2 text-xs font-bold ${range === value ? "bg-emerald-300 text-neutral-950" : "text-neutral-500"}`}>
               {value} يوم
             </button>
           ))}

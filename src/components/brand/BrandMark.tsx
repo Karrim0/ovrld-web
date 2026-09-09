@@ -5,6 +5,10 @@ export interface BrandMarkProps {
   title?: string;
 }
 
+/**
+ * OVRLD mark: an open O (the training loop) crossed by an ascending load bar.
+ * It stays legible at favicon size and uses the shared brand accent in both themes.
+ */
 export function BrandMark({ className, title = "OVRLD" }: BrandMarkProps) {
   return (
     <svg
@@ -15,9 +19,25 @@ export function BrandMark({ className, title = "OVRLD" }: BrandMarkProps) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M9.5 50.5 28.2 13h9.9L19.6 50.5H9.5Z" fill="currentColor" />
-      <path d="M28.6 50.5 42.8 22.1 55 50.5H44.6l-3.2-8.4h-8.6l-4.2 8.4Z" fill="currentColor" opacity=".58" />
-      <path d="M31.2 34.6h8.2l3.8 7.5H27.5l3.7-7.5Z" fill="currentColor" opacity=".92" />
+      <path
+        d="M42.5 16.4A20 20 0 1 0 45.7 44"
+        stroke="currentColor"
+        strokeWidth="8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M29 47.5 45.8 15.8"
+        stroke="var(--brand-accent, #34d399)"
+        strokeWidth="8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M41.7 17.6h8.1v8.1"
+        stroke="var(--brand-accent, #34d399)"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

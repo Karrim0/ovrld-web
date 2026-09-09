@@ -55,7 +55,7 @@ export function GroupPrivacySettingsClient({ userId }: { userId: UUID }) {
       <Toggle checked={records} onChange={setRecords} title="أرقامك القياسية" description="اظهر لما تكسر رقم وعدد أرقامك الإجمالي." />
       <Toggle checked={weights} onChange={setWeights} title="قيم الأرقام" description="اظهر الوزن أو عدد العدات الحقيقي في نشاط الأرقام. مقفول افتراضيًا." />
       {message ? <p className="rounded-xl bg-neutral-100 p-3 text-sm dark:bg-neutral-900">{message}</p> : null}
-      <button type="button" disabled={saving} onClick={() => void save()} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-300 px-4 py-3 font-bold text-neutral-950 disabled:opacity-50"><Save className="h-5 w-5" />{saving ? "بنحفظ…" : "احفظ إعدادات الخصوصية"}</button>
+      <button type="button" disabled={saving} onClick={() => void save()} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-300 px-4 py-3 font-bold text-neutral-950 disabled:opacity-50"><Save className="h-5 w-5" />{saving ? "بنحفظ…" : "احفظ إعدادات الخصوصية"}</button>
     </div>
   );
 }

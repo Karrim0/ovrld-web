@@ -89,10 +89,10 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
       </button>
 
       <div className="flex justify-between gap-3 text-sm font-semibold text-neutral-400">
-        <Link href="/forgot-password" className="transition hover:text-indigo-300">
+        <Link href="/forgot-password" className="transition hover:text-emerald-300">
           نسيت الباسورد؟
         </Link>
-        <Link href="/register" className="transition hover:text-indigo-300">
+        <Link href="/register" className="transition hover:text-emerald-300">
           اعمل حساب
         </Link>
       </div>

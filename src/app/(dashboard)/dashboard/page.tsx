@@ -34,7 +34,7 @@ export default async function DashboardPage() {
         <section className="gc-home-section">
           <div className="mb-2.5 flex items-center justify-between gap-3 px-1">
             <h2 className="text-base font-black">الأسبوع</h2>
-            <Link href="/split/personal" className="text-xs font-bold text-indigo-300">تعديل</Link>
+            <Link href="/split/personal" className="text-xs font-bold text-emerald-300">تعديل</Link>
           </div>
           <PersonalSplitOverviewClient userId={user.id} compact />
         </section>

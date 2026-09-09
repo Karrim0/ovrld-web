@@ -59,7 +59,7 @@ export function BodyProgressPreview({ userId }: { userId: UUID }) {
           )}
         </span>
         <span className="shrink-0 text-end">
-          {weighInDue ? <span className="gc-chip text-amber-300">سجّل دلوقتي</span> : data.goal?.targetWeightKg ? <><Target className="ms-auto h-4 w-4 text-indigo-300" /><span className="mt-1 block text-xs font-bold">{formatWeight(data.goal.targetWeightKg)}</span></> : <ArrowUpLeft className="h-5 w-5 text-neutral-500" />}
+          {weighInDue ? <span className="gc-chip text-amber-300">سجّل دلوقتي</span> : data.goal?.targetWeightKg ? <><Target className="ms-auto h-4 w-4 text-emerald-300" /><span className="mt-1 block text-xs font-bold">{formatWeight(data.goal.targetWeightKg)}</span></> : <ArrowUpLeft className="h-5 w-5 text-neutral-500" />}
         </span>
       </div>
     </Link>

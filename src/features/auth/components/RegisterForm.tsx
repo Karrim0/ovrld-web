@@ -84,7 +84,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
     return (
       <section className="gc-card space-y-5 p-5 sm:p-6">
         <div className="flex items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-indigo-300/15 text-indigo-200">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-300/15 text-emerald-200">
             <MailCheck className="h-5 w-5" />
           </span>
           <div>
@@ -95,8 +95,8 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
           </div>
         </div>
 
-        <div className="rounded-xl border border-indigo-300/15 bg-indigo-300/[0.06] p-3 text-sm text-neutral-300">
-          <p className="flex items-center gap-2 font-semibold"><CheckCircle2 className="h-4 w-4 text-indigo-200" /> لينك التأكيد لازم يرجّعك لـOVRLD، مش localhost.</p>
+        <div className="rounded-xl border border-emerald-300/15 bg-emerald-300/[0.06] p-3 text-sm text-neutral-300">
+          <p className="flex items-center gap-2 font-semibold"><CheckCircle2 className="h-4 w-4 text-emerald-200" /> لينك التأكيد لازم يرجّعك لـOVRLD، مش localhost.</p>
         </div>
 
         <AuthSubmitMessage message={submitError} />
@@ -142,7 +142,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
 
       <p className="text-sm text-neutral-400">
         عندك حساب بالفعل؟{" "}
-        <Link href="/login" className="font-semibold text-white transition hover:text-indigo-200">سجّل دخول</Link>
+        <Link href="/login" className="font-semibold text-white transition hover:text-emerald-200">سجّل دخول</Link>
       </p>
     </form>
   );

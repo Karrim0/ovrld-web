@@ -136,13 +136,13 @@ export function SplitImportWizard({ onClose, onImported }: SplitImportWizardProp
           {!plan && !saved ? (
             <>
               <div className="grid gap-3 sm:grid-cols-2">
-                <button type="button" onClick={() => inputRef.current?.click()} className="rounded-2xl border border-dashed border-indigo-300/30 bg-indigo-300/[0.06] p-5 text-start transition hover:bg-indigo-300/[0.1]">
-                  <ImagePlus className="h-6 w-6 text-indigo-200" />
+                <button type="button" onClick={() => inputRef.current?.click()} className="rounded-2xl border border-dashed border-emerald-300/30 bg-emerald-300/[0.06] p-5 text-start transition hover:bg-emerald-300/[0.1]">
+                  <ImagePlus className="h-6 w-6 text-emerald-200" />
                   <strong className="mt-3 block">صورة أو PDF أو ملف جداول</strong>
                   <span className="mt-1 block text-sm leading-5 text-neutral-500">Excel وCSV والنص المنسوخ بيتقروا مجانًا. الصور وPDF بيستخدموا AI اختياري.</span>
                 </button>
                 <label className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
-                  <FileSpreadsheet className="h-6 w-6 text-indigo-200" />
+                  <FileSpreadsheet className="h-6 w-6 text-emerald-200" />
                   <strong className="mt-3 block">أو الصق الجدول</strong>
                   <textarea value={text} onChange={(event) => setText(event.target.value)} rows={5} placeholder="السبت أبر: بنش بريس 3×8–12…" className="gc-input mt-3 resize-none text-sm" />
                 </label>
@@ -193,8 +193,8 @@ export function SplitImportWizard({ onClose, onImported }: SplitImportWizardProp
                       <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">التركيز<input value={day.focus} onChange={(event) => updateDay(dayIndex, { focus: event.target.value })} className="gc-input mt-1 text-sm normal-case" maxLength={32} /></label>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2">
-                      <button type="button" onClick={() => updateDay(dayIndex, { workoutType: day.workoutType === "rest" ? "custom" : day.workoutType, iconKey: day.iconKey === "moon" ? "dumbbell" : day.iconKey, title: day.title === "راحة" ? "يوم تمرين" : day.title, focus: day.focus === "راحة" ? "مخصص" : day.focus })} className={`min-h-10 rounded-xl border text-xs font-bold ${day.workoutType !== "rest" ? "border-indigo-300/45 bg-indigo-300 text-[#11131a]" : "border-white/[0.08] text-neutral-500"}`}>تمرين</button>
-                      <button type="button" onClick={() => updateDay(dayIndex, { workoutType: "rest", title: "راحة", focus: "راحة", iconKey: "moon", colorKey: "blue", exercises: [] })} className={`min-h-10 rounded-xl border text-xs font-bold ${day.workoutType === "rest" ? "border-indigo-300/45 bg-indigo-300 text-[#11131a]" : "border-white/[0.08] text-neutral-500"}`}>راحة</button>
+                      <button type="button" onClick={() => updateDay(dayIndex, { workoutType: day.workoutType === "rest" ? "custom" : day.workoutType, iconKey: day.iconKey === "moon" ? "dumbbell" : day.iconKey, title: day.title === "راحة" ? "يوم تمرين" : day.title, focus: day.focus === "راحة" ? "مخصص" : day.focus })} className={`min-h-10 rounded-xl border text-xs font-bold ${day.workoutType !== "rest" ? "border-emerald-300/45 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] text-neutral-500"}`}>تمرين</button>
+                      <button type="button" onClick={() => updateDay(dayIndex, { workoutType: "rest", title: "راحة", focus: "راحة", iconKey: "moon", colorKey: "blue", exercises: [] })} className={`min-h-10 rounded-xl border text-xs font-bold ${day.workoutType === "rest" ? "border-emerald-300/45 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] text-neutral-500"}`}>راحة</button>
                     </div>
                     {day.workoutType === "rest" ? <p className="mt-3 text-sm text-neutral-500">يوم راحة متخططلها. مش هنضيف تمارين لليوم ده.</p> : (
                       <div className="mt-3 space-y-2">

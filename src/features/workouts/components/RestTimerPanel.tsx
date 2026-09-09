@@ -84,7 +84,7 @@ export function RestTimerPanel() {
           <div className="gc-timer-sound mt-4 flex min-w-0 items-center justify-between gap-3 p-3 text-start">
             <div className="flex min-w-0 items-center gap-3">
               <span className="gc-settings-icon h-9 w-9">{timer.soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}</span>
-              <div className="min-w-0"><p className="truncate text-sm font-bold">صوت انتهاء الراحة</p><button type="button" onClick={timer.testSound} className="text-xs font-semibold text-indigo-600 dark:text-indigo-200">جرّب الصوت</button></div>
+              <div className="min-w-0"><p className="truncate text-sm font-bold">صوت انتهاء الراحة</p><button type="button" onClick={timer.testSound} className="text-xs font-semibold text-emerald-600 dark:text-emerald-200">جرّب الصوت</button></div>
             </div>
             <button type="button" role="switch" aria-checked={timer.soundEnabled} onClick={() => timer.setSoundEnabled(!timer.soundEnabled)} className={`gc-switch ${timer.soundEnabled ? "gc-switch-active" : ""}`}>
               <span className="gc-switch-thumb" />

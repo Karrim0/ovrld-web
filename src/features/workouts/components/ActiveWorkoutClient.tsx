@@ -15,7 +15,6 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
-  ChevronDown,
   ChevronLeft,
   Dumbbell,
   GripVertical,
@@ -29,7 +28,6 @@ import {
   Play,
   Plus,
   RefreshCcw,
-  Save,
   SlidersHorizontal,
   SkipForward,
   TimerReset,
@@ -40,6 +38,7 @@ import {
 } from "lucide-react";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { useRestTimer } from "@/contexts/rest-timer-context";
+import { useLanguage } from "@/contexts/language-context";
 import { fetchExerciseLibrary } from "@/features/exercises/services/exercise.service";
 import { CustomExerciseForm } from "@/features/exercises/components/CustomExerciseForm";
 import { addSplitExercise } from "@/features/splits/services/split.service";
@@ -121,7 +120,7 @@ function buildWeightOptions(baseWeight: number | null, step: number) {
   return [...new Set(values)].sort((a, b) => a - b);
 }
 
-function getComparison(snapshot: LoggedSetSnapshot) {
+function getComparison(snapshot: LoggedSetSnapshot, language: "ar" | "en") {
   const pieces: string[] = [];
   if (
     snapshot.weightKg !== null &&
@@ -129,17 +128,17 @@ function getComparison(snapshot: LoggedSetSnapshot) {
     snapshot.weightKg !== snapshot.previousWeightKg
   ) {
     const difference = snapshot.weightKg - snapshot.previousWeightKg;
-    pieces.push(`${difference > 0 ? "+" : ""}${formatNumber(difference)} كجم`);
+    pieces.push(`${difference > 0 ? "+" : ""}${formatNumber(difference)} ${language === "ar" ? "كجم" : "kg"}`);
   }
   if (
     snapshot.previousReps !== null &&
     snapshot.reps !== snapshot.previousReps
   ) {
     const difference = snapshot.reps - snapshot.previousReps;
-    pieces.push(`${difference > 0 ? "+" : ""}${difference} عدة`);
+    pieces.push(`${difference > 0 ? "+" : ""}${difference} ${language === "ar" ? "عدة" : difference === 1 || difference === -1 ? "rep" : "reps"}`);
   }
-  if (snapshot.previousWeightKg === null && snapshot.previousReps === null) return "نقطة بداية جديدة";
-  return pieces.length > 0 ? pieces.join(" · ") : "نفس آخر مرة";
+  if (snapshot.previousWeightKg === null && snapshot.previousReps === null) return language === "ar" ? "نقطة بداية جديدة" : "New baseline";
+  return pieces.length > 0 ? pieces.join(" · ") : language === "ar" ? "نفس آخر مرة" : "Same as last time";
 }
 
 type ProgressionSuggestion = {
@@ -155,12 +154,13 @@ function buildProgressionSuggestion(
   targetRepsMin: number,
   targetRepsMax: number,
   weightStep: number,
+  language: "ar" | "en",
 ): ProgressionSuggestion {
   if (!previousSet || previousSet.reps === null) {
     return {
       kind: "baseline",
-      label: "أول مرة",
-      detail: `ابدأ بوزن مريح وخلّي هدفك ${targetRepsMin}–${targetRepsMax} عدة بفورم نضيف.`,
+      label: language === "ar" ? "أول مرة" : "First time",
+      detail: language === "ar" ? `ابدأ بوزن مريح وخلّي هدفك ${targetRepsMin}–${targetRepsMax} عدة بفورم نضيف.` : `Start with a comfortable load and aim for ${targetRepsMin}–${targetRepsMax} clean reps.`,
       weightKg: null,
       reps: targetRepsMin,
     };
@@ -170,8 +170,8 @@ function buildProgressionSuggestion(
   if (reps < targetRepsMin) {
     return {
       kind: "hold",
-      label: "ثبّت الأول",
-      detail: `آخر مرة كانت ${reps} عدات. ثبّت الوزن وحاول توصل ${targetRepsMin} بفورم نضيف قبل الزيادة.`,
+      label: language === "ar" ? "ثبّت الأول" : "Hold the load",
+      detail: language === "ar" ? `آخر مرة كانت ${reps} عدات. ثبّت الوزن وحاول توصل ${targetRepsMin} بفورم نضيف قبل الزيادة.` : `Last time was ${reps} reps. Keep the load and reach ${targetRepsMin} clean reps before increasing.`,
       weightKg: previousSet.weightKg,
       reps: targetRepsMin,
     };
@@ -180,8 +180,8 @@ function buildProgressionSuggestion(
     const nextReps = Math.min(targetRepsMax, reps + 1);
     return {
       kind: "reps",
-      label: `+1 عدة`,
-      detail: `نفس الوزن · هدف ${nextReps} عدات لو الفورم لسه نضيف.`,
+      label: language === "ar" ? "+1 عدة" : "+1 rep",
+      detail: language === "ar" ? `نفس الوزن · هدف ${nextReps} عدات لو الفورم لسه نضيف.` : `Same load · aim for ${nextReps} reps if form stays clean.`,
       weightKg: previousSet.weightKg,
       reps: nextReps,
     };
@@ -190,16 +190,16 @@ function buildProgressionSuggestion(
     const nextWeight = Math.round((previousSet.weightKg + weightStep) * 100) / 100;
     return {
       kind: "load",
-      label: `+${formatNumber(weightStep)} كجم`,
-      detail: `وصلت سقف العدات. جرّب ${formatNumber(nextWeight)} كجم × ${targetRepsMin} لو آخر سِت كانت مستقرة.`,
+      label: `+${formatNumber(weightStep)} ${language === "ar" ? "كجم" : "kg"}`,
+      detail: language === "ar" ? `وصلت سقف العدات. جرّب ${formatNumber(nextWeight)} كجم × ${targetRepsMin} لو آخر سِت كانت مستقرة.` : `You hit the rep ceiling. Try ${formatNumber(nextWeight)} kg × ${targetRepsMin} if the last set was stable.`,
       weightKg: nextWeight,
       reps: targetRepsMin,
     };
   }
   return {
     kind: "reps",
-    label: "+1 عدة",
-    detail: `حاول ${Math.min(targetRepsMax + 1, reps + 1)} عدة بنفس التنفيذ.`,
+    label: language === "ar" ? "+1 عدة" : "+1 rep",
+    detail: language === "ar" ? `حاول ${Math.min(targetRepsMax + 1, reps + 1)} عدة بنفس التنفيذ.` : `Try ${Math.min(targetRepsMax + 1, reps + 1)} reps with the same execution.`,
     weightKg: previousSet.weightKg,
     reps: reps + 1,
   };
@@ -211,6 +211,8 @@ function exerciseIsComplete(sets: WorkoutSet[]) {
 
 export function ActiveWorkoutClient() {
   const router = useRouter();
+  const { language, t } = useLanguage();
+  const ar = language === "ar";
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session");
   const { session, isLoading, error: loadError, reload } = useActiveWorkout(sessionId);
@@ -281,7 +283,7 @@ export function ActiveWorkoutClient() {
   const previousSet = previousSets[activeSetIndex];
   const staleSession = session ? isStaleActiveWorkout(session.startedAt) : false;
   const progressionSuggestion = currentExercise
-    ? buildProgressionSuggestion(previousSet, currentExercise.targetRepsMin, currentExercise.targetRepsMax, weightStep)
+    ? buildProgressionSuggestion(previousSet, currentExercise.targetRepsMin, currentExercise.targetRepsMax, weightStep, language)
     : null;
 
   useEffect(() => {
@@ -394,7 +396,7 @@ export function ActiveWorkoutClient() {
       await reload();
       setCurrentIndex(toIndex);
     } catch (caught) {
-      setError(getArabicErrorMessage(caught, "معرفناش نرتّب التمارين."));
+      setError(t(getArabicErrorMessage(caught, "معرفناش نرتّب التمارين.")));
     } finally {
       setBusy(false);
       setDraggingExerciseId(null);
@@ -467,11 +469,11 @@ export function ActiveWorkoutClient() {
     const reps = parseOptionalNumber(selectedReps);
 
     if (Number.isNaN(weightKg) || (weightKg !== null && (weightKg < 0 || weightKg > 5000))) {
-      setError("اختار وزن صحيح.");
+      setError(t("اختار وزن صحيح."));
       return;
     }
     if (Number.isNaN(reps) || reps === null || !Number.isInteger(reps) || reps <= 0 || reps > 1000) {
-      setError("اختار عدد العدات اللي خلصتها.");
+      setError(t("اختار عدد العدات اللي خلصتها."));
       return;
     }
 
@@ -511,7 +513,7 @@ export function ActiveWorkoutClient() {
         restTimer.reset();
         restTimer.close();
       }
-      setError(getArabicErrorMessage(caught, "معرفناش نسجّل السِت دي."));
+      setError(t(getArabicErrorMessage(caught, "معرفناش نسجّل السِت دي.")));
     } finally {
       setBusy(false);
     }
@@ -539,7 +541,7 @@ export function ActiveWorkoutClient() {
       await updateWorkoutSessionNotes(session.id, sessionNotes);
       router.push("/dashboard");
     } catch (caught) {
-      setError(getArabicErrorMessage(caught, "معرفناش نحفظ التمرينة قبل ما تخرج."));
+      setError(t(getArabicErrorMessage(caught, "معرفناش نحفظ التمرينة قبل ما تخرج.")));
     } finally {
       setBusy(false);
     }
@@ -553,7 +555,7 @@ export function ActiveWorkoutClient() {
       await addExerciseToWorkout(session.id, exercise.id, 2, !permanent || !isOnline);
       if (permanent && session.splitDayId) {
         if (!isOnline) {
-          setError("اتحفظ في التمرينة دي. وصّل النت عشان تضيفه لجدولك بشكل دائم.");
+          setError(t("اتحفظ في التمرينة دي. وصّل النت عشان تضيفه لجدولك بشكل دائم."));
         } else {
           await addSplitExercise({
             splitDayId: session.splitDayId,
@@ -571,7 +573,7 @@ export function ActiveWorkoutClient() {
       setCurrentIndex(session.exercises.length);
       setPhase("ready");
     } catch (caught) {
-      setError(getArabicErrorMessage(caught, "معرفناش نضيف التمرين."));
+      setError(t(getArabicErrorMessage(caught, "معرفناش نضيف التمرين.")));
     } finally {
       setBusy(false);
     }
@@ -587,7 +589,7 @@ export function ActiveWorkoutClient() {
       setCurrentIndex((index) => Math.max(0, Math.min(index, session.exercises.length - 2)));
       setPhase("overview");
     } catch (caught) {
-      setError(getArabicErrorMessage(caught, "معرفناش نشيل التمرين."));
+      setError(t(getArabicErrorMessage(caught, "معرفناش نشيل التمرين.")));
     } finally {
       setBusy(false);
     }
@@ -602,7 +604,7 @@ export function ActiveWorkoutClient() {
       await reload();
       tapFeedback([8, 30, 8]);
     } catch (caught) {
-      setError(getArabicErrorMessage(caught, "معرفناش نعيد تشغيل مؤقت التمرينة."));
+      setError(t(getArabicErrorMessage(caught, "معرفناش نعيد تشغيل مؤقت التمرينة.")));
     } finally {
       setResumingStale(false);
     }
@@ -632,7 +634,7 @@ export function ActiveWorkoutClient() {
       router.replace(`/workout/${session.id}`);
       router.refresh();
     } catch (caught) {
-      setError(getArabicErrorMessage(caught, "معرفناش نخلّص التمرينة."));
+      setError(t(getArabicErrorMessage(caught, "معرفناش نخلّص التمرينة.")));
     } finally {
       setBusy(false);
     }
@@ -655,7 +657,7 @@ export function ActiveWorkoutClient() {
       router.replace("/dashboard");
       router.refresh();
     } catch (caught) {
-      setError(getArabicErrorMessage(caught, "معرفناش نمسح التمرينة."));
+      setError(t(getArabicErrorMessage(caught, "معرفناش نمسح التمرينة.")));
       setBusy(false);
     }
   }
@@ -679,18 +681,18 @@ export function ActiveWorkoutClient() {
     <div className="gc-gym-mode mx-auto w-full min-w-0 space-y-3 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] pt-1">
       <header className="gc-workout-header gc-gym-sticky sticky z-30 rounded-b-[18px] px-1 pb-2.5 pt-2">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-indigo-300 text-[#11131a]">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-300 text-[#11131a]">
             <Dumbbell className="h-4.5 w-4.5" />
           </span>
           <button
             type="button"
             onClick={() => { setPhase("overview"); setQueueEditing(false); }}
             className="min-w-0 flex-1 text-start"
-            aria-label="افتح تمارين النهارده"
+            aria-label={ar ? "افتح تمارين النهارده" : "Open today’s exercises"}
           >
-            <span className="block truncate text-[10px] font-bold uppercase tracking-[0.13em] text-indigo-200">Gym Mode</span>
+            <span className="block truncate text-[10px] font-bold uppercase tracking-[0.13em] text-emerald-200">Gym Mode</span>
             <span className="block truncate text-sm font-black">
-              {phase === "overview" ? "تمارين النهارده" : translateExerciseName(currentExercise.exercise.name)}
+              {phase === "overview" ? (ar ? "تمارين النهارده" : "Today’s exercises") : t(translateExerciseName(currentExercise.exercise.name))}
             </span>
           </button>
           <span className="hidden rounded-lg bg-white/[0.04] px-2 py-1.5 text-[11px] font-bold text-neutral-400 min-[375px]:block">
@@ -700,16 +702,16 @@ export function ActiveWorkoutClient() {
             type="button"
             onClick={() => setShowWorkoutOptions(true)}
             className="gc-gym-menu-button"
-            aria-label="خيارات التمرينة"
+            aria-label={ar ? "خيارات التمرينة" : "Workout options"}
           >
             <MoreHorizontal className="h-5 w-5" />
           </button>
         </div>
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
-          <div className="h-full rounded-full bg-indigo-300 transition-[width] duration-300" style={{ width: `${progress}%` }} />
+          <div className="h-full rounded-full bg-emerald-300 transition-[width] duration-300" style={{ width: `${progress}%` }} />
         </div>
         <div className="mt-1 flex items-center justify-between text-[10px] font-bold text-neutral-600">
-          <span>{totals.completedSets}/{totals.totalSets} سِت</span>
+          <span>{totals.completedSets}/{totals.totalSets} {ar ? "سِت" : "sets"}</span>
           <span>{Math.round(progress)}%</span>
         </div>
       </header>
@@ -717,9 +719,9 @@ export function ActiveWorkoutClient() {
       {staleSession ? (
         <section className="gc-stale-session-alert" role="status">
           <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" />
-          <span className="min-w-0 flex-1 text-xs font-semibold text-neutral-400">الجلسة قديمة؛ الوقت القديم مش هيتحسب.</span>
+          <span className="min-w-0 flex-1 text-xs font-semibold text-neutral-400">{ar ? "الجلسة قديمة؛ الوقت القديم مش هيتحسب." : "This session is stale; old idle time will not count."}</span>
           <button type="button" disabled={resumingStale} onClick={() => void resumeStaleSession()} className="gc-stale-session-resume disabled:opacity-50">
-            <RefreshCcw className="h-3.5 w-3.5" /> {resumingStale ? "بنعيد…" : "كمّل من دلوقتي"}
+            <RefreshCcw className="h-3.5 w-3.5" /> {resumingStale ? (ar ? "بنعيد…" : "Resuming…") : (ar ? "كمّل من دلوقتي" : "Resume now")}
           </button>
         </section>
       ) : null}
@@ -730,19 +732,19 @@ export function ActiveWorkoutClient() {
         <section className="space-y-3">
           <div className="gc-gym-queue-toolbar">
             <div className="min-w-0">
-              <p className="text-sm font-black">تمارين النهارده</p>
-              <p className="mt-0.5 text-[11px] font-semibold text-neutral-500">{totals.completedExercises}/{session.exercises.length} خلصوا · {totals.completedSets}/{totals.totalSets} سِت</p>
+              <p className="text-sm font-black">{ar ? "تمارين النهارده" : "Today’s exercises"}</p>
+              <p className="mt-0.5 text-[11px] font-semibold text-neutral-500">{totals.completedExercises}/{session.exercises.length} {ar ? "خلصوا" : "done"} · {totals.completedSets}/{totals.totalSets} {ar ? "سِت" : "sets"}</p>
             </div>
             <button
               type="button"
               onClick={() => setQueueEditing((value) => !value)}
               className={`gc-compact-action ${queueEditing ? "gc-compact-action-active" : ""}`}
             >
-              <SlidersHorizontal className="h-3.5 w-3.5" /> {queueEditing ? "تم" : "تعديل"}
+              <SlidersHorizontal className="h-3.5 w-3.5" /> {queueEditing ? (ar ? "تم" : "Done") : (ar ? "تعديل" : "Edit")}
             </button>
           </div>
 
-          <div className="gc-gym-queue" aria-label="تمارين النهارده">
+          <div className="gc-gym-queue" aria-label={ar ? "تمارين النهارده" : "Today’s exercises"}>
             {session.exercises.map((exercise, index) => {
               const done = exerciseIsComplete(exercise.sets);
               const completedSets = exercise.sets.filter((set) => set.isCompleted).length;
@@ -763,9 +765,9 @@ export function ActiveWorkoutClient() {
                       {done ? <Check className="h-4 w-4" /> : index + 1}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-black">{translateExerciseName(exercise.exercise.name)}</span>
+                      <span className="block truncate text-sm font-black">{t(translateExerciseName(exercise.exercise.name))}</span>
                       <span className="mt-0.5 block truncate text-[11px] font-semibold text-neutral-500">
-                        {completedSets}/{exercise.sets.length} سِت{previous?.sets[0] ? ` · ${previous.sets[0].weightKg ?? 0} كجم × ${previous.sets[0].reps ?? 0}` : " · أول مرة"}
+                        {completedSets}/{exercise.sets.length} {ar ? "سِت" : "sets"}{previous?.sets[0] ? ` · ${previous.sets[0].weightKg ?? 0} ${ar ? "كجم" : "kg"} × ${previous.sets[0].reps ?? 0}` : ar ? " · أول مرة" : " · first time"}
                       </span>
                     </span>
                     {!queueEditing ? <ChevronLeft className="h-4 w-4 shrink-0 text-neutral-600" /> : null}
@@ -783,13 +785,13 @@ export function ActiveWorkoutClient() {
 
           {queueEditing ? (
             <button type="button" onClick={() => { setShowWorkoutOptions(true); setShowExercisePicker(true); }} className="gc-secondary-button w-full">
-              <ListPlus className="h-4 w-4" /> ضيف تمرين
+              <ListPlus className="h-4 w-4" /> {ar ? "ضيف تمرين" : "Add exercise"}
             </button>
           ) : null}
 
           {workoutComplete ? (
             <button type="button" disabled={busy} onClick={() => void finish()} className="gc-primary-button gc-workout-finish-button w-full disabled:opacity-50">
-              <Check className="h-4 w-4" /> {busy ? "بنخلّص…" : "خلّص التمرينة"}
+              <Check className="h-4 w-4" /> {busy ? (ar ? "بنخلّص…" : "Finishing…") : (ar ? "خلّص التمرينة" : "Finish workout")}
             </button>
           ) : (
             <button
@@ -800,7 +802,7 @@ export function ActiveWorkoutClient() {
               }}
               className="gc-primary-button w-full"
             >
-              <Play className="h-4 w-4" /> {totals.completedSets > 0 ? "كمّل" : "ابدأ"}
+              <Play className="h-4 w-4" /> {totals.completedSets > 0 ? (ar ? "كمّل" : "Continue") : (ar ? "ابدأ" : "Start")}
             </button>
           )}
         </section>
@@ -809,34 +811,34 @@ export function ActiveWorkoutClient() {
           <div className="gc-gym-exercise-head">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-500">
-                <span>تمرين {currentIndex + 1}/{session.exercises.length}</span>
+                <span>{ar ? "تمرين" : "Exercise"} {currentIndex + 1}/{session.exercises.length}</span>
                 <span>·</span>
-                <span>{muscleLabelAr(currentExercise.exercise.primaryMuscle)}</span>
-                {currentExercise.isSessionOnlyAddition ? <span className="gc-mini-badge">للجلسة دي</span> : null}
+                <span>{t(muscleLabelAr(currentExercise.exercise.primaryMuscle))}</span>
+                {currentExercise.isSessionOnlyAddition ? <span className="gc-mini-badge">{ar ? "للجلسة دي" : "Session only"}</span> : null}
               </div>
-              <h1 className="mt-1 truncate text-xl font-black tracking-[-0.025em]">{translateExerciseName(currentExercise.exercise.name)}</h1>
+              <h1 className="mt-1 truncate text-xl font-black tracking-[-0.025em]">{t(translateExerciseName(currentExercise.exercise.name))}</h1>
             </div>
           </div>
 
           <div className="gc-gym-history-line">
-            <History className="h-3.5 w-3.5 shrink-0 text-indigo-200" />
+            <History className="h-3.5 w-3.5 shrink-0 text-emerald-200" />
             {previousPerformanceLoading ? (
-              <span>بنجيب آخر أرقام…</span>
+              <span>{ar ? "بنجيب آخر أرقام…" : "Loading previous numbers…"}</span>
             ) : previousPerformance ? (
-              <span>آخر مرة {formatWorkoutDate(previousPerformance.scheduledDate)}{previousSet ? ` · ${previousSet.weightKg ?? 0} كجم × ${previousSet.reps ?? 0}` : ""}</span>
+              <span>{ar ? "آخر مرة" : "Last time"} {t(formatWorkoutDate(previousPerformance.scheduledDate))}{previousSet ? ` · ${previousSet.weightKg ?? 0} ${ar ? "كجم" : "kg"} × ${previousSet.reps ?? 0}` : ""}</span>
             ) : (
-              <span>أول مرة · هنثبت نقطة البداية</span>
+              <span>{ar ? "أول مرة · هنثبت نقطة البداية" : "First time · setting your baseline"}</span>
             )}
           </div>
 
           {currentComplete && !lastLogged ? (
             <div className="gc-gym-complete-strip">
               <Check className="h-5 w-5 shrink-0" />
-              <div className="min-w-0 flex-1"><strong>{workoutComplete ? "كل التمرينة خلصت" : "التمرين خلص"}</strong><span>{completedCurrentSets}/{currentExercise.sets.length} سِت</span></div>
+              <div className="min-w-0 flex-1"><strong>{workoutComplete ? (ar ? "كل التمرينة خلصت" : "Workout complete") : (ar ? "التمرين خلص" : "Exercise complete")}</strong><span>{completedCurrentSets}/{currentExercise.sets.length} {ar ? "سِت" : "sets"}</span></div>
               {workoutComplete ? (
-                <button type="button" disabled={busy} onClick={() => void finish()} className="gc-compact-action">إنهاء</button>
+                <button type="button" disabled={busy} onClick={() => void finish()} className="gc-compact-action">{ar ? "إنهاء" : "Finish"}</button>
               ) : (
-                <button type="button" onClick={goToNextExercise} className="gc-compact-action">التالي <ChevronLeft className="h-3.5 w-3.5" /></button>
+                <button type="button" onClick={goToNextExercise} className="gc-compact-action">{ar ? "التالي" : "Next"} <ChevronLeft className="h-3.5 w-3.5" /></button>
               )}
             </div>
           ) : null}
@@ -845,10 +847,10 @@ export function ActiveWorkoutClient() {
             <div className="gc-gym-set-panel">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="gc-eyebrow">سِت {activeSet.setNumber}</p>
-                  <h2 className="mt-0.5 text-lg font-black">{completedCurrentSets}/{currentExercise.sets.length} خلصوا</h2>
+                  <p className="gc-eyebrow">{ar ? "سِت" : "Set"} {activeSet.setNumber}</p>
+                  <h2 className="mt-0.5 text-lg font-black">{completedCurrentSets}/{currentExercise.sets.length} {ar ? "خلصوا" : "completed"}</h2>
                 </div>
-                <span className="text-xs font-bold text-neutral-500">هدف {currentExercise.targetRepsMin}–{currentExercise.targetRepsMax}</span>
+                <div className="flex items-center gap-2"><span className="text-xs font-bold text-neutral-500">{ar ? "هدف" : "Target"} {currentExercise.targetRepsMin}–{currentExercise.targetRepsMax}</span><button type="button" onClick={startSet} className="gc-set-timer-button" aria-label={ar ? "ابدأ مؤقت السِت" : "Start set timer"}><TimerReset className="h-3.5 w-3.5" /></button></div>
               </div>
 
               {progressionSuggestion ? (
@@ -866,91 +868,86 @@ export function ActiveWorkoutClient() {
                     }}
                     className="gc-gym-suggestion-action"
                   >
-                    استخدم
+                    {ar ? "استخدم" : "Use"}
                   </button>
                 </div>
               ) : null}
 
-              <div className="gc-gym-set-grid mt-3 grid grid-cols-2 gap-2" aria-label="تسجيل السِت">
+              <div className="gc-gym-set-grid mt-3 grid grid-cols-2 gap-2" aria-label={ar ? "تسجيل السِت" : "Log set"}>
                 <div className="gc-quick-set-control">
-                  <span className="gc-quick-set-label">الوزن · كجم</span>
+                  <span className="gc-quick-set-label">{ar ? "الوزن · كجم" : "Weight · kg"}</span>
                   <div className="mt-2 grid grid-cols-[2.6rem_1fr_2.6rem] items-center gap-1">
-                    <button type="button" onClick={() => nudgeWeight(-weightStep)} className="gc-quick-set-nudge" aria-label={`قلل الوزن ${formatNumber(weightStep)}`}><Minus className="h-4 w-4" /></button>
-                    <button type="button" onClick={() => setPhase("logging")} className="gc-quick-set-value" aria-label="عدّل الوزن">{selectedWeight || "—"}</button>
-                    <button type="button" onClick={() => nudgeWeight(weightStep)} className="gc-quick-set-nudge" aria-label={`زوّد الوزن ${formatNumber(weightStep)}`}><Plus className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => nudgeWeight(-weightStep)} className="gc-quick-set-nudge" aria-label={ar ? `قلل الوزن ${formatNumber(weightStep)}` : `Decrease weight by ${formatNumber(weightStep)}`}><Minus className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => setPhase("logging")} className="gc-quick-set-value" aria-label={ar ? "عدّل الوزن" : "Edit weight"}>{selectedWeight || "—"}</button>
+                    <button type="button" onClick={() => nudgeWeight(weightStep)} className="gc-quick-set-nudge" aria-label={ar ? `زوّد الوزن ${formatNumber(weightStep)}` : `Increase weight by ${formatNumber(weightStep)}`}><Plus className="h-4 w-4" /></button>
                   </div>
                 </div>
                 <div className="gc-quick-set-control">
-                  <span className="gc-quick-set-label">العدات</span>
+                  <span className="gc-quick-set-label">{ar ? "العدات" : "Reps"}</span>
                   <div className="mt-2 grid grid-cols-[2.6rem_1fr_2.6rem] items-center gap-1">
-                    <button type="button" onClick={() => nudgeReps(-1)} className="gc-quick-set-nudge" aria-label="قلل عدة"><Minus className="h-4 w-4" /></button>
-                    <button type="button" onClick={() => setPhase("logging")} className="gc-quick-set-value" aria-label="عدّل العدات">{selectedReps || "—"}</button>
-                    <button type="button" onClick={() => nudgeReps(1)} className="gc-quick-set-nudge" aria-label="زوّد عدة"><Plus className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => nudgeReps(-1)} className="gc-quick-set-nudge" aria-label={ar ? "قلل عدة" : "Decrease reps"}><Minus className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => setPhase("logging")} className="gc-quick-set-value" aria-label={ar ? "عدّل العدات" : "Edit reps"}>{selectedReps || "—"}</button>
+                    <button type="button" onClick={() => nudgeReps(1)} className="gc-quick-set-nudge" aria-label={ar ? "زوّد عدة" : "Increase reps"}><Plus className="h-4 w-4" /></button>
                   </div>
                 </div>
               </div>
 
               <button type="button" disabled={busy || selectedReps === ""} onClick={() => void logSet()} className="gc-primary-button gc-gym-log-button mt-3 w-full min-h-14 text-base disabled:opacity-40">
-                <Check className="h-5 w-5" /> {busy ? "بنحفظ…" : `سجّل ${selectedWeight || "0"} كجم × ${selectedReps || "—"}`}
+                <Check className="h-5 w-5" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : ar ? `سجّل ${selectedWeight || "0"} كجم × ${selectedReps || "—"}` : `Log ${selectedWeight || "0"} kg × ${selectedReps || "—"}`}
               </button>
 
-              <div className="gc-gym-inline-tools mt-2">
-                <button type="button" onClick={() => setPhase("logging")}><SlidersHorizontal className="h-4 w-4" /><span>تفاصيل</span></button>
-                <button type="button" onClick={startSet}><TimerReset className="h-4 w-4" /><span>مؤقت</span></button>
-                <button type="button" onClick={() => setPhase("overview")}><List className="h-4 w-4" /><span>التمارين</span></button>
-              </div>
             </div>
           ) : null}
 
           {phase === "working" && activeSet ? (
             <div className="gc-gym-set-panel text-center">
-              <p className="gc-eyebrow">سِت {activeSet.setNumber}</p>
+              <p className="gc-eyebrow">{ar ? "سِت" : "Set"} {activeSet.setNumber}</p>
               <p className="mt-2 text-5xl font-black tracking-[-0.06em]"><SetElapsedClock key={activeSet.id} startedAt={setStartedAt} /></p>
               <button type="button" onClick={() => { setSelectedWeight((current) => current || activeSet.weightKg?.toString() || previousSet?.weightKg?.toString() || ""); setSelectedReps((current) => current || activeSet.reps?.toString() || previousSet?.reps?.toString() || String(currentExercise.targetRepsMin)); setWeightStep(readWeightStep(currentExercise.exerciseId, previousSets)); setPhase("logging"); }} className="gc-primary-button mt-5 w-full">
-                <Check className="h-4 w-4" /> خلصت السِت
+                <Check className="h-4 w-4" /> {ar ? "خلصت السِت" : "Set finished"}
               </button>
-              <button type="button" onClick={() => { setSetStartedAt(null); setPhase("ready"); }} className="mt-1 min-h-10 w-full text-xs font-bold text-neutral-500">إلغاء</button>
+              <button type="button" onClick={() => { setSetStartedAt(null); setPhase("ready"); }} className="mt-1 min-h-10 w-full text-xs font-bold text-neutral-500">{ar ? "إلغاء" : "Cancel"}</button>
             </div>
           ) : null}
 
           {phase === "logging" && activeSet ? (
             <div className="gc-gym-set-panel">
               <div className="flex items-center justify-between gap-3">
-                <div><p className="gc-eyebrow">تفاصيل السِت {activeSet.setNumber}</p><h2 className="mt-0.5 text-lg font-black">الوزن والعدات</h2></div>
-                <button type="button" onClick={() => setPhase("ready")} className="gc-icon-button" aria-label="ارجع"><X className="h-4 w-4" /></button>
+                <div><p className="gc-eyebrow">{ar ? "تفاصيل السِت" : "Set details"} {activeSet.setNumber}</p><h2 className="mt-0.5 text-lg font-black">{ar ? "الوزن والعدات" : "Weight & reps"}</h2></div>
+                <button type="button" onClick={() => setPhase("ready")} className="gc-icon-button" aria-label={ar ? "ارجع" : "Back"}><X className="h-4 w-4" /></button>
               </div>
 
               <div className="mt-4">
-                <div className="flex items-center justify-between"><span className="text-xs font-bold text-neutral-500">الوزن · كجم</span><span className="text-[10px] font-bold text-neutral-600">خطوة {formatNumber(weightStep)}</span></div>
-                <div className="gc-number-strip mt-2" role="list" aria-label="اختيارات الوزن">
+                <div className="flex items-center justify-between"><span className="text-xs font-bold text-neutral-500">{ar ? "الوزن · كجم" : "Weight · kg"}</span><span className="text-[10px] font-bold text-neutral-600">{ar ? "خطوة" : "Step"} {formatNumber(weightStep)}</span></div>
+                <div className="gc-number-strip mt-2" role="list" aria-label={ar ? "اختيارات الوزن" : "Weight options"}>
                   {weightOptions.map((weight) => {
                     const selected = Number(selectedWeight) === weight;
                     const last = previousSet?.weightKg === weight;
-                    return <button key={weight} type="button" onClick={() => { setSelectedWeight(weight.toString()); setShowCustomWeight(false); }} className={`gc-number-option ${selected ? "gc-number-option-selected" : ""}`}><span className="text-xl font-black tabular-nums">{formatNumber(weight)}</span><span className="text-[9px] font-bold text-neutral-500">كجم</span>{last ? <span className="gc-number-badge">آخر مرة</span> : null}</button>;
+                    return <button key={weight} type="button" onClick={() => { setSelectedWeight(weight.toString()); setShowCustomWeight(false); }} className={`gc-number-option ${selected ? "gc-number-option-selected" : ""}`}><span className="text-xl font-black tabular-nums">{formatNumber(weight)}</span><span className="text-[9px] font-bold text-neutral-500">{ar ? "كجم" : "kg"}</span>{last ? <span className="gc-number-badge">{ar ? "آخر مرة" : "Last"}</span> : null}</button>;
                   })}
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {WEIGHT_STEPS.map((step) => <button key={step} type="button" onClick={() => saveWeightStep(step)} className={`gc-step-chip ${weightStep === step ? "gc-step-chip-active" : ""}`}>+{formatNumber(step)}</button>)}
-                  <button type="button" onClick={() => setShowCustomWeight((value) => !value)} className="gc-step-chip me-auto">رقم تاني</button>
+                  <button type="button" onClick={() => setShowCustomWeight((value) => !value)} className="gc-step-chip me-auto">{ar ? "رقم تاني" : "Custom"}</button>
                 </div>
                 {showCustomWeight ? <input autoFocus inputMode="decimal" type="number" min={0} step="any" value={selectedWeight} onChange={(event) => setSelectedWeight(event.target.value)} className="gc-input mt-2 text-center text-lg font-black tabular-nums" /> : null}
               </div>
 
               <div className="mt-4 border-t border-white/[0.06] pt-4">
-                <span className="text-xs font-bold text-neutral-500">العدات</span>
-                <div className="gc-rep-grid mt-2" role="list" aria-label="اختيارات العدات">
+                <span className="text-xs font-bold text-neutral-500">{ar ? "العدات" : "Reps"}</span>
+                <div className="gc-rep-grid mt-2" role="list" aria-label={ar ? "اختيارات العدات" : "Rep options"}>
                   {repOptions.map((reps) => {
                     const selected = Number(selectedReps) === reps;
                     const last = previousSet?.reps === reps;
-                    return <button key={reps} type="button" onClick={() => { setSelectedReps(reps.toString()); setShowCustomReps(false); }} className={`gc-rep-option ${selected ? "gc-number-option-selected" : ""}`}><span className="text-lg font-black tabular-nums">{reps}</span>{last ? <span className="gc-number-badge">آخر مرة</span> : null}</button>;
+                    return <button key={reps} type="button" onClick={() => { setSelectedReps(reps.toString()); setShowCustomReps(false); }} className={`gc-rep-option ${selected ? "gc-number-option-selected" : ""}`}><span className="text-lg font-black tabular-nums">{reps}</span>{last ? <span className="gc-number-badge">{ar ? "آخر مرة" : "Last"}</span> : null}</button>;
                   })}
                 </div>
-                <button type="button" onClick={() => setShowCustomReps((value) => !value)} className="mt-2 text-xs font-bold text-indigo-200">عدد تاني</button>
+                <button type="button" onClick={() => setShowCustomReps((value) => !value)} className="mt-2 text-xs font-bold text-emerald-200">{ar ? "عدد تاني" : "Custom reps"}</button>
                 {showCustomReps ? <input autoFocus inputMode="numeric" type="number" min={1} step={1} value={selectedReps} onChange={(event) => setSelectedReps(event.target.value)} className="gc-input mt-2 text-center text-lg font-black tabular-nums" /> : null}
               </div>
 
               <button type="button" disabled={busy || selectedReps === ""} onClick={() => void logSet()} className="gc-primary-button gc-gym-log-button mt-4 w-full text-base disabled:opacity-40">
-                <Check className="h-5 w-5" /> {busy ? "بنحفظ…" : `سجّل ${selectedWeight || "0"} كجم × ${selectedReps || "—"}`}
+                <Check className="h-5 w-5" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : ar ? `سجّل ${selectedWeight || "0"} كجم × ${selectedReps || "—"}` : `Log ${selectedWeight || "0"} kg × ${selectedReps || "—"}`}
               </button>
             </div>
           ) : null}
@@ -958,7 +955,7 @@ export function ActiveWorkoutClient() {
           {phase === "post" && lastLogged ? (
             <div className="gc-gym-post-strip" aria-live="polite">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-400 text-[#101319]"><Check className="h-5 w-5" /></span>
-              <div className="min-w-0 flex-1"><strong className="block text-base tabular-nums">{lastLogged.weightKg ?? 0} كجم × {lastLogged.reps}</strong><span className="block truncate text-xs font-semibold text-neutral-500">{getComparison(lastLogged)}</span></div>
+              <div className="min-w-0 flex-1"><strong className="block text-base tabular-nums">{lastLogged.weightKg ?? 0} {ar ? "كجم" : "kg"} × {lastLogged.reps}</strong><span className="block truncate text-xs font-semibold text-neutral-500">{getComparison(lastLogged, language)}</span></div>
               {restTimer.isRunning ? <button type="button" onClick={restTimer.open} className="gc-compact-action"><TimerReset className="h-3.5 w-3.5" /> {formatDuration(restTimer.remainingSeconds)}</button> : null}
             </div>
           ) : null}
@@ -966,19 +963,19 @@ export function ActiveWorkoutClient() {
           {phase === "post" && lastLogged ? (
             <div className="grid gap-2">
               {workoutComplete ? (
-                <button type="button" disabled={busy} onClick={() => void finish()} className="gc-primary-button gc-workout-finish-button w-full disabled:opacity-50"><Check className="h-4 w-4" /> {busy ? "بنخلّص…" : "خلّص التمرينة"}</button>
+                <button type="button" disabled={busy} onClick={() => void finish()} className="gc-primary-button gc-workout-finish-button w-full disabled:opacity-50"><Check className="h-4 w-4" /> {busy ? (ar ? "بنخلّص…" : "Finishing…") : (ar ? "خلّص التمرينة" : "Finish workout")}</button>
               ) : nextIncompleteSet ? (
-                <button type="button" onClick={() => { const nextIndex = currentExercise.sets.findIndex((set) => set.id === nextIncompleteSet.id); prepareSetValues(nextIndex >= 0 ? nextIndex : activeSetIndex); setPhase("ready"); }} className="gc-primary-button w-full"><Play className="h-4 w-4" /> سِت {nextIncompleteSet.setNumber}</button>
+                <button type="button" onClick={() => { const nextIndex = currentExercise.sets.findIndex((set) => set.id === nextIncompleteSet.id); prepareSetValues(nextIndex >= 0 ? nextIndex : activeSetIndex); setPhase("ready"); }} className="gc-primary-button w-full"><Play className="h-4 w-4" /> {ar ? "سِت" : "Set"} {nextIncompleteSet.setNumber}</button>
               ) : (
-                <button type="button" onClick={goToNextExercise} className="gc-primary-button w-full">التمرين اللي بعده <ChevronLeft className="h-4 w-4" /></button>
+                <button type="button" onClick={goToNextExercise} className="gc-primary-button w-full">{ar ? "التمرين اللي بعده" : "Next exercise"} <ChevronLeft className="h-4 w-4" /></button>
               )}
-              {!workoutComplete ? <button type="button" onClick={goToNextExercise} className="gc-gym-text-action"><SkipForward className="h-3.5 w-3.5" /> تمرين تاني</button> : null}
+              {!workoutComplete ? <button type="button" onClick={goToNextExercise} className="gc-gym-text-action"><SkipForward className="h-3.5 w-3.5" /> {ar ? "تمرين تاني" : "Another exercise"}</button> : null}
             </div>
           ) : null}
 
           {previousPerformance?.exerciseNotes ? (
             <button type="button" onClick={() => setShowExerciseNotes((value) => !value)} className="gc-gym-note-row">
-              <MessageSquareText className="h-4 w-4 shrink-0 text-indigo-200" />
+              <MessageSquareText className="h-4 w-4 shrink-0 text-emerald-200" />
               <span className={`min-w-0 flex-1 text-start text-xs text-neutral-400 ${showExerciseNotes ? "" : "truncate"}`}>{previousPerformance.exerciseNotes}</span>
             </button>
           ) : null}
@@ -987,34 +984,29 @@ export function ActiveWorkoutClient() {
 
       {showWorkoutOptions ? (
         <div className="gc-workout-options-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowWorkoutOptions(false); }}>
-          <section className="gc-workout-options-sheet" role="dialog" aria-modal="true" aria-label="خيارات التمرينة">
+          <section className="gc-workout-options-sheet" role="dialog" aria-modal="true" aria-label={ar ? "خيارات التمرينة" : "Workout options"}>
             <div className="gc-workout-options-handle" />
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="gc-eyebrow">Gym Mode</p>
-                <h2 className="mt-0.5 text-xl font-black">خيارات التمرينة</h2>
-                <p className="mt-1 text-xs font-semibold text-neutral-500">الإعدادات الثانوية هنا عشان شاشة التسجيل تفضل مركزة.</p>
+                <h2 className="mt-0.5 text-xl font-black">{ar ? "خيارات التمرينة" : "Workout options"}</h2>
+                <p className="mt-1 text-xs font-semibold text-neutral-500">{ar ? "الإعدادات الثانوية هنا عشان شاشة التسجيل تفضل مركزة." : "Secondary actions live here so logging stays focused."}</p>
               </div>
-              <button type="button" onClick={() => setShowWorkoutOptions(false)} className="gc-icon-button" aria-label="اقفل"><X className="h-4 w-4" /></button>
+              <button type="button" onClick={() => setShowWorkoutOptions(false)} className="gc-icon-button" aria-label={ar ? "اقفل" : "Close"}><X className="h-4 w-4" /></button>
             </div>
 
             <div className="gc-workout-options-list mt-4">
               <button type="button" onClick={() => { setPhase("overview"); setQueueEditing(true); setShowWorkoutOptions(false); }} className="gc-workout-option-row">
                 <span className="gc-workout-option-icon"><List className="h-4 w-4" /></span>
-                <span className="min-w-0 flex-1 text-start"><strong>إدارة التمارين</strong><small>ترتيب القائمة وتعديلها</small></span>
+                <span className="min-w-0 flex-1 text-start"><strong>{ar ? "إدارة التمارين" : "Manage exercises"}</strong><small>{ar ? "ترتيب القائمة وتعديلها" : "Reorder and edit the queue"}</small></span>
                 <ChevronLeft className="h-4 w-4 text-neutral-600" />
               </button>
 
-              <button type="button" onClick={() => setShowExercisePicker((value) => !value)} className="gc-workout-option-row">
-                <span className="gc-workout-option-icon"><ListPlus className="h-4 w-4" /></span>
-                <span className="min-w-0 flex-1 text-start"><strong>ضيف تمرين</strong><small>للجلسة دي أو للجدول الأساسي</small></span>
-                <ChevronDown className={`h-4 w-4 text-neutral-500 transition ${showExercisePicker ? "rotate-180" : ""}`} />
-              </button>
 
               {phase !== "overview" ? (
                 <button type="button" disabled={busy} onClick={() => { setShowWorkoutOptions(false); void removeCurrentExercise(); }} className="gc-workout-option-row">
                   <span className="gc-workout-option-icon"><Trash2 className="h-4 w-4" /></span>
-                  <span className="min-w-0 flex-1 text-start"><strong>شيل التمرين الحالي</strong><small>من الجلسة الحالية</small></span>
+                  <span className="min-w-0 flex-1 text-start"><strong>{ar ? "شيل التمرين الحالي" : "Remove current exercise"}</strong><small>{ar ? "من الجلسة الحالية" : "From this session"}</small></span>
                 </button>
               ) : null}
             </div>
@@ -1022,32 +1014,32 @@ export function ActiveWorkoutClient() {
             {showExercisePicker ? (
               <div className="mt-3 space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-3">
                 <select value={selectedExercise} onChange={(event) => setSelectedExercise(event.target.value)} className="gc-input text-sm">
-                  <option value="">اختار تمرين…</option>
-                  {availableExercises.map((exercise) => <option key={exercise.id} value={exercise.id}>{translateExerciseName(exercise.name)}</option>)}
+                  <option value="">{ar ? "اختار تمرين…" : "Choose an exercise…"}</option>
+                  {availableExercises.map((exercise) => <option key={exercise.id} value={exercise.id}>{t(translateExerciseName(exercise.name))}</option>)}
                 </select>
-                <label className="flex items-center gap-2 text-xs font-semibold text-neutral-400"><input type="checkbox" checked={permanent} onChange={(event) => setPermanent(event.target.checked)} /> ضيفه كمان للجدول</label>
-                {!isOnline && permanent ? <p className="text-xs font-semibold text-amber-300">تعديل الجدول محتاج نت؛ هيتحفظ في الجلسة الحالية بس.</p> : null}
-                <button type="button" disabled={!selectedExercise || busy} onClick={() => void addExercise()} className="gc-primary-button w-full disabled:opacity-40"><Plus className="h-4 w-4" /> إضافة</button>
-                <button type="button" onClick={() => setShowCustomExercise((value) => !value)} className="gc-gym-text-action w-full">تمرين مخصص</button>
+                <label className="flex items-center gap-2 text-xs font-semibold text-neutral-400"><input type="checkbox" checked={permanent} onChange={(event) => setPermanent(event.target.checked)} /> {ar ? "ضيفه كمان للجدول" : "Also add to base plan"}</label>
+                {!isOnline && permanent ? <p className="text-xs font-semibold text-amber-300">{ar ? "تعديل الجدول محتاج نت؛ هيتحفظ في الجلسة الحالية بس." : "Editing the base plan needs internet; it will only be saved to this session for now."}</p> : null}
+                <button type="button" disabled={!selectedExercise || busy} onClick={() => void addExercise()} className="gc-primary-button w-full disabled:opacity-40"><Plus className="h-4 w-4" /> {ar ? "إضافة" : "Add"}</button>
+                <button type="button" onClick={() => setShowCustomExercise((value) => !value)} className="gc-gym-text-action w-full">{ar ? "تمرين مخصص" : "Custom exercise"}</button>
                 {showCustomExercise ? <CustomExerciseForm compact defaultWorkoutType="custom" onCreated={addExercise} onCancel={() => setShowCustomExercise(false)} /> : null}
               </div>
             ) : null}
 
             {phase !== "overview" ? (
               <label className="mt-4 block text-xs font-bold text-neutral-500">
-                ملاحظة التمرين
-                <textarea defaultValue={currentExercise.notes} onBlur={(event) => void updateWorkoutExerciseNotes(currentExercise.id, event.target.value).catch((caught: Error) => setError(caught.message))} rows={2} placeholder="مسكة، وضع جهاز، ملاحظة…" className="gc-input mt-2 font-normal" />
+                {ar ? "ملاحظة التمرين" : "Exercise note"}
+                <textarea defaultValue={currentExercise.notes} onBlur={(event) => void updateWorkoutExerciseNotes(currentExercise.id, event.target.value).catch((caught: Error) => setError(caught.message))} rows={2} placeholder={ar ? "مسكة، وضع جهاز، ملاحظة…" : "Grip, machine setup, note…"} className="gc-input mt-2 font-normal" />
               </label>
             ) : null}
 
             <label className="mt-4 block text-xs font-bold text-neutral-500">
-              ملاحظة الجلسة
-              <textarea value={sessionNotes} onChange={(event) => setSessionNotes(event.target.value)} onBlur={() => void updateWorkoutSessionNotes(session.id, sessionNotes)} rows={2} className="gc-input mt-2 font-normal" placeholder="أي حاجة محتاج تفتكرها…" />
+              {ar ? "ملاحظة الجلسة" : "Session note"}
+              <textarea value={sessionNotes} onChange={(event) => setSessionNotes(event.target.value)} onBlur={() => void updateWorkoutSessionNotes(session.id, sessionNotes)} rows={2} className="gc-input mt-2 font-normal" placeholder={ar ? "أي حاجة محتاج تفتكرها…" : "Anything you want to remember…"} />
             </label>
 
             <div className="mt-4 grid gap-2 border-t border-[var(--border)] pt-4">
-              <button type="button" disabled={busy} onClick={() => void leaveWorkout()} className="gc-secondary-button w-full disabled:opacity-50"><LogOut className="h-4 w-4" /> {busy ? "بنحفظ…" : "احفظ واخرج"}</button>
-              <button type="button" disabled={busy} onClick={() => void discard()} className="gc-danger-button w-full disabled:opacity-40"><XCircle className="h-4 w-4" /> امسح الجلسة</button>
+              <button type="button" disabled={busy} onClick={() => void leaveWorkout()} className="gc-secondary-button w-full disabled:opacity-50"><LogOut className="h-4 w-4" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : (ar ? "احفظ واخرج" : "Save & exit")}</button>
+              <button type="button" disabled={busy} onClick={() => void discard()} className="gc-danger-button w-full disabled:opacity-40"><XCircle className="h-4 w-4" /> {ar ? "امسح الجلسة" : "Discard session"}</button>
             </div>
           </section>
         </div>

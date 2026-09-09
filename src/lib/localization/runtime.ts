@@ -7,7 +7,8 @@ export const LANGUAGE_STORAGE_KEY = STORAGE_KEYS.language;
 
 const ARABIC_RE = /[\u0600-\u06ff]/u;
 const ATTRIBUTES = ["aria-label", "title", "placeholder", "alt"] as const;
-const SKIP_SELECTOR = "script, style, code, pre, textarea, [data-no-localize], [contenteditable='true']";
+const SKIP_TEXT_SELECTOR = "script, style, code, pre, textarea, [data-no-localize], [contenteditable='true']";
+const SKIP_ATTRIBUTE_SELECTOR = "script, style, code, pre, [data-no-localize], [contenteditable='true']";
 
 const ARABIC_DIGITS: Readonly<Record<string, string>> = {
   "٠": "0",
@@ -77,6 +78,17 @@ function translateArabicDynamic(value: string): string {
     .replace(/^(\d+)\s*دقيقة(?:\s|$)/gu, "$1 min ")
     .replace(/^(\d+)\s*دقايق(?:\s|$)/gu, "$1 min ")
     .replace(/(\d+(?:\.\d+)?)\s*كجم/gu, "$1 kg")
+    .replace(/(\d+(?:\.\d+)?)\s*سم\b/gu, "$1 cm")
+    .replace(/(\d+(?:\.\d+)?)\s*g\s*بروتين/gu, "$1g protein")
+    .replace(/(\d+(?:\.\d+)?)%\s*توافق/gu, "$1% fit")
+    .replace(/(\d+)\s*تسجيلات?/gu, "$1 logs")
+    .replace(/(\d+)\s*قراءات?/gu, "$1 readings")
+    .replace(/بعد\s+(\d+)\s+أيام?/gu, "in $1 days")
+    .replace(/(\d+)\s+مناطق أساسية حجمها قليل نسبيًا\./gu, "$1 core areas have relatively low volume.")
+    .replace(/تغطية الخطة\s+(\d+)\/10\s+مناطق\s+·\s+(\d+)\s+أيام تمرين\./gu, "Plan coverage: $1/10 areas · $2 training days.")
+    .replace(/الـlower body حوالي\s+(\d+)%\s+من الحمل المحسوب\s+·\s+(\d+)\s+أيام تمرين\./gu, "Lower body is about $1% of calculated volume · $2 training days.")
+    .replace(/باقي\s+(\d+)\s*kcal\s+·\s+(\d+(?:\.\d+)?)g\s+بروتين/gu, "$1 kcal · $2g protein left")
+    .replace(/باقي\s+(\d+)\s*kcal/gu, "$1 kcal left")
     .replace(/(\d+)\s*عدة/gu, "$1 reps")
     .replace(/(\d+)\s*سِتات?/gu, "$1 sets")
     .replace(/(\d+)\s*تمارين?/gu, "$1 exercises")
@@ -89,7 +101,12 @@ function translateArabicDynamic(value: string): string {
     .replace(/وصلت سقف العدات\. جرّب (\d+(?:\.\d+)?) كجم × (\d+) لو آخر سِت كانت مستقرة\./gu, "You hit the rep ceiling. Try $1 kg × $2 if the last set was stable.")
     .replace(/هدف صغير:\s+نفس الوزن وحاول\s+(\d+)\s+عدة لو الفورم لسه نضيف\./gu, "Small target: keep the weight and try $1 reps if form stays clean.")
     .replace(/وصلت سقف العدات\. لو السِت كانت مريحة، جرّب \+(\d+(?:\.\d+)?) كجم وابدأ من (\d+) عدات\./gu, "You hit the top of the rep range. If the set felt comfortable, try +$1 kg and restart at $2 reps.")
+    .replace(/مؤشر القوة التقديري أعلى بحوالي\s+(\d+(?:\.\d+)?)%\s+مقارنة بالفترة اللي قبلها\./gu, "Estimated strength is up about $1% versus the previous period.")
     .replace(/مؤشر القوة أعلى بحوالي\s+(\d+(?:\.\d+)?)%/gu, "Strength estimate is up about $1%")
+    .replace(/الوزن طالع\s+(\d+(?:\.\d+)?)\s*كجم/gu, "Weight is up $1 kg")
+    .replace(/الوزن نازل\s+(\d+(?:\.\d+)?)\s*كجم/gu, "Weight is down $1 kg")
+    .replace(/الوزن اتحرك\s+(\d+(?:\.\d+)?)\s*كجم/gu, "Weight changed by $1 kg")
+    .replace(/المؤشر التقديري نازل حوالي\s+(\d+(?:\.\d+)?)%\.\s*راقب أكتر من تمرينة قبل أي قرار كبير\./gu, "Estimated strength is down about $1%. Watch more than one session before making a major change.")
     .replace(/التمرين\s+(\d+)\s+من\s+(\d+)/gu, "Exercise $1 of $2")
     .replace(/السِت\s+(\d+)/gu, "Set $1")
     .replace(/آخر\s+سِت\s+(\d+)/gu, "Last set $1")
@@ -161,13 +178,17 @@ export function localizeRuntimeText(value: string, language: AppLanguage): strin
   return preserveWhitespace(value, translated);
 }
 
-function shouldSkip(element: Element | null): boolean {
-  return Boolean(element?.closest(SKIP_SELECTOR));
+function shouldSkipText(element: Element | null): boolean {
+  return Boolean(element?.closest(SKIP_TEXT_SELECTOR));
+}
+
+function shouldSkipAttributes(element: Element | null): boolean {
+  return Boolean(element?.closest(SKIP_ATTRIBUTE_SELECTOR));
 }
 
 function localizeTextNode(node: Text, language: AppLanguage): void {
   const parent = node.parentElement;
-  if (!parent || shouldSkip(parent)) return;
+  if (!parent || shouldSkipText(parent)) return;
 
   const current = node.data;
   let source = originalText.get(node);
@@ -189,7 +210,7 @@ function localizeTextNode(node: Text, language: AppLanguage): void {
 }
 
 function localizeAttribute(element: Element, attribute: string, language: AppLanguage): void {
-  if (shouldSkip(element)) return;
+  if (shouldSkipAttributes(element)) return;
   const current = element.getAttribute(attribute);
   if (!current) return;
 

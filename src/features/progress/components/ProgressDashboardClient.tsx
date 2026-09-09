@@ -35,7 +35,7 @@ export function ProgressDashboardClient({ userId }: ProgressDashboardClientProps
     return (
       <div className="space-y-4 pb-24 pt-4">
         <section className="gc-empty-state">
-          <Dumbbell className="h-6 w-6 text-indigo-300" />
+          <Dumbbell className="h-6 w-6 text-emerald-300" />
           <h2 className="mt-3 text-2xl font-black tracking-[-0.04em]">ابدأ أول تمرينة</h2>
           <p className="mt-1 text-sm text-neutral-500">بعد أول تسجيل هنبدأ نعرض القوة والالتزام والاتجاه.</p>
           <Link href="/workout/today" className="gc-primary-button mt-4 w-full sm:w-auto">ابدأ</Link>
@@ -51,7 +51,7 @@ export function ProgressDashboardClient({ userId }: ProgressDashboardClientProps
           <span className="text-[10px] font-black uppercase tracking-[0.12em] text-neutral-500">الأسبوع ده</span>
           <div className="mt-1 flex items-baseline gap-2"><strong className="text-3xl font-black tracking-[-0.05em]">{summary.sessionsThisWeek}</strong><span className="text-sm font-bold text-neutral-500">تمرين</span></div>
         </div>
-        <div className="text-end"><span className="text-[10px] font-black uppercase tracking-[0.12em] text-neutral-500">الالتزام</span><strong className="mt-1 block text-2xl font-black text-indigo-300">{formatAdherencePercentage(summary.adherence.weekly)}</strong></div>
+        <div className="text-end"><span className="text-[10px] font-black uppercase tracking-[0.12em] text-neutral-500">الالتزام</span><strong className="mt-1 block text-2xl font-black text-emerald-300">{formatAdherencePercentage(summary.adherence.weekly)}</strong></div>
       </section>
 
       <div className="grid grid-cols-3 gap-2">
@@ -69,13 +69,13 @@ export function ProgressDashboardClient({ userId }: ProgressDashboardClientProps
           { href: "/progress/records", title: "الأرقام القياسية", icon: Award },
           { href: "/progress/body-map", title: "خريطة العضلات", icon: ScanLine },
         ].map(({ href, title, icon: Icon }) => (
-          <Link key={href} href={href} className="gc-list-row"><Icon className="h-4 w-4 text-indigo-300" /><span className="min-w-0 flex-1 font-bold">{title}</span><ArrowUpLeft className="h-4 w-4 text-neutral-600" /></Link>
+          <Link key={href} href={href} className="gc-list-row"><Icon className="h-4 w-4 text-emerald-300" /><span className="min-w-0 flex-1 font-bold">{title}</span><ArrowUpLeft className="h-4 w-4 text-neutral-600" /></Link>
         ))}
       </section>
 
       {summary.recentRecords.length > 0 ? (
         <section className="gc-list-panel">
-          <div className="flex items-center justify-between px-4 py-3"><strong>آخر الأرقام</strong><Link href="/progress/records" className="text-xs font-bold text-indigo-300">الكل</Link></div>
+          <div className="flex items-center justify-between px-4 py-3"><strong>آخر الأرقام</strong><Link href="/progress/records" className="text-xs font-bold text-emerald-300">الكل</Link></div>
           {summary.recentRecords.slice(0, 3).map((record) => (
             <div key={`${record.exerciseId}-${record.type}`} className="gc-list-row"><Award className="h-4 w-4 text-amber-300" /><span className="min-w-0 flex-1 truncate font-bold">{translateExerciseName(record.exerciseName)}</span><strong className="text-sm">{record.type === "max_reps" ? `${record.value} عدة` : formatWeight(record.value)}</strong></div>
           ))}

@@ -65,7 +65,7 @@ export function ThemeSwitcher({ variant = "compact", className = "" }: ThemeSwit
         onClick={toggleTheme}
         className={`gc-list-row w-full text-start ${className}`}
       >
-        <SunMoon className="h-4 w-4 shrink-0 text-indigo-400" aria-hidden />
+        <SunMoon className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden />
         <span className="min-w-0 flex-1 font-bold">{isArabic ? "شكل التطبيق" : "App appearance"}</span>
         <span className="text-xs font-black text-neutral-500">{isArabic ? dark ? "داكن" : "فاتح" : dark ? "Dark" : "Light"}</span>
       </button>

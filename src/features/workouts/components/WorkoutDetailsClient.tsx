@@ -89,19 +89,19 @@ export function WorkoutDetailsClient({ sessionId }: { sessionId: UUID }) {
         <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">ملخص التمرينة</h2>
         <div className="mt-4 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
           <div className="gc-stat">
-            <CalendarDays className="h-4 w-4 text-indigo-200" />
+            <CalendarDays className="h-4 w-4 text-emerald-200" />
             <strong className="mt-2 block text-sm">
               {formatDateArEg(session.scheduledDate)}
             </strong>
             <span className="text-[11px] text-neutral-500">التاريخ</span>
           </div>
           <div className="gc-stat">
-            <Clock3 className="h-4 w-4 text-indigo-200" />
+            <Clock3 className="h-4 w-4 text-emerald-200" />
             <strong className="mt-2 block text-sm">{formatDuration(session.durationSeconds)}</strong>
             <span className="text-[11px] text-neutral-500">المدة</span>
           </div>
           <div className="gc-stat">
-            <Dumbbell className="h-4 w-4 text-indigo-200" />
+            <Dumbbell className="h-4 w-4 text-emerald-200" />
             <strong className="mt-2 block text-sm">{completedSets}</strong>
             <span className="text-[11px] text-neutral-500">السِتات</span>
           </div>
@@ -109,7 +109,7 @@ export function WorkoutDetailsClient({ sessionId }: { sessionId: UUID }) {
 
         <div className="mt-4 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-indigo-200" />
+            <Sparkles className="h-4 w-4 text-emerald-200" />
             <p className="text-sm font-bold">مقارنة بآخر تمرينة</p>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
@@ -128,10 +128,10 @@ export function WorkoutDetailsClient({ sessionId }: { sessionId: UUID }) {
               <strong className="mt-1 block text-lg">{adjustedCount}</strong>
               <span className="text-[10px] font-semibold text-amber-100/70">اتغيّر</span>
             </div>
-            <div className="rounded-xl bg-indigo-300/[0.08] p-2.5">
-              <Dumbbell className="mx-auto h-4 w-4 text-indigo-200" />
+            <div className="rounded-xl bg-emerald-300/[0.08] p-2.5">
+              <Dumbbell className="mx-auto h-4 w-4 text-emerald-200" />
               <strong className="mt-1 block text-lg">{baselineCount}</strong>
-              <span className="text-[10px] font-semibold text-indigo-100/70">بداية جديدة</span>
+              <span className="text-[10px] font-semibold text-emerald-100/70">بداية جديدة</span>
             </div>
           </div>
         </div>
@@ -158,7 +158,7 @@ export function WorkoutDetailsClient({ sessionId }: { sessionId: UUID }) {
                         ? "bg-white/[0.06] text-neutral-300"
                         : comparison.trend === "adjusted"
                           ? "bg-amber-300/10 text-amber-200"
-                          : "bg-indigo-300/10 text-indigo-200"
+                          : "bg-emerald-300/10 text-emerald-200"
                   }`}
                 >
                   {comparison.trend === "improved" ? (

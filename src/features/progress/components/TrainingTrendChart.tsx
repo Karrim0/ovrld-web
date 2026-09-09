@@ -45,7 +45,7 @@ export function TrainingTrendChart({ userId }: { userId: UUID }) {
       </div>
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
         {METRICS.map((item) => (
-          <button key={item.key} type="button" onClick={() => setMetric(item.key)} className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition ${metric === item.key ? "bg-indigo-300 text-neutral-950" : "border border-white/[0.07] bg-white/[0.035] text-neutral-400"}`}>
+          <button key={item.key} type="button" onClick={() => setMetric(item.key)} className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition ${metric === item.key ? "bg-emerald-300 text-neutral-950" : "border border-white/[0.07] bg-white/[0.035] text-neutral-400"}`}>
             {item.icon}{item.label}
           </button>
         ))}

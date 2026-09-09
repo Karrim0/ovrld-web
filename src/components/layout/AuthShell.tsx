@@ -36,12 +36,12 @@ export function AuthShell({ children }: AuthShellProps) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="gc-auth-feature p-4">
-              <WifiOff className="h-5 w-5 text-indigo-500 dark:text-indigo-300" />
+              <WifiOff className="h-5 w-5 text-emerald-500 dark:text-emerald-300" />
               <p className="mt-3 font-bold">شغال من غير نت</p>
               <p className="gc-muted mt-1 text-xs leading-5">كمّل تسجيل حتى لو نت الجيم ضعيف.</p>
             </div>
             <div className="gc-auth-feature p-4">
-              <ShieldCheck className="h-5 w-5 text-indigo-500 dark:text-indigo-300" />
+              <ShieldCheck className="h-5 w-5 text-emerald-500 dark:text-emerald-300" />
               <p className="mt-3 font-bold">خصوصيتك محفوظة</p>
               <p className="gc-muted mt-1 text-xs leading-5">إنت اللي بتحدد الجروب يشوف إيه.</p>
             </div>

@@ -38,7 +38,7 @@ export function PersonalRecordsClient({ userId }: PersonalRecordsClientProps) {
     <div className="space-y-4">
       <div className="flex gap-2 overflow-x-auto pb-1">
         {FILTERS.map((item) => (
-          <button key={item.value} type="button" onClick={() => setFilter(item.value)} className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm ${filter === item.value ? "bg-indigo-300 text-neutral-950" : ""}`}>{item.label}</button>
+          <button key={item.value} type="button" onClick={() => setFilter(item.value)} className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm ${filter === item.value ? "bg-emerald-300 text-neutral-950" : ""}`}>{item.label}</button>
         ))}
       </div>
       {visible.length === 0 ? (

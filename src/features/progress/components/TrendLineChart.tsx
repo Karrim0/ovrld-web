@@ -53,11 +53,11 @@ export function TrendLineChart({
             </g>
           );
         })}
-        <polygon points={area} className="fill-indigo-300/10" />
-        <polyline points={polyline} fill="none" className="stroke-indigo-300" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        <polygon points={area} className="fill-emerald-300/10" />
+        <polyline points={polyline} fill="none" className="stroke-emerald-300" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
         {coordinates.map((point, index) => (
           <g key={`${point.label}-${index}`}>
-            <circle cx={point.x} cy={point.y} r="5" className="fill-neutral-950 stroke-indigo-300" strokeWidth="3" />
+            <circle cx={point.x} cy={point.y} r="5" className="fill-neutral-950 stroke-emerald-300" strokeWidth="3" />
             {labelIndexes.has(index) ? <text x={point.x} y={height - 12} textAnchor="middle" fontSize="12" fill="currentColor" opacity="0.55">{point.label}</text> : null}
             <title>{point.label}: {formatValue(point.value)}</title>
           </g>

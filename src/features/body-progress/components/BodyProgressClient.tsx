@@ -89,11 +89,11 @@ function WeightSparkline({ snapshot }: { snapshot: BodyProgressSnapshot }) {
             <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <polyline points={`0,82 ${coords} 100,82`} fill="url(#weightArea)" stroke="none" className="text-indigo-300" />
-        <polyline points={coords} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-300" />
+        <polyline points={`0,82 ${coords} 100,82`} fill="url(#weightArea)" stroke="none" className="text-emerald-300" />
+        <polyline points={coords} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-300" />
         {points.map((point, index) => {
           const [x, y] = coords.split(" ")[index].split(",");
-          return <circle key={point.id} cx={x} cy={y} r="2.2" fill="currentColor" className="text-indigo-200" />;
+          return <circle key={point.id} cx={x} cy={y} r="2.2" fill="currentColor" className="text-emerald-200" />;
         })}
       </svg>
       <div className="mt-1 flex items-center justify-between text-[10px] font-semibold text-neutral-500">
@@ -348,7 +348,7 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
       <section className="gc-card p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <div><p className="gc-eyebrow">قياس جديد</p><h3 className="mt-1 text-lg font-black">الوزن</h3></div>
-          <Gauge className="h-5 w-5 text-indigo-300" />
+          <Gauge className="h-5 w-5 text-emerald-300" />
         </div>
 
         <div className="mt-4 rounded-[22px] border border-white/[0.07] bg-white/[0.025] p-3">
@@ -380,13 +380,13 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
       </section>
 
       <section className="gc-card p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3"><div><p className="gc-eyebrow">الاتجاه</p><h3 className="mt-1 text-lg font-black">تغير الوزن</h3></div>{totalDelta !== null && totalDelta !== 0 ? (totalDelta > 0 ? <TrendingUp className="h-5 w-5 text-emerald-300" /> : <TrendingDown className="h-5 w-5 text-sky-300" />) : <Sparkles className="h-5 w-5 text-indigo-300" />}</div>
+        <div className="flex items-center justify-between gap-3"><div><p className="gc-eyebrow">الاتجاه</p><h3 className="mt-1 text-lg font-black">تغير الوزن</h3></div>{totalDelta !== null && totalDelta !== 0 ? (totalDelta > 0 ? <TrendingUp className="h-5 w-5 text-emerald-300" /> : <TrendingDown className="h-5 w-5 text-sky-300" />) : <Sparkles className="h-5 w-5 text-emerald-300" />}</div>
         <div className="mt-4"><WeightSparkline snapshot={snapshot} /></div>
       </section>
 
       <section className="gc-card p-4 sm:p-5">
         <div className="flex items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-indigo-300/10 text-indigo-300"><Target className="h-5 w-5" /></span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-300/10 text-emerald-300"><Target className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
             <p className="font-bold">{snapshot.goal?.goalType === "gain_weight" ? "Gain Mode شغال" : "الهدف"}</p>
             <p className="mt-0.5 text-xs text-neutral-500">{snapshot.goal?.goalType === "gain_weight" ? "زيادة الوزن" : "مفيش Goal Mode متفعل"}</p>

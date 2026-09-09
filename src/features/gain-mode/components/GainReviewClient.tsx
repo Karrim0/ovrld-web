@@ -124,7 +124,7 @@ export function GainReviewClient({ userId }: { userId: UUID }) {
       <WindowMetrics title="آخر 7 أيام مكتملة" window={review.weekly} />
 
       <section className={`gc-review-section gc-gain-plan-${review.planCompatibility.state}`}>
-        <div className="flex items-start gap-3"><Dumbbell className="mt-0.5 h-4 w-4 text-indigo-400" /><div className="min-w-0 flex-1"><p className="gc-eyebrow">الجدول × Gain Mode</p><h3 className="mt-0.5 text-sm font-black">{review.planCompatibility.title}</h3><p className="mt-1 text-xs leading-5 text-neutral-500">{review.planCompatibility.detail}</p></div><strong className="text-lg tabular-nums">{review.planCompatibility.score === null ? "—" : `${review.planCompatibility.score}%`}</strong></div>
+        <div className="flex items-start gap-3"><Dumbbell className="mt-0.5 h-4 w-4 text-emerald-400" /><div className="min-w-0 flex-1"><p className="gc-eyebrow">الجدول × Gain Mode</p><h3 className="mt-0.5 text-sm font-black">{review.planCompatibility.title}</h3><p className="mt-1 text-xs leading-5 text-neutral-500">{review.planCompatibility.detail}</p></div><strong className="text-lg tabular-nums">{review.planCompatibility.score === null ? "—" : `${review.planCompatibility.score}%`}</strong></div>
       </section>
 
       <WindowMetrics title="آخر 28 يوم" window={review.month28} />

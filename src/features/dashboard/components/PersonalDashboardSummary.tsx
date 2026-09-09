@@ -45,7 +45,7 @@ export function PersonalDashboardSummary({ userId }: { userId: UUID }) {
 
   const { summary } = state;
   const stats = [
-    { label: "خطة الأسبوع", value: formatAdherencePercentage(summary.adherence.weekly), detail: `${summary.adherence.weeklyCompleted}/${summary.adherence.weeklyScheduled}`, icon: Target, tone: "text-indigo-300" },
+    { label: "خطة الأسبوع", value: formatAdherencePercentage(summary.adherence.weekly), detail: `${summary.adherence.weeklyCompleted}/${summary.adherence.weeklyScheduled}`, icon: Target, tone: "text-emerald-300" },
     { label: "السلسلة الحالية", value: `${summary.currentStreak} يوم`, detail: `الأفضل ${summary.longestStreak} يوم`, icon: Flame, tone: "text-orange-400" },
     { label: "آخر الأرقام", value: String(summary.recentRecords.length), detail: "إنجازات جديدة", icon: Award, tone: "text-amber-300" },
   ];

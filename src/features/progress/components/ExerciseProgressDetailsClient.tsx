@@ -47,7 +47,7 @@ export function ExerciseProgressDetailsClient({ userId, exerciseId }: { userId: 
         <div><h3 className="font-bold">منحنى التقدم</h3><p className="text-sm text-neutral-500">قارن القوة والوزن وحجم الشغل بين التمرينات.</p></div>
         <div className="mt-4 flex rounded-xl border p-1">
           {([['e1rm', 'أقصى عدة متوقعة'], ['load', 'أعلى وزن'], ['volume', 'حجم التمرين']] as Array<[Metric, string]>).map(([key, label]) => (
-            <button key={key} type="button" onClick={() => setMetric(key)} className={`flex-1 rounded-lg px-2 py-2 text-xs font-bold ${metric === key ? "bg-indigo-300 text-neutral-950" : "text-neutral-500"}`}>{label}</button>
+            <button key={key} type="button" onClick={() => setMetric(key)} className={`flex-1 rounded-lg px-2 py-2 text-xs font-bold ${metric === key ? "bg-emerald-300 text-neutral-950" : "text-neutral-500"}`}>{label}</button>
           ))}
         </div>
         <div className="mt-4"><TrendLineChart points={chartPoints} valueLabel={metric} formatValue={(value) => formatWeight(value)} /></div>

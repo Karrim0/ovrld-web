@@ -56,7 +56,7 @@ export function LanguageSwitcher({ variant = "compact", className = "" }: Langua
         onClick={toggleLanguage}
         className={`gc-list-row w-full text-start ${className}`}
       >
-        <Languages className="h-4 w-4 shrink-0 text-indigo-400" aria-hidden />
+        <Languages className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden />
         <span className="min-w-0 flex-1 font-bold">{language === "ar" ? "لغة التطبيق" : "App language"}</span>
         <span className="text-xs font-black text-neutral-500">{language === "ar" ? "العربية" : "English"}</span>
       </button>

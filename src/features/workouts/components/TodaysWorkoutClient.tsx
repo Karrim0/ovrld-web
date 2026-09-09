@@ -108,23 +108,23 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
     const completedSets = activeSession.exercises.reduce((total, exercise) => total + exercise.sets.filter((set) => set.isCompleted).length, 0);
     if (compact) {
       return (
-        <section className="gc-today-compact border-indigo-300/20">
+        <section className="gc-today-compact border-emerald-300/20">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-300 text-[#11131a]"><Play className="h-4 w-4" /></span>
-            <div className="min-w-0 flex-1"><span className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-300">تمرين شغال</span><h2 className="truncate text-lg font-black">كمّل تمرينتك</h2></div>
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-300 text-[#11131a]"><Play className="h-4 w-4" /></span>
+            <div className="min-w-0 flex-1"><span className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-300">تمرين شغال</span><h2 className="truncate text-lg font-black">كمّل تمرينتك</h2></div>
             <strong className="text-sm tabular-nums">{completedSets}/{totalSets}</strong>
           </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-indigo-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-emerald-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
           <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-3 w-full min-h-11"><Play className="h-4 w-4" /> كمّل</Link>
         </section>
       );
     }
     return (
-      <section className="gc-card border-indigo-300/20 p-5 sm:p-6">
+      <section className="gc-card border-emerald-300/20 p-5 sm:p-6">
         <p className="gc-eyebrow">فيه تمرينة شغالة</p>
         <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">كمّل تمرينتك</h2>
         <p className="mt-2 text-sm text-neutral-500">خلصت {completedSets} من {totalSets} سِتات.</p>
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-indigo-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-emerald-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
         <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-5 w-full sm:w-auto"><Play className="h-4 w-4" /> كمّل التمرينة</Link>
       </section>
     );
@@ -177,7 +177,7 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
       <section className={`gc-card overflow-hidden p-0 ${compact ? "gc-today-hero" : ""}`}>
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
-            <span className={`grid shrink-0 place-items-center rounded-xl bg-indigo-300 text-[#11131a] ${compact ? "h-10 w-10" : "h-12 w-12"}`}><Dumbbell className={compact ? "h-5 w-5" : "h-6 w-6"} /></span>
+            <span className={`grid shrink-0 place-items-center rounded-xl bg-emerald-300 text-[#11131a] ${compact ? "h-10 w-10" : "h-12 w-12"}`}><Dumbbell className={compact ? "h-5 w-5" : "h-6 w-6"} /></span>
             <div className="min-w-0 flex-1"><p className="gc-eyebrow">{WEEKDAY_LABELS_AR[weekday]} · النهارده</p><h2 className={`mt-1 truncate font-black tracking-[-0.03em] ${compact ? "text-xl" : "text-2xl"}`}>{title}</h2><p className="mt-1 text-xs font-semibold text-neutral-500">{today.exercises.length} تمارين · {totalTargetSets} سِتات</p></div>
           </div>
           {!compact && today.dayNotes ? <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3 text-sm leading-6 text-neutral-400">{today.dayNotes}</p> : null}
@@ -198,7 +198,7 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
           </div>
         ) : (
           <div className="border-t border-white/[0.06] p-4 sm:p-5">
-            <div className="mb-3 flex items-center justify-between gap-3"><h3 className="font-semibold">تمارين النهارده</h3><Link href={`/split/personal?day=${weekday}`} className="text-xs font-semibold text-indigo-200">عدّل الأسبوع</Link></div>
+            <div className="mb-3 flex items-center justify-between gap-3"><h3 className="font-semibold">تمارين النهارده</h3><Link href={`/split/personal?day=${weekday}`} className="text-xs font-semibold text-emerald-200">عدّل الأسبوع</Link></div>
             <ol className="space-y-2">{displayedExercises.map((item, index) => <li key={item.id} className="flex items-center gap-3 rounded-xl border border-white/[0.055] bg-white/[0.02] p-3"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.055] text-xs font-bold">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{translateExerciseName(item.exercise.name)}</p><p className="mt-0.5 text-xs text-neutral-500">{item.targetSets} سِتات · {item.targetRepsMin}–{item.targetRepsMax} عدات</p></div></li>)}</ol>
           </div>
         )}

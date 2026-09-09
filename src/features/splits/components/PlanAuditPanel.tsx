@@ -42,7 +42,7 @@ export function PlanAuditPanel({ userId, revision }: { userId: UUID; revision?: 
     <section className="gc-card overflow-hidden">
       <div className="p-4 sm:p-5">
         <div className="flex items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-indigo-300/10 text-indigo-200"><ScanSearch className="h-5 w-5" /></span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-300/10 text-emerald-200"><ScanSearch className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1"><p className="gc-eyebrow">Plan Audit</p><h3 className="mt-1 text-lg font-black">{meta.label}</h3><p className="mt-1 text-xs leading-5 text-neutral-500">{meta.detail}</p></div>
         </div>
 
@@ -61,7 +61,7 @@ export function PlanAuditPanel({ userId, revision }: { userId: UUID; revision?: 
             {visibleMuscles.map((item) => (
               <div key={item.muscle} className="grid grid-cols-[70px_1fr_auto] items-center gap-2 text-xs">
                 <span className="truncate font-bold text-neutral-400">{muscleLabelAr(item.muscle)}</span>
-                <span className="h-2 overflow-hidden rounded-full bg-white/[0.05]"><span className="block h-full rounded-full bg-indigo-300/70" style={{ width: `${Math.max(7, (item.weightedSets / maxLoad) * 100)}%` }} /></span>
+                <span className="h-2 overflow-hidden rounded-full bg-white/[0.05]"><span className="block h-full rounded-full bg-emerald-300/70" style={{ width: `${Math.max(7, (item.weightedSets / maxLoad) * 100)}%` }} /></span>
                 <span className="min-w-10 text-end text-[10px] text-neutral-600">{item.exposureDays}×</span>
               </div>
             ))}
@@ -74,7 +74,7 @@ export function PlanAuditPanel({ userId, revision }: { userId: UUID; revision?: 
         <div className="space-y-2">
           {data.insights.map((insight) => (
             <div key={insight.id} className="flex items-start gap-3 rounded-2xl bg-white/[0.025] p-3">
-              <span className={`mt-0.5 ${insight.tone === "positive" ? "text-emerald-200" : insight.tone === "watch" ? "text-amber-200" : "text-indigo-200"}`}>{insight.tone === "positive" ? <Sparkles className="h-4 w-4" /> : <CircleAlert className="h-4 w-4" />}</span>
+              <span className={`mt-0.5 ${insight.tone === "positive" ? "text-emerald-200" : insight.tone === "watch" ? "text-amber-200" : "text-emerald-200"}`}>{insight.tone === "positive" ? <Sparkles className="h-4 w-4" /> : <CircleAlert className="h-4 w-4" />}</span>
               <div><p className="text-sm font-bold">{insight.title}</p><p className="mt-1 text-[11px] leading-5 text-neutral-600">{insight.detail}</p></div>
             </div>
           ))}

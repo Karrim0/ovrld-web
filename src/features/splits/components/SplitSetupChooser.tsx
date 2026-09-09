@@ -1,8 +1,19 @@
 "use client";
 
 import { getArabicErrorMessage } from "@/lib/localization";
+import { useLanguage } from "@/contexts/language-context";
 import { useState } from "react";
-import { ChevronLeft, FileUp, LayoutTemplate, Loader2, PencilRuler, Sparkles, X } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Dumbbell,
+  FileUp,
+  LayoutTemplate,
+  Loader2,
+  PencilRuler,
+  Sparkles,
+  X,
+} from "lucide-react";
 import type { StarterPlanKey } from "../types";
 import { applySplitTemplate } from "../services/split.service";
 import { SplitImportWizard } from "./SplitImportWizard";
@@ -11,25 +22,81 @@ interface SplitSetupChooserProps {
   onChanged: () => Promise<void>;
 }
 
-const STARTERS: Array<{ key: Exclude<StarterPlanKey, "manual">; title: string; detail: string }> = [
-  { key: "gain_glutes_4", title: "Recommended Gain · Glutes + Legs", detail: "4 أيام · السبت Lower A · الأحد Upper · الاثنين Lower B · الأربعاء Lower C" },
-  { key: "full_body_3", title: "فل بادي · 3 أيام", detail: "بسيط ومتوازن والراحة فيه سهلة" },
-  { key: "upper_lower_4", title: "أبر / لوور · 4 أيام", detail: "تمرينتين أبر وتمرينتين لوور" },
-  { key: "ppl_ul_5", title: "بوش بول رجل + أبر لوور · 5 أيام", detail: "تكرار أعلى ومعاه يومين راحة" },
-  { key: "ppl_6", title: "بوش / بول / رجل · 6 أيام", detail: "دورة كاملة من 6 أيام" },
+type ReadyPlan = {
+  key: Exclude<StarterPlanKey, "manual">;
+  titleAr: string;
+  titleEn: string;
+  detailAr: string;
+  detailEn: string;
+  days: number;
+  recommended?: boolean;
+};
+
+const STARTERS: ReadyPlan[] = [
+  {
+    key: "gain_glutes_4",
+    titleAr: "Gain · Glutes + Legs",
+    titleEn: "Gain · Glutes + Legs",
+    detailAr: "السبت Lower A · الأحد Upper · الاثنين Lower B · الأربعاء Lower C",
+    detailEn: "Sat Lower A · Sun Upper · Mon Lower B · Wed Lower C",
+    days: 4,
+    recommended: true,
+  },
+  {
+    key: "full_body_3",
+    titleAr: "فل بادي",
+    titleEn: "Full Body",
+    detailAr: "3 أيام متوازنة وسهلة في الاستشفاء",
+    detailEn: "3 balanced days with simple recovery",
+    days: 3,
+  },
+  {
+    key: "upper_lower_4",
+    titleAr: "أبر / لوور",
+    titleEn: "Upper / Lower",
+    detailAr: "يومين Upper + يومين Lower",
+    detailEn: "2 Upper + 2 Lower days",
+    days: 4,
+  },
+  {
+    key: "ppl_ul_5",
+    titleAr: "PPL + Upper / Lower",
+    titleEn: "PPL + Upper / Lower",
+    detailAr: "تكرار أعلى مع يومين راحة",
+    detailEn: "Higher frequency with two rest days",
+    days: 5,
+  },
+  {
+    key: "ppl_6",
+    titleAr: "Push / Pull / Legs",
+    titleEn: "Push / Pull / Legs",
+    detailAr: "دورة كاملة من 6 أيام",
+    detailEn: "A full 6-day training cycle",
+    days: 6,
+  },
 ];
 
 export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
+  const { language } = useLanguage();
+  const ar = language === "ar";
   const [starterOpen, setStarterOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [busyKey, setBusyKey] = useState<StarterPlanKey | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const gainPlan = STARTERS[0];
+
   async function apply(key: StarterPlanKey) {
+    const selected = STARTERS.find((plan) => plan.key === key);
     const warning = key === "manual"
-      ? "تبدأ بأسبوع فاضي؟ التمارين الحالية هتتمسح."
-      : "تبدّل جدولك الحالي بالجدول الجاهز ده؟";
+      ? ar
+        ? "تبدأ بجدول فاضي؟ جدولك الأساسي الحالي هيتبدّل، وتقدر تضيف الأيام والتمارين بعدها."
+        : "Start with an empty plan? Your current base plan will be replaced and you can build it from there."
+      : ar
+        ? `تستخدم ${selected?.titleAr ?? "الجدول ده"}؟ جدولك الأساسي الحالي هيتبدّل، وتقدر تعدّل كل حاجة بعدين.`
+        : `Use ${selected?.titleEn ?? "this plan"}? Your current base plan will be replaced, and you can edit everything later.`;
     if (!window.confirm(warning)) return;
+
     setBusyKey(key);
     setError(null);
     try {
@@ -37,58 +104,127 @@ export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
       await onChanged();
       setStarterOpen(false);
     } catch (caught) {
-      setError(getArabicErrorMessage(caught, "معرفناش نعمل الجدول."));
+      const arabic = getArabicErrorMessage(caught, "معرفناش نعمل الجدول.");
+      setError(ar ? arabic : "We could not apply this plan. Please try again.");
     } finally {
       setBusyKey(null);
     }
   }
 
   return (
-    <>
-      <section className="gc-hero-card relative overflow-hidden rounded-[28px] p-4 sm:p-5">
-        <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-indigo-300/10 blur-3xl" />
-        <div className="relative">
-          <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-indigo-200" /><p className="gc-eyebrow">اعمل جدولك أو غيّره</p></div>
-          <h2 className="mt-2 text-xl font-bold">عايز تعمل جدولك إزاي؟</h2>
-          <p className="mt-1 text-sm leading-6 text-neutral-500">ابدأ من الصفر، اختار نظام جاهز، أو خلّي OVRLD يقرا الجدول اللي بتتمرّن عليه.</p>
+    <div>
+      <section className="gc-plan-builder rounded-[24px] p-4 sm:p-5">
+        <div className="flex items-start gap-3">
+          <span className="gc-plan-builder-icon"><LayoutTemplate className="h-5 w-5" /></span>
+          <div className="min-w-0 flex-1">
+            <p className="gc-eyebrow">{ar ? "إعداد الجدول" : "Plan setup"}</p>
+            <h2 className="mt-1 text-xl font-black tracking-[-0.025em]">
+              {ar ? "ابدأ من نقطة واضحة" : "Choose a clear starting point"}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-neutral-500">
+              {ar
+                ? "اختار خطة جاهزة، استورد جدولك الحالي، أو ابدأ من الصفر. أي اختيار تقدر تعدّله بعدين."
+                : "Choose a ready plan, import the plan you already use, or build from scratch. Every option stays editable."}
+            </p>
+          </div>
+        </div>
 
-          <button type="button" disabled={Boolean(busyKey)} onClick={() => void apply("gain_glutes_4")} className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-emerald-300/25 bg-emerald-300/[0.08] p-4 text-start transition hover:border-emerald-300/45">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-300/12 text-emerald-200"><Sparkles className="h-5 w-5" /></span>
-            <span className="min-w-0 flex-1"><strong className="block">Recommended Gain · Glutes + Legs</strong><span className="mt-1 block text-xs leading-5 text-neutral-400">4 أيام · الخميس والجمعة راحة ثابتة · متوصل تلقائي بـGain Mode.</span></span>
-            {busyKey === "gain_glutes_4" ? <Loader2 className="h-5 w-5 animate-spin text-emerald-200" /> : <ChevronLeft className="h-5 w-5 text-emerald-200" />}
+        <div className="gc-plan-recommended mt-4">
+          <div className="flex items-start gap-3">
+            <span className="gc-plan-recommended-mark"><Sparkles className="h-5 w-5" /></span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <strong className="text-sm font-black">{ar ? gainPlan.titleAr : gainPlan.titleEn}</strong>
+                <span className="gc-plan-recommended-badge">{ar ? "مقترح لـ Gain Mode" : "Recommended for Gain Mode"}</span>
+              </div>
+              <p className="mt-1 text-xs leading-5 text-neutral-500">{ar ? gainPlan.detailAr : gainPlan.detailEn}</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <span className="gc-plan-chip">{ar ? "4 أيام تمرين" : "4 training days"}</span>
+                <span className="gc-plan-chip">{ar ? "3 أيام راحة" : "3 rest days"}</span>
+                <span className="gc-plan-chip">Glutes + Legs</span>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={Boolean(busyKey)}
+            onClick={() => void apply("gain_glutes_4")}
+            className="gc-primary-button mt-4 w-full"
+          >
+            {busyKey === "gain_glutes_4" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Dumbbell className="h-4 w-4" />}
+            {busyKey === "gain_glutes_4"
+              ? ar ? "بنجهز الخطة…" : "Preparing plan…"
+              : ar ? "استخدم خطة Gain" : "Use Gain plan"}
+          </button>
+        </div>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <button type="button" disabled={Boolean(busyKey)} onClick={() => setStarterOpen(true)} className="gc-plan-path-card">
+            <span className="gc-plan-path-icon"><LayoutTemplate className="h-4.5 w-4.5" /></span>
+            <span className="min-w-0 flex-1 text-start">
+              <strong>{ar ? "كل الخطط الجاهزة" : "Ready plans"}</strong>
+              <small>{ar ? "3–6 أيام" : "3–6 days"}</small>
+            </span>
+            <ArrowRight className="gc-plan-path-arrow h-4 w-4" />
           </button>
 
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            <button type="button" disabled={Boolean(busyKey)} onClick={() => void apply("manual")} className="group rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4 text-start transition hover:border-indigo-300/30 hover:bg-indigo-300/[0.07]">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.06] text-indigo-200"><PencilRuler className="h-5 w-5" /></span>
-              <strong className="mt-3 flex items-center justify-between">اعمل جدولك بنفسك {busyKey === "manual" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronLeft className="h-4 w-4 text-neutral-600 group-hover:text-indigo-200" />}</strong>
-              <span className="mt-1 block text-xs leading-5 text-neutral-500">أسبوع فاضي تشكّله براحتك.</span>
-            </button>
-            <button type="button" disabled={Boolean(busyKey)} onClick={() => setStarterOpen(true)} className="group rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4 text-start transition hover:border-indigo-300/30 hover:bg-indigo-300/[0.07]">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.06] text-indigo-200"><LayoutTemplate className="h-5 w-5" /></span>
-              <strong className="mt-3 flex items-center justify-between">استخدم جدول جاهز <ChevronLeft className="h-4 w-4 text-neutral-600 group-hover:text-indigo-200" /></strong>
-              <span className="mt-1 block text-xs leading-5 text-neutral-500">اختار 3 أو 4 أو 5 أو 6 أيام تمرين.</span>
-            </button>
-            <button type="button" disabled={Boolean(busyKey)} onClick={() => setImportOpen(true)} className="group rounded-2xl border border-indigo-300/20 bg-indigo-300/[0.07] p-4 text-start transition hover:border-indigo-300/40 hover:bg-indigo-300/[0.11]">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-300/12 text-indigo-200"><FileUp className="h-5 w-5" /></span>
-              <strong className="mt-3 flex items-center justify-between">استورد جدولك <ChevronLeft className="h-4 w-4 text-indigo-200" /></strong>
-              <span className="mt-1 block text-xs leading-5 text-neutral-400">صورة أو PDF أو Excel أو CSV أو نص منسوخ.</span>
-            </button>
-          </div>
-          {error ? <p className="mt-3 rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm font-semibold text-red-300">{error}</p> : null}
+          <button type="button" disabled={Boolean(busyKey)} onClick={() => setImportOpen(true)} className="gc-plan-path-card">
+            <span className="gc-plan-path-icon"><FileUp className="h-4.5 w-4.5" /></span>
+            <span className="min-w-0 flex-1 text-start">
+              <strong>{ar ? "استورد جدولك" : "Import your plan"}</strong>
+              <small>{ar ? "ملف أو نص" : "File or text"}</small>
+            </span>
+            <ArrowRight className="gc-plan-path-arrow h-4 w-4" />
+          </button>
+
+          <button type="button" disabled={Boolean(busyKey)} onClick={() => void apply("manual")} className="gc-plan-path-card">
+            <span className="gc-plan-path-icon"><PencilRuler className="h-4.5 w-4.5" /></span>
+            <span className="min-w-0 flex-1 text-start">
+              <strong>{ar ? "ابدأ من الصفر" : "Build from scratch"}</strong>
+              <small>{ar ? "أسبوع فاضي" : "Empty week"}</small>
+            </span>
+            {busyKey === "manual" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="gc-plan-path-arrow h-4 w-4" />}
+          </button>
         </div>
+
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-[var(--surface-overlay)] px-3 py-2 text-[11px] font-semibold text-neutral-500">
+          <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+          <span>{ar ? "مفيش اختيار نهائي: الأيام والتمارين والأهداف كلها قابلة للتعديل." : "Nothing is locked: days, exercises and targets can all be edited later."}</span>
+        </div>
+
+        {error ? <p className="mt-3 rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm font-semibold text-red-300">{error}</p> : null}
       </section>
 
       {starterOpen ? (
-        <div className="gc-modal-backdrop fixed inset-0 z-[85] flex items-end p-2 sm:items-center sm:justify-center sm:p-3" role="dialog" aria-modal="true" aria-label="اختار جدول جاهز">
+        <div className="gc-modal-backdrop fixed inset-0 z-[85] flex items-end p-2 sm:items-center sm:justify-center sm:p-3" role="dialog" aria-modal="true" aria-label={ar ? "اختار جدول جاهز" : "Choose a ready plan"}>
           <section className="gc-modal-card w-full max-w-lg rounded-[24px] p-4 sm:rounded-[26px] sm:p-5">
-            <div className="flex items-start justify-between gap-3"><div><p className="gc-eyebrow">جداول جاهزة</p><h3 className="mt-1 text-xl font-bold">اختار عدد أيام تمرينك</h3><p className="mt-1 text-sm text-neutral-500">تقدر تعدّل كل اسم ويوم وتمرين وهدف براحتك.</p></div><button type="button" onClick={() => setStarterOpen(false)} className="gc-icon-button rounded-full"><X className="h-5 w-5" /></button></div>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="gc-eyebrow">{ar ? "الخطط الجاهزة" : "Ready plans"}</p>
+                <h3 className="mt-1 text-xl font-black">{ar ? "اختار الهيكل الأقرب لهدفك" : "Choose the structure closest to your goal"}</h3>
+                <p className="mt-1 text-sm leading-5 text-neutral-500">{ar ? "شوف عدد الأيام والتركيز قبل ما تطبق الخطة." : "Compare days and focus before applying a plan."}</p>
+              </div>
+              <button type="button" onClick={() => setStarterOpen(false)} className="gc-icon-button rounded-full" aria-label={ar ? "اقفل" : "Close"}><X className="h-5 w-5" /></button>
+            </div>
+
             <div className="mt-4 space-y-2">
-              {STARTERS.filter((starter) => starter.key !== "gain_glutes_4").map((starter) => (
-                <button key={starter.key} type="button" disabled={Boolean(busyKey)} onClick={() => void apply(starter.key)} className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-start transition hover:border-indigo-300/30">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-300/10 text-indigo-200"><LayoutTemplate className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><strong className="block">{starter.title}</strong><span className="mt-0.5 block text-xs text-neutral-500">{starter.detail}</span></span>
-                  {busyKey === starter.key ? <Loader2 className="h-5 w-5 animate-spin text-indigo-200" /> : <ChevronLeft className="h-5 w-5 text-neutral-600" />}
+              {STARTERS.map((starter) => (
+                <button
+                  key={starter.key}
+                  type="button"
+                  disabled={Boolean(busyKey)}
+                  onClick={() => void apply(starter.key)}
+                  className={`gc-ready-plan-row ${starter.recommended ? "gc-ready-plan-row-recommended" : ""}`}
+                >
+                  <span className="gc-ready-plan-days"><strong>{starter.days}</strong><small>{ar ? "أيام" : "days"}</small></span>
+                  <span className="min-w-0 flex-1 text-start">
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <strong className="text-sm">{ar ? starter.titleAr : starter.titleEn}</strong>
+                      {starter.recommended ? <span className="gc-plan-recommended-badge">Gain Mode</span> : null}
+                    </span>
+                    <small className="mt-1 block text-xs leading-5 text-neutral-500">{ar ? starter.detailAr : starter.detailEn}</small>
+                  </span>
+                  {busyKey === starter.key ? <Loader2 className="h-5 w-5 animate-spin text-emerald-300" /> : <ArrowRight className="h-4 w-4 shrink-0 text-neutral-500" />}
                 </button>
               ))}
             </div>
@@ -97,6 +233,6 @@ export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
       ) : null}
 
       {importOpen ? <SplitImportWizard onClose={() => setImportOpen(false)} onImported={onChanged} /> : null}
-    </>
+    </div>
   );
 }

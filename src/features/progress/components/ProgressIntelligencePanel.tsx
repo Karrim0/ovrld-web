@@ -10,7 +10,7 @@ import { fetchProgressIntelligence, type ProgressIntelligenceSummary } from "../
 const MOMENTUM_META = {
   collecting: { title: "بنجمع خط الأساس", icon: Gauge, tone: "text-neutral-400" },
   rising: { title: "القوة ماشية لفوق", icon: TrendingUp, tone: "text-emerald-300" },
-  steady: { title: "التقدم مستقر", icon: Sparkles, tone: "text-indigo-300" },
+  steady: { title: "التقدم مستقر", icon: Sparkles, tone: "text-emerald-300" },
   needs_attention: { title: "في أرقام محتاجة عين", icon: TrendingDown, tone: "text-amber-300" },
 } as const;
 
@@ -47,7 +47,7 @@ export function ProgressIntelligencePanel({ userId }: { userId: UUID }) {
       </div>
       {firstInsight ? (
         <Link href={firstInsight.exerciseId ? `/progress/exercises/${firstInsight.exerciseId}` : "/progress/exercises"} className="flex items-center gap-3 px-4 py-3 text-sm">
-          <span className={firstInsight.tone === "watch" ? "text-amber-300" : firstInsight.tone === "positive" ? "text-emerald-300" : "text-indigo-300"}>{firstInsight.tone === "watch" ? <CircleAlert className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}</span>
+          <span className={firstInsight.tone === "watch" ? "text-amber-300" : firstInsight.tone === "positive" ? "text-emerald-300" : "text-emerald-300"}>{firstInsight.tone === "watch" ? <CircleAlert className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}</span>
           <span className="min-w-0 flex-1 truncate font-bold">{firstInsight.exerciseName ? `${translateExerciseName(firstInsight.exerciseName)} · ${firstInsight.title}` : firstInsight.title}</span>
           <ArrowUpLeft className="h-4 w-4 text-neutral-600" />
         </Link>

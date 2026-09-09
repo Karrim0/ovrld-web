@@ -27,13 +27,13 @@ export default async function ProfilePage() {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={profile.avatar_url} alt="" className="h-16 w-16 rounded-2xl border border-white/10 object-cover" />
           ) : (
-            <span className="grid h-16 w-16 place-items-center rounded-2xl bg-indigo-300 text-neutral-950"><UserRound className="h-7 w-7" /></span>
+            <span className="grid h-16 w-16 place-items-center rounded-2xl bg-emerald-300 text-neutral-950"><UserRound className="h-7 w-7" /></span>
           )}
           <div className="min-w-0 flex-1"><h2 className="truncate text-xl font-black">{displayName}</h2><p className="mt-0.5 truncate text-xs text-neutral-500">{user.email}</p></div>
         </section>
 
         <section className="gc-list-panel">
-          <Link href="/profile/settings" className="gc-list-row"><Settings className="h-4 w-4 text-indigo-300" /><span className="min-w-0 flex-1 font-bold">الحساب</span><ArrowUpLeft className="h-4 w-4 text-neutral-600" /></Link>
+          <Link href="/profile/settings" className="gc-list-row"><Settings className="h-4 w-4 text-emerald-300" /><span className="min-w-0 flex-1 font-bold">الحساب</span><ArrowUpLeft className="h-4 w-4 text-neutral-600" /></Link>
           <Link href="/progress/gain" className="gc-list-row"><Sparkles className="h-4 w-4 text-emerald-300" /><span className="min-w-0 flex-1 font-bold">Gain Mode</span><span className="gc-mini-badge">GOAL</span><ArrowUpLeft className="h-4 w-4 text-neutral-600" /></Link>
           <Link href="/progress/body" className="gc-list-row"><Scale className="h-4 w-4 text-emerald-300" /><span className="min-w-0 flex-1 font-bold">الجسم والوزن</span><ArrowUpLeft className="h-4 w-4 text-neutral-600" /></Link>
           <Link href="/split/personal" className="gc-list-row"><Dumbbell className="h-4 w-4 text-neutral-400" /><span className="min-w-0 flex-1 font-bold">جدول التمرين</span><ArrowUpLeft className="h-4 w-4 text-neutral-600" /></Link>

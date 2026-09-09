@@ -95,7 +95,7 @@ const ICON_OPTIONS: Array<{ key: SplitDayIconKey; label: string }> = [
 ];
 
 const COLOR_OPTIONS: Array<{ key: SplitDayColorKey; className: string }> = [
-  { key: "indigo", className: "bg-indigo-300" },
+  { key: "indigo", className: "bg-emerald-300" },
   { key: "blue", className: "bg-sky-300" },
   { key: "emerald", className: "bg-emerald-300" },
   { key: "amber", className: "bg-amber-300" },
@@ -104,7 +104,7 @@ const COLOR_OPTIONS: Array<{ key: SplitDayColorKey; className: string }> = [
 ];
 
 const COLOR_TONES: Record<SplitDayColorKey, string> = {
-  indigo: "border-indigo-300/35 bg-indigo-300/[0.09] text-indigo-200",
+  indigo: "border-emerald-300/35 bg-emerald-300/[0.09] text-emerald-200",
   blue: "border-sky-300/35 bg-sky-300/[0.09] text-sky-200",
   emerald: "border-emerald-300/35 bg-emerald-300/[0.09] text-emerald-200",
   amber: "border-amber-300/35 bg-amber-300/[0.09] text-amber-200",
@@ -512,8 +512,8 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
       {mode === "personal" ? (
         <section className="gc-card p-2">
           <div className="grid grid-cols-2 gap-1 rounded-2xl bg-black/20 p-1">
-            <button type="button" onClick={() => setView("week")} className={`min-h-11 rounded-xl text-sm font-bold transition ${view === "week" ? "bg-indigo-300 text-[#11131a]" : "text-neutral-400"}`}>الأسبوع ده</button>
-            <button type="button" onClick={() => setView("base")} className={`min-h-11 rounded-xl text-sm font-bold transition ${view === "base" ? "bg-indigo-300 text-[#11131a]" : "text-neutral-400"}`}>الجدول الأساسي</button>
+            <button type="button" onClick={() => setView("week")} className={`min-h-11 rounded-xl text-sm font-bold transition ${view === "week" ? "bg-emerald-300 text-[#11131a]" : "text-neutral-400"}`}>الأسبوع ده</button>
+            <button type="button" onClick={() => setView("base")} className={`min-h-11 rounded-xl text-sm font-bold transition ${view === "base" ? "bg-emerald-300 text-[#11131a]" : "text-neutral-400"}`}>الجدول الأساسي</button>
           </div>
         </section>
       ) : null}
@@ -546,7 +546,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                 if (isWeekDay) setSelectedWeekDate(day.scheduleDate); else selectBase(day);
                 setMessage(null);
               }} className={`gc-week-day-card ${active ? "gc-week-day-card-active gc-week-day-card-selected" : ""}`}>
-                <span className={`block text-[10px] font-black uppercase ${active ? "text-indigo-200" : "text-neutral-500"}`}>{SHORT_DAY[weekday]}</span>
+                <span className={`block text-[10px] font-black uppercase ${active ? "text-emerald-200" : "text-neutral-500"}`}>{SHORT_DAY[weekday]}</span>
                 <span className={`gc-week-day-icon ${day.workoutType === "rest" ? "gc-week-day-icon-rest" : ""}`}><Icon className="h-4 w-4" /></span>
                 <span className={`mt-1.5 block truncate text-[11px] font-bold ${day.workoutType === "rest" ? "text-neutral-500" : "text-neutral-200"}`}>{translateWorkoutLabel(day.displayName) || "تمرين"}</span>
                 {isWeekDay ? <span className="mt-1 block text-[9px] font-semibold text-neutral-600">{dateCaption(day.scheduleDate)}</span> : null}
@@ -558,10 +558,20 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
 
       {mode === "personal" ? (
         <details className="gc-list-panel group">
-          <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><WandSparkles className="h-4 w-4 text-indigo-400" /><span className="min-w-0 flex-1 font-bold">أدوات الجدول</span><span className="text-[10px] font-semibold text-neutral-500">إنشاء · استيراد · تحليل</span><ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" /></summary>
+          <summary className="gc-list-row min-h-16 list-none [&::-webkit-details-marker]:hidden">
+            <span className="gc-workout-option-icon"><WandSparkles className="h-4 w-4" /></span>
+            <span className="min-w-0 flex-1">
+              <strong className="block text-sm">غيّر أو اختار جدول</strong>
+              <small className="mt-0.5 block text-[11px] font-semibold text-neutral-500">Gain · خطط جاهزة · استيراد · من الصفر</small>
+            </span>
+            <ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" />
+          </summary>
           <div className="space-y-3 border-t border-[var(--border)] p-3">
-            <details className="rounded-xl border border-[var(--border)]"><summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><WandSparkles className="h-4 w-4 text-indigo-400" /><span className="min-w-0 flex-1 font-bold">إنشاء أو استيراد جدول</span><ChevronDown className="h-4 w-4 text-neutral-500" /></summary><div className="border-t border-[var(--border)] p-3"><SplitSetupChooser onChanged={loadAll} /></div></details>
-            <details className="rounded-xl border border-[var(--border)]"><summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><Target className="h-4 w-4 text-indigo-400" /><span className="min-w-0 flex-1 font-bold">تحليل الخطة</span><ChevronDown className="h-4 w-4 text-neutral-500" /></summary><div className="border-t border-[var(--border)] p-2"><PlanAuditPanel userId={userId} revision={planRevision} /></div></details>
+            <SplitSetupChooser onChanged={loadAll} />
+            <details className="rounded-xl border border-[var(--border)]">
+              <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><Target className="h-4 w-4 text-emerald-400" /><span className="min-w-0 flex-1 font-bold">تحليل الخطة</span><ChevronDown className="h-4 w-4 text-neutral-500" /></summary>
+              <div className="border-t border-[var(--border)] p-2"><PlanAuditPanel userId={userId} revision={planRevision} /></div>
+            </details>
           </div>
         </details>
       ) : null}
@@ -605,7 +615,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                       {orderedDays.filter((day) => day.workoutType !== "rest").map((day) => {
                         const active = weekSourceId === day.id && formType !== "rest";
                         const Icon = ICONS[day.iconKey];
-                        return <button key={day.id} type="button" onClick={() => chooseWeekSource(day.id)} className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 text-start ${active ? "border-indigo-300/45 bg-indigo-300/[0.1]" : "border-white/[0.08] bg-white/[0.025]"}`}><Icon className="h-4 w-4 text-indigo-200" /><span className="min-w-0"><strong className="block truncate text-sm">{titleFor(day)}</strong><span className="block truncate text-[11px] text-neutral-500">{day.focusLabel ?? "مخصص"}</span></span>{active ? <Check className="ms-auto h-4 w-4 text-indigo-200" /> : null}</button>;
+                        return <button key={day.id} type="button" onClick={() => chooseWeekSource(day.id)} className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 text-start ${active ? "border-emerald-300/45 bg-emerald-300/[0.1]" : "border-white/[0.08] bg-white/[0.025]"}`}><Icon className="h-4 w-4 text-emerald-200" /><span className="min-w-0"><strong className="block truncate text-sm">{titleFor(day)}</strong><span className="block truncate text-[11px] text-neutral-500">{day.focusLabel ?? "مخصص"}</span></span>{active ? <Check className="ms-auto h-4 w-4 text-emerald-200" /> : null}</button>;
                       })}
                     </div>
                   </fieldset>
@@ -614,8 +624,8 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                 <fieldset>
                   <legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">خطة اليوم ده</legend>
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <button type="button" onClick={setAsTrainingDay} className={`min-h-11 rounded-xl border text-sm font-bold ${formType !== "rest" ? "border-indigo-300/50 bg-indigo-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>تمرين</button>
-                    <button type="button" onClick={() => { setFormType("rest"); setFormName("راحة"); setFormFocus("راحة"); setFormIcon("moon"); setFormColor("blue"); }} className={`min-h-11 rounded-xl border text-sm font-bold ${formType === "rest" ? "border-indigo-300/50 bg-indigo-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>{view === "week" ? "راحة / إجازة" : "راحة"}</button>
+                    <button type="button" onClick={setAsTrainingDay} className={`min-h-11 rounded-xl border text-sm font-bold ${formType !== "rest" ? "border-emerald-300/50 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>تمرين</button>
+                    <button type="button" onClick={() => { setFormType("rest"); setFormName("راحة"); setFormFocus("راحة"); setFormIcon("moon"); setFormColor("blue"); }} className={`min-h-11 rounded-xl border text-sm font-bold ${formType === "rest" ? "border-emerald-300/50 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>{view === "week" ? "راحة / إجازة" : "راحة"}</button>
                   </div>
                 </fieldset>
                 {view === "week" ? <p className="text-[10px] leading-4 text-neutral-600">تغيير اليوم هنا للأسبوع ده بس. لو عندك مشوار أو محتاجة راحة، سجّليها عادي وGain Mode هيحسب الالتزام على الواقع بدل ما يمنعك.</p> : null}
@@ -632,9 +642,9 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                   <div className="space-y-4 border-t border-white/[0.06] p-3.5">
                     <label className="text-xs font-bold uppercase tracking-wide text-neutral-500">تركيز اليوم<input value={formFocus} onChange={(event) => setFormFocus(event.target.value)} maxLength={32} placeholder="مثال: صدر وضهر" className="gc-input mt-1 normal-case" /></label>
                     {view === "base" && formType !== "rest" ? (
-                      <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">فلتر مكتبة التمارين</legend><div className="mt-2 flex flex-wrap gap-2">{WORKOUT_FILTERS.map((filter) => <button key={filter.value} type="button" onClick={() => setFormType(filter.value)} className={`rounded-full border px-3 py-2 text-xs font-bold ${formType === filter.value ? "border-indigo-300/45 bg-indigo-300/[0.12] text-indigo-100" : "border-white/[0.08] text-neutral-500"}`}>{filter.label}</button>)}</div></fieldset>
+                      <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">فلتر مكتبة التمارين</legend><div className="mt-2 flex flex-wrap gap-2">{WORKOUT_FILTERS.map((filter) => <button key={filter.value} type="button" onClick={() => setFormType(filter.value)} className={`rounded-full border px-3 py-2 text-xs font-bold ${formType === filter.value ? "border-emerald-300/45 bg-emerald-300/[0.12] text-emerald-100" : "border-white/[0.08] text-neutral-500"}`}>{filter.label}</button>)}</div></fieldset>
                     ) : null}
-                    <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">الأيقونة</legend><div className="mt-2 flex flex-wrap gap-2">{ICON_OPTIONS.map(({ key, label }) => { const Icon = ICONS[key]; return <button key={key} type="button" title={label} aria-label={label} onClick={() => setFormIcon(key)} className={`grid h-11 w-11 place-items-center rounded-xl border ${formIcon === key ? "border-indigo-300/50 bg-indigo-300 text-[#11131a]" : "border-white/[0.08] bg-white/[0.025] text-neutral-400"}`}><Icon className="h-4 w-4" /></button>; })}</div></fieldset>
+                    <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">الأيقونة</legend><div className="mt-2 flex flex-wrap gap-2">{ICON_OPTIONS.map(({ key, label }) => { const Icon = ICONS[key]; return <button key={key} type="button" title={label} aria-label={label} onClick={() => setFormIcon(key)} className={`grid h-11 w-11 place-items-center rounded-xl border ${formIcon === key ? "border-emerald-300/50 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] bg-white/[0.025] text-neutral-400"}`}><Icon className="h-4 w-4" /></button>; })}</div></fieldset>
                     <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">اللون</legend><div className="mt-2 flex gap-2">{COLOR_OPTIONS.map(({ key, className }) => <button key={key} type="button" aria-label={`لون ${COLOR_LABELS[key]}`} onClick={() => setFormColor(key)} className={`relative grid h-10 w-10 place-items-center rounded-full border ${formColor === key ? "border-white/70" : "border-white/[0.08]"}`}><span className={`h-5 w-5 rounded-full ${className}`} />{formColor === key ? <Check className="absolute h-3 w-3 text-[#11131a]" /> : null}</button>)}</div></fieldset>
                     <label className="block text-xs font-bold uppercase tracking-wide text-neutral-500">ملاحظات اليوم<textarea value={formNotes} onChange={(event) => setFormNotes(event.target.value)} maxLength={240} rows={3} placeholder="المسكة، سرعة الحركة، شدة التمرين…" className="gc-input mt-1 resize-none text-sm normal-case" /></label>
                   </div>

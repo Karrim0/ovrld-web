@@ -33,7 +33,7 @@ export function SoloModeButton() {
         disabled={isLoading}
         className="gc-card-interactive flex w-full items-center gap-4 p-4 text-start disabled:opacity-50"
       >
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-indigo-300 text-neutral-950">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-300 text-neutral-950">
           <Dumbbell className="h-5 w-5" />
         </span>
         <span className="min-w-0 flex-1">

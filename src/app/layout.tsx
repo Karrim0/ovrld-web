@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     default: APP_CONFIG.name,
     template: `%s · ${APP_CONFIG.name}`,
   },
-  description: APP_CONFIG.description,
+  description: APP_CONFIG.englishDescription,
   applicationName: APP_CONFIG.name,
   manifest: "/manifest.webmanifest",
   icons: {
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f7fb" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0d13" },
+    { media: "(prefers-color-scheme: light)", color: "#f7faf8" },
+    { media: "(prefers-color-scheme: dark)", color: "#07100d" },
   ],
   width: "device-width",
   initialScale: 1,
