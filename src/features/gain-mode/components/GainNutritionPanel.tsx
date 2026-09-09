@@ -43,7 +43,6 @@ function dayState(day: GainNutritionDaySummary) {
 export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapshot: GainModeSnapshot }) {
   const [today, setToday] = useState(snapshot.todayNutrition);
   const [week, setWeek] = useState<GainNutritionDaySummary[]>([]);
-  const [showForm, setShowForm] = useState(false);
   const [label, setLabel] = useState("");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
@@ -95,7 +94,7 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
     setBusy(true);
     try {
       await addGainNutritionEntry(userId, { label, caloriesKcal, proteinGrams });
-      setLabel(""); setCalories(""); setProtein(""); setShowForm(false); setSaved("اتسجلت.");
+      setLabel(""); setCalories(""); setProtein(""); setSaved("اتسجلت.");
       await refresh();
     } catch (caught) {
       setError(getArabicErrorMessage(caught, "معرفناش نسجّل الأكل."));
@@ -189,23 +188,24 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
         <strong className="tabular-nums">{calorieLeft === null ? "—" : `${calorieLeft} kcal`} · {proteinLeft === null ? "—" : `${proteinLeft}g بروتين`}</strong>
       </div>
 
-      <GainAiFoodLogger userId={userId} onLogged={refresh} />
-
-      <button type="button" onClick={() => setShowForm((value) => !value)} className="gc-quiet-action mt-3 w-full min-h-10">
-        <Hash className="h-4 w-4" /> إدخال أرقام يدويًا
-        <ChevronDown className={`ms-auto h-4 w-4 transition-transform ${showForm ? "rotate-180" : ""}`} />
-      </button>
-
-      {showForm ? (
-        <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface-overlay)] p-3">
-          <div className="grid grid-cols-2 gap-2">
-            <label className="col-span-2 text-[10px] font-black text-neutral-500">اسم سريع · اختياري<input value={label} onChange={(event) => setLabel(event.target.value)} maxLength={80} className="gc-input mt-1" placeholder="مثال: فطار" /></label>
-            <label className="text-[10px] font-black text-neutral-500">kcal<input value={calories} onChange={(event) => setCalories(event.target.value)} inputMode="numeric" className="gc-input mt-1 text-center font-black" placeholder="650" /></label>
-            <label className="text-[10px] font-black text-neutral-500">بروتين g<input value={protein} onChange={(event) => setProtein(event.target.value)} inputMode="decimal" className="gc-input mt-1 text-center font-black" placeholder="32" /></label>
+      <div className="gc-food-log-primary mt-3">
+        <div className="flex items-start gap-3">
+          <span className="gc-food-log-primary-icon"><Hash className="h-4 w-4" /></span>
+          <div className="min-w-0 flex-1">
+            <p className="gc-eyebrow">إدخال أرقام يدويًا</p>
+            <strong className="mt-0.5 block text-sm font-black">سجّل أكلك دلوقتي</strong>
+            <p className="mt-0.5 text-[11px] font-semibold leading-5 text-neutral-500">اكتب السعرات أو البروتين مباشرة. الاسم اختياري.</p>
           </div>
-          <button type="button" disabled={busy} onClick={() => void addEntry()} className="gc-secondary-button mt-2 w-full min-h-10 disabled:opacity-50"><Save className="h-4 w-4" /> حفظ</button>
         </div>
-      ) : null}
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <label className="col-span-2 text-[10px] font-black text-neutral-500">اسم سريع · اختياري<input value={label} onChange={(event) => setLabel(event.target.value)} maxLength={80} className="gc-input mt-1" placeholder="مثال: فطار" /></label>
+          <label className="text-[10px] font-black text-neutral-500">kcal<input value={calories} onChange={(event) => setCalories(event.target.value)} inputMode="numeric" className="gc-input mt-1 text-center font-black" placeholder="650" /></label>
+          <label className="text-[10px] font-black text-neutral-500">بروتين g<input value={protein} onChange={(event) => setProtein(event.target.value)} inputMode="decimal" className="gc-input mt-1 text-center font-black" placeholder="32" /></label>
+        </div>
+        <button type="button" disabled={busy} onClick={() => void addEntry()} className="gc-primary-button mt-2 w-full min-h-11 disabled:opacity-50"><Save className="h-4 w-4" /> سجّل الأكل</button>
+      </div>
+
+      <GainAiFoodLogger userId={userId} onLogged={refresh} />
 
       {today.entries.length ? (
         <div className="mt-4 border-t border-[var(--border)] pt-3">

@@ -4191,3 +4191,115 @@ html[data-gc-i18n-ready="true"] body {
 .gc-home-gain-card { border-color: var(--border); background: var(--surface-elevated); }
 .gc-home-gain-icon { background: var(--accent-soft); color: var(--accent-strong); }
 .dark .gc-home-gain-icon { color: var(--accent); }
+
+/* OVRLD Pass 5.1 — quick logging as a first-class path + clearer food hierarchy. */
+@layer components {
+  .gc-food-log-primary {
+    border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border));
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--accent) 4%, var(--surface-elevated));
+    padding: .85rem;
+  }
+
+  .gc-food-log-primary-icon {
+    display: grid;
+    width: 2.2rem;
+    height: 2.2rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: .72rem;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+  }
+
+  .dark .gc-food-log-primary-icon { color: var(--accent); }
+
+  .gc-ai-premium-secondary {
+    border-color: var(--border);
+    background: var(--surface-elevated);
+    padding: .72rem .8rem;
+  }
+
+  .gc-ai-premium-secondary .gc-ai-premium-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: .68rem;
+  }
+
+  .gc-plan-women-badge {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid color-mix(in srgb, #c68fa5 34%, var(--border));
+    border-radius: 999px;
+    background: color-mix(in srgb, #c68fa5 11%, transparent);
+    padding: .22rem .48rem;
+    font-size: .5rem;
+    font-weight: 950;
+    color: #9d667c;
+  }
+
+  .dark .gc-plan-women-badge { color: #d5a7b9; }
+
+  .gc-plan-chip-blush {
+    border-color: color-mix(in srgb, #c68fa5 28%, var(--border));
+    background: color-mix(in srgb, #c68fa5 8%, var(--surface-overlay));
+    color: #9d667c;
+  }
+
+  .dark .gc-plan-chip-blush { color: #d5a7b9; }
+
+  .gc-ready-plan-row-recommended {
+    border-color: color-mix(in srgb, #c68fa5 20%, color-mix(in srgb, var(--accent) 22%, var(--border)));
+  }
+
+  .gc-quick-workout-success {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    border: 1px solid color-mix(in srgb, var(--success) 24%, var(--border));
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--success) 7%, var(--surface-elevated));
+    padding: .72rem .8rem;
+  }
+
+  .gc-quick-workout-success > span {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: .65rem;
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    color: var(--success);
+  }
+
+  .gc-quick-workout-success strong { display: block; font-size: .75rem; font-weight: 950; }
+  .gc-quick-workout-success p { margin-top: .08rem; font-size: .62rem; font-weight: 750; color: var(--muted); }
+
+  .gc-quick-use-last {
+    grid-column: 2 / -1;
+    display: inline-flex;
+    width: fit-content;
+    min-height: 1.7rem;
+    align-items: center;
+    gap: .28rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-subtle);
+    padding: .25rem .5rem;
+    font-size: .55rem;
+    font-weight: 850;
+    color: var(--muted-strong);
+  }
+
+  .gc-quick-use-last span {
+    margin-inline-start: .12rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gc-quick-use-last:active {
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+    background: var(--accent-soft);
+  }
+}

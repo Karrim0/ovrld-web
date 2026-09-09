@@ -30,6 +30,7 @@ type ReadyPlan = {
   detailEn: string;
   days: number;
   recommended?: boolean;
+  womenFocused?: boolean;
 };
 
 const STARTERS: ReadyPlan[] = [
@@ -41,6 +42,7 @@ const STARTERS: ReadyPlan[] = [
     detailEn: "Sat Lower A · Sun Upper · Mon Lower B · Wed Lower C",
     days: 4,
     recommended: true,
+    womenFocused: true,
   },
   {
     key: "full_body_3",
@@ -136,12 +138,13 @@ export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
               <div className="flex flex-wrap items-center gap-2">
                 <strong className="text-sm font-black">{ar ? gainPlan.titleAr : gainPlan.titleEn}</strong>
                 <span className="gc-plan-recommended-badge">{ar ? "مقترح لـ Gain Mode" : "Recommended for Gain Mode"}</span>
+                {gainPlan.womenFocused ? <span className="gc-plan-women-badge">{ar ? "موجّه للبنات" : "Women-focused"}</span> : null}
               </div>
               <p className="mt-1 text-xs leading-5 text-neutral-500">{ar ? gainPlan.detailAr : gainPlan.detailEn}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <span className="gc-plan-chip">{ar ? "4 أيام تمرين" : "4 training days"}</span>
                 <span className="gc-plan-chip">{ar ? "3 أيام راحة" : "3 rest days"}</span>
-                <span className="gc-plan-chip">Glutes + Legs</span>
+                <span className="gc-plan-chip gc-plan-chip-blush">Glutes + Legs · Shape</span>
               </div>
             </div>
           </div>
@@ -221,6 +224,7 @@ export function SplitSetupChooser({ onChanged }: SplitSetupChooserProps) {
                     <span className="flex flex-wrap items-center gap-1.5">
                       <strong className="text-sm">{ar ? starter.titleAr : starter.titleEn}</strong>
                       {starter.recommended ? <span className="gc-plan-recommended-badge">Gain Mode</span> : null}
+                      {starter.womenFocused ? <span className="gc-plan-women-badge">{ar ? "للبنات" : "Women"}</span> : null}
                     </span>
                     <small className="mt-1 block text-xs leading-5 text-neutral-500">{ar ? starter.detailAr : starter.detailEn}</small>
                   </span>

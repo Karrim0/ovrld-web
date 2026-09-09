@@ -49,6 +49,7 @@ export function GainAiFoodLogger({ userId, onLogged }: { userId: UUID; onLogged:
       });
     return () => { active = false; };
   }, [userId]);
+
   const quickMeals = useMemo(() => savedMeals.slice(0, 6), [savedMeals]);
 
   async function logSavedMeal(meal: GainSavedMeal) {
@@ -90,21 +91,6 @@ export function GainAiFoodLogger({ userId, onLogged }: { userId: UUID; onLogged:
 
   return (
     <div className="mt-3 space-y-3">
-      <div className="gc-ai-premium-lock">
-        <div className="flex items-start gap-3">
-          <span className="gc-ai-premium-icon"><Sparkles className="h-5 w-5" /></span>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2"><strong className="text-sm">AI Food Logging</strong><span className="gc-premium-badge"><Crown className="h-3 w-3" /> Premium</span></div>
-            <p className="mt-1 text-xs leading-5 text-neutral-500">اكتب الوجبة بطريقتك، وOVRLD يقدّر السعرات والبروتين قبل ما تسجلها.</p>
-          </div>
-          <LockKeyhole className="h-4 w-4 shrink-0 text-amber-500" />
-        </div>
-        <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface-overlay)] px-3 py-3 text-xs font-semibold leading-5 text-neutral-500">
-          الميزة محجوزة لـ OVRLD Premium ولسه مش متاحة للتفعيل في النسخة الحالية. التسجيل اليدوي والوجبات المحفوظة شغالين عادي.
-        </div>
-        <button type="button" className="gc-secondary-button mt-3 w-full" disabled aria-disabled="true"><Crown className="h-4 w-4" /> Premium · قريبًا</button>
-      </div>
-
       {savedMealsAvailable ? (
         <div className="gc-saved-meals-box">
           <div className="flex items-center justify-between gap-3">
@@ -142,6 +128,24 @@ export function GainAiFoodLogger({ userId, onLogged }: { userId: UUID; onLogged:
           </details>
         </div>
       ) : <p className="gc-inline-error">الوجبات المحفوظة محتاجة تحديث قاعدة البيانات Phase 11.</p>}
+
+      <details className="gc-ai-premium-lock gc-ai-premium-secondary group">
+        <summary className="flex min-h-11 list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
+          <span className="gc-ai-premium-icon"><Sparkles className="h-4 w-4" /></span>
+          <span className="min-w-0 flex-1 text-start">
+            <span className="flex flex-wrap items-center gap-2"><strong className="text-xs">AI Food Logging</strong><span className="gc-premium-badge"><Crown className="h-3 w-3" /> Premium</span></span>
+            <small className="mt-0.5 block text-[10px] font-semibold text-neutral-500">اختياري · التسجيل اليدوي فوق، وافتح ده لو عايز تقدير AI</small>
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="mt-2 border-t border-[var(--border)] pt-3">
+          <div className="flex items-start gap-2">
+            <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+            <p className="text-xs leading-5 text-neutral-500">اكتب الوجبة بطريقتك، وOVRLD يقدّر السعرات والبروتين قبل ما تسجلها. الميزة محجوزة لـ OVRLD Premium ولسه مش متاحة للتفعيل في النسخة الحالية.</p>
+          </div>
+          <button type="button" className="gc-secondary-button mt-3 w-full" disabled aria-disabled="true"><Crown className="h-4 w-4" /> Premium · قريبًا</button>
+        </div>
+      </details>
 
       {error ? <p className="gc-inline-error">{error}</p> : null}
       {message ? <p className="gc-inline-success">{message}</p> : null}
