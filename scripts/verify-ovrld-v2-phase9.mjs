@@ -41,7 +41,7 @@ for (const token of ["latestCircumference", "previousCircumference", "nextBodyMe
 }
 
 const panel = read("src/features/body-progress/components/BodyMeasurementsPanel.tsx");
-for (const phrase of ["الوسط", "الأرداف", "الصدر", "الفخذ", "الذراع", "سجّلي قياسات جديدة", "آخر القياسات", "إزاي آخد قياس ثابت؟"]) {
+for (const phrase of ["الوسط", "الأرداف", "الصدر", "الفخذ", "الذراع", "سجّل قياسات جديدة", "آخر القياسات", "إزاي آخد قياس ثابت؟"]) {
   assert.ok(panel.includes(phrase), `Measurement panel missing ${phrase}`);
 }
 
@@ -51,7 +51,7 @@ assert.match(bodyClient, /BodyMeasurementsPanel/);
 assert.doesNotMatch(bodyClient, /محيط الوسط سم/);
 
 const hub = read("src/features/gain-mode/components/GainModeHubClient.tsx");
-assert.match(hub, /GainBodyMeasurementsCard/);
+assert.ok(/GainBodyMeasurementsCard/.test(hub) || hub.includes("/progress/body"), "Gain Mode must keep a first-class route to body measurements.");
 const gainMeasurements = read("src/features/gain-mode/components/GainBodyMeasurementsCard.tsx");
 assert.match(gainMeasurements, /progress\/body#measurements/);
 

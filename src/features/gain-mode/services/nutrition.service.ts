@@ -228,7 +228,7 @@ export async function saveGainMeal(userId: UUID, input: SaveGainMealInput): Prom
   const label = input.label.trim().slice(0, 80);
   const caloriesKcal = Math.round(input.caloriesKcal);
   const proteinGrams = Math.round(input.proteinGrams * 10) / 10;
-  if (!label) throw new Error("اكتبي اسم للوجبة المحفوظة.");
+  if (!label) throw new Error("اكتب اسم للوجبة المحفوظة.");
   if (!Number.isFinite(caloriesKcal) || caloriesKcal < 0 || caloriesKcal > 5000) throw new Error("راجع سعرات الوجبة.");
   if (!Number.isFinite(proteinGrams) || proteinGrams < 0 || proteinGrams > 300) throw new Error("راجع بروتين الوجبة.");
   if (caloriesKcal === 0 && proteinGrams === 0) throw new Error("سجّل سعرات أو بروتين على الأقل.");

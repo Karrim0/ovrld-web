@@ -19,10 +19,15 @@ export function PlanAuditPanel({ userId, revision }: { userId: UUID; revision?: 
 
   useEffect(() => {
     let active = true;
-    setError(null);
     void fetchPlanAudit(userId)
-      .then((next) => { if (active) setData(next); })
-      .catch((caught) => { if (active) setError(getArabicErrorMessage(caught, "معرفناش نراجع الجدول دلوقتي.")); });
+      .then((next) => {
+        if (!active) return;
+        setData(next);
+        setError(null);
+      })
+      .catch((caught) => {
+        if (active) setError(getArabicErrorMessage(caught, "معرفناش نراجع الجدول دلوقتي."));
+      });
     return () => { active = false; };
   }, [revision, userId]);
 

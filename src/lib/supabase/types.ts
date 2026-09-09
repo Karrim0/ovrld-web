@@ -402,9 +402,11 @@ export type Database = {
           calorie_target_kcal: number | null
           created_at: string
           diet_pattern: string
+          equation_sex: string
           meal_size_difficulty: boolean
           nutrition_mode: string
           protein_target_grams: number | null
+          physique_focus: string
           status: string
           updated_at: string
           user_id: string
@@ -416,9 +418,11 @@ export type Database = {
           calorie_target_kcal?: number | null
           created_at?: string
           diet_pattern?: string
+          equation_sex?: string
           meal_size_difficulty?: boolean
           nutrition_mode?: string
           protein_target_grams?: number | null
+          physique_focus?: string
           status?: string
           updated_at?: string
           user_id: string
@@ -430,9 +434,11 @@ export type Database = {
           calorie_target_kcal?: number | null
           created_at?: string
           diet_pattern?: string
+          equation_sex?: string
           meal_size_difficulty?: boolean
           nutrition_mode?: string
           protein_target_grams?: number | null
+          physique_focus?: string
           status?: string
           updated_at?: string
           user_id?: string

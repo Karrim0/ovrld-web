@@ -76,13 +76,13 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: userData, error: authError } = await supabase.auth.getUser();
   if (authError || !userData.user) {
-    return NextResponse.json({ error: "لازم تسجّلي دخول الأول." }, { status: 401 });
+    return NextResponse.json({ error: "لازم تسجّل دخول الأول." }, { status: 401 });
   }
 
   const body = await request.json().catch(() => null) as { text?: unknown } | null;
   const text = typeof body?.text === "string" ? body.text.trim() : "";
   if (text.length < 3) {
-    return NextResponse.json({ error: "اكتبي أكلتي إيه الأول." }, { status: 400 });
+    return NextResponse.json({ error: "اكتب أكلت إيه الأول." }, { status: 400 });
   }
   if (text.length > MAX_TEXT_LENGTH) {
     return NextResponse.json({ error: "خلي وصف الأكل أقصر شوية — 700 حرف أو أقل." }, { status: 413 });
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({
-      error: "التقدير الذكي مش متوصل بمفتاح AI على السيرفر. تقدري تدخلي الأرقام يدويًا عادي.",
+      error: "التقدير الذكي مش متوصل بمفتاح AI على السيرفر. تقدر تدخل الأرقام يدويًا عادي.",
       code: "AI_FOOD_NOT_CONFIGURED",
     }, { status: 503 });
   }
@@ -132,27 +132,27 @@ export async function POST(request: NextRequest) {
     const quotaProblem = providerError?.code === "insufficient_quota" || /quota|billing/i.test(providerError?.message ?? "");
     return NextResponse.json({
       error: quotaProblem
-        ? "التقدير الذكي مش متاح دلوقتي بسبب رصيد الـAI. دخّلي الأرقام يدويًا مؤقتًا."
-        : "معرفناش نقدّر الأكل دلوقتي. جرّبي وصف أوضح أو دخّلي الأرقام يدويًا.",
+        ? "التقدير الذكي مش متاح دلوقتي بسبب رصيد الـAI. دخّل الأرقام يدويًا مؤقتًا."
+        : "معرفناش نقدّر الأكل دلوقتي. جرّب وصف أوضح أو دخّل الأرقام يدويًا.",
       code: quotaProblem ? "AI_FOOD_QUOTA_UNAVAILABLE" : "AI_FOOD_FAILED",
     }, { status: 422 });
   }
 
   const textOutput = outputText(rawResponse);
   if (!textOutput) {
-    return NextResponse.json({ error: "معرفناش نفهم وصف الأكل. اكتبي الكمية والأصناف بشكل أوضح." }, { status: 422 });
+    return NextResponse.json({ error: "معرفناش نفهم وصف الأكل. اكتب الكمية والأصناف بشكل أوضح." }, { status: 422 });
   }
 
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(textOutput);
   } catch {
-    return NextResponse.json({ error: "التقدير رجع بشكل غير واضح. جرّبي تاني أو دخّلي الأرقام يدويًا." }, { status: 422 });
+    return NextResponse.json({ error: "التقدير رجع بشكل غير واضح. جرّب تاني أو دخّل الأرقام يدويًا." }, { status: 422 });
   }
 
   const parsed = estimateSchema.safeParse(parsedJson);
   if (!parsed.success || !parsed.data.recognized || parsed.data.items.length === 0) {
-    return NextResponse.json({ error: "مش واضح إن الوصف فيه أكل اتاكل فعلًا. اكتبي الأصناف والكميات بشكل أبسط." }, { status: 422 });
+    return NextResponse.json({ error: "مش واضح إن الوصف فيه أكل اتاكل فعلًا. اكتب الأصناف والكميات بشكل أبسط." }, { status: 422 });
   }
 
   const estimate = {
@@ -166,6 +166,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     estimate,
-    message: "ده تقدير تقريبي. راجعي الكمية والأرقام قبل التسجيل.",
+    message: "ده تقدير تقريبي. راجع الكمية والأرقام قبل التسجيل.",
   });
 }

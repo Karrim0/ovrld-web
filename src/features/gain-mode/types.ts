@@ -6,6 +6,8 @@ export type GainActivityLevel = "light" | "moderate" | "high";
 export type GainAppetiteLevel = "low" | "average" | "good";
 export type GainDietPattern = "mixed" | "vegetarian" | "vegan" | "other";
 export type GainNutritionMode = "simple" | "precision";
+export type GainEquationSex = "female" | "male";
+export type GainPhysiqueFocus = "balanced" | "lower_body" | "glutes_legs";
 
 export interface GainModeProfile {
   userId: UUID;
@@ -16,6 +18,8 @@ export interface GainModeProfile {
   mealSizeDifficulty: boolean;
   dietPattern: GainDietPattern;
   nutritionMode: GainNutritionMode;
+  equationSex: GainEquationSex;
+  physiqueFocus: GainPhysiqueFocus;
   calorieTargetKcal: number | null;
   proteinTargetGrams: number | null;
   createdAt: ISODateString;
@@ -155,6 +159,45 @@ export interface GainReviewSnapshot {
     comparedTo: ISODateString | null;
   };
   adjustments: GainCalorieAdjustment[];
+  planCompatibility: GainPlanCompatibility;
+}
+
+
+
+export type GainPlanCompatibilityState = "setup" | "good" | "partial" | "needs_work";
+
+export interface GainPlanCompatibility {
+  state: GainPlanCompatibilityState;
+  score: number | null;
+  focus: GainPhysiqueFocus;
+  focusLabel: string;
+  title: string;
+  detail: string;
+  lowerBodyShare: number | null;
+  priorityLoads: Array<{ muscle: string; sets: number; exposureDays: number }>;
+  maintenanceLoads: Array<{ muscle: string; sets: number; exposureDays: number }>;
+  insights: string[];
+}
+
+export type GainTrainingState = "setup" | "collecting" | "on_track" | "attention";
+
+export interface GainTrainingSummary {
+  state: GainTrainingState;
+  title: string;
+  detail: string;
+  href: string;
+  cta: string;
+  trainingDays: number;
+  plannedSets: number;
+  exerciseSlots: number;
+  workoutsCompleted: number;
+  workoutsScheduled: number;
+  adherence: number | null;
+  improvingExercises: number;
+  plateauExercises: number;
+  slippingExercises: number;
+  trackedExercises: number;
+  compatibility: GainPlanCompatibility;
 }
 
 export interface GainModeSnapshot {
@@ -170,4 +213,5 @@ export interface GainModeSnapshot {
   supportDetail: string;
   dietSupportDetail: string | null;
   review: GainWeeklyReview;
+  training: GainTrainingSummary;
 }

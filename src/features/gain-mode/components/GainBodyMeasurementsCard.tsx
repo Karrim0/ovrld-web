@@ -26,7 +26,7 @@ export function GainBodyMeasurementsCard({ body }: { body: BodyProgressSnapshot 
           <p className="gc-eyebrow">تطور الجسم</p>
           <h3 className="mt-0.5 text-sm font-black">القياسات</h3>
         </div>
-        <span className={`gc-day-status ${due ? "gc-day-status-due" : ""}`}>{!latest ? "ابدئي" : due ? "مستحق" : dueInDays === null ? "كل 4 أسابيع" : `بعد ${dueInDays} يوم`}</span>
+        <span className={`gc-day-status ${due ? "gc-day-status-due" : ""}`}>{!latest ? "ابدأ" : due ? "مستحق" : dueInDays === null ? "كل 4 أسابيع" : `بعد ${dueInDays} يوم`}</span>
       </div>
 
       <div className="mt-3 grid grid-cols-3 divide-x divide-x-reverse divide-[var(--border)] rounded-xl bg-[var(--surface-overlay)]">
@@ -36,7 +36,7 @@ export function GainBodyMeasurementsCard({ body }: { body: BodyProgressSnapshot 
       </div>
 
       <Link href="/progress/body#measurements" className="gc-review-action mt-3">
-        {latest ? "شوفي القياسات" : "سجّلي أول قياسات"}<ArrowUpLeft className="h-4 w-4" />
+        {latest ? "شوف القياسات" : "سجّل أول قياسات"}<ArrowUpLeft className="h-4 w-4" />
       </Link>
     </section>
   );

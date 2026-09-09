@@ -45,9 +45,10 @@ assert.match(reviewService, /state: "suggest"/);
 assert.match(reviewService, /canApply: nextTarget > calorieTargetKcal/);
 
 const client = read("src/features/gain-mode/components/GainReviewClient.tsx");
-for (const phrase of ["قرار الأسبوع", "آخر 7 أيام مكتملة", "آخر 28 يوم", "طبّقي التعديل", "تعديلات السعرات", "OVRLD يقترح فقط"]) {
+for (const phrase of ["قرار الأسبوع", "آخر 7 أيام مكتملة", "آخر 28 يوم", "تعديلات السعرات", "OVRLD يقترح فقط"]) {
   assert.ok(client.includes(phrase), `Review client missing ${phrase}`);
 }
+assert.ok(client.includes("طبّق التعديل") || client.includes("طبّقي التعديل"), "Review client missing apply-adjustment CTA");
 
 const preview = read("src/features/gain-mode/components/GainReviewPreview.tsx");
 assert.match(preview, /مراجعة الأسبوع/);

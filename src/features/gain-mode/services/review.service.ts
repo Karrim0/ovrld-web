@@ -1,12 +1,13 @@
 import { createClient } from "@/lib/supabase/client";
-import { addDaysToDate, getTodayISODate, parseISODateOnly, toISODateOnly } from "@/lib/dates";
-import { fetchAdherenceSummary } from "@/features/progress/services/progress.service";
+import { addDaysToDate, enumerateDateRange, getTodayISODate, getWeekdayFromDate, parseISODateOnly, toISODateOnly } from "@/lib/dates";
+import { fetchPersonalSplit } from "@/features/splits/services/split.service";
+import { fetchPlanAudit } from "@/features/splits/services/plan-audit.service";
 import { fetchProgressIntelligence } from "@/features/progress/services/progress-intelligence.service";
 import { fetchWorkoutHistory } from "@/features/workouts/services/workout-session.service";
 import { hasCircumference, fetchBodyProgress } from "@/features/body-progress/services/body-progress.service";
 import type { BodyMeasurement } from "@/features/body-progress/types";
-import type { ISODateOnlyString, UUID } from "@/types";
-import { estimateRecentWeeklyWeightChange, fetchGainModeProfile, estimateCalorieTarget } from "./gain-mode.service";
+import type { ISODateOnlyString, UUID, WorkoutType } from "@/types";
+import { buildGainPlanCompatibility, estimateRecentWeeklyWeightChange, fetchGainModeProfile, estimateCalorieTarget } from "./gain-mode.service";
 import { fetchGainNutritionRange, summarizeNutritionDay } from "./nutrition.service";
 import type {
   GainAdaptiveDecision,
@@ -54,6 +55,38 @@ function buildDateRange(startDate: ISODateOnlyString, endDate: ISODateOnlyString
   const dates: ISODateOnlyString[] = [];
   for (let current = start; current <= end; current = addDaysToDate(current, 1)) dates.push(toISODateOnly(current));
   return dates;
+}
+
+async function fetchTrainingWindow(
+  userId: UUID,
+  startDate: ISODateOnlyString,
+  endDate: ISODateOnlyString,
+  history: Awaited<ReturnType<typeof fetchWorkoutHistory>>,
+): Promise<{ completed: number; scheduled: number; adherence: number | null }> {
+  const [split, overridesResult] = await Promise.all([
+    fetchPersonalSplit(userId),
+    createClient()
+      .from("weekly_schedule_days")
+      .select("schedule_date, workout_type")
+      .eq("user_id", userId)
+      .gte("schedule_date", startDate)
+      .lte("schedule_date", endDate),
+  ]);
+  if (overridesResult.error) throw new Error(overridesResult.error.message);
+
+  const baseTypes = new Map(split.map((day) => [day.weekday, day.workoutType]));
+  const overrideTypes = new Map((overridesResult.data ?? []).map((day) => [day.schedule_date, day.workout_type as WorkoutType]));
+  const scheduledDates = enumerateDateRange(parseISODateOnly(startDate), parseISODateOnly(endDate))
+    .filter((date) => {
+      const iso = toISODateOnly(date);
+      return (overrideTypes.get(iso) ?? baseTypes.get(getWeekdayFromDate(date)) ?? "rest") !== "rest";
+    })
+    .map(toISODateOnly);
+  const completedDates = new Set(history
+    .filter((session) => session.scheduledDate >= startDate && session.scheduledDate <= endDate)
+    .map((session) => session.scheduledDate));
+  const completed = scheduledDates.filter((date) => completedDates.has(date)).length;
+  return { completed, scheduled: scheduledDates.length, adherence: scheduledDates.length > 0 ? completed / scheduledDates.length : null };
 }
 
 async function fetchNutritionWindow(
@@ -122,14 +155,16 @@ function buildDecision(input: {
   currentWeightKg: number | null;
   weeklyWeightChangeKg: number | null;
   nutrition: GainNutritionWindowSummary;
-  adherence: Awaited<ReturnType<typeof fetchAdherenceSummary>>;
+  trainingAdherence: number | null;
+  workoutsScheduled: number;
+  plan: Awaited<ReturnType<typeof fetchPlanAudit>>;
   lastAdjustment: GainCalorieAdjustment | null;
   weightReadingCount: number;
   weightSpanDays: number;
   periodStart: ISODateOnlyString;
   periodEnd: ISODateOnlyString;
 }): GainAdaptiveDecision {
-  const { calorieTargetKcal, currentWeightKg, weeklyWeightChangeKg, nutrition, adherence, lastAdjustment } = input;
+  const { calorieTargetKcal, currentWeightKg, weeklyWeightChangeKg, nutrition, trainingAdherence, workoutsScheduled, plan, lastAdjustment } = input;
   const observationDaysRemaining = lastAdjustment ? Math.max(0, 14 - daysSince(lastAdjustment.createdAt)) : 0;
 
   if (observationDaysRemaining > 0) {
@@ -149,8 +184,21 @@ function buildDecision(input: {
     return {
       state: "collect",
       title: "محتاجين داتا أكتر",
-      detail: "كمّلي الوزن والتسجيل حوالي أسبوعين قبل أي تعديل في السعرات.",
+      detail: "كمّل الوزن والتسجيل حوالي أسبوعين قبل أي تعديل في السعرات.",
       reasonCode: "weight_data",
+      suggestedCalorieTargetKcal: null,
+      calorieDeltaKcal: null,
+      canApply: false,
+      observationDaysRemaining: 0,
+    };
+  }
+
+  if (plan.trainingDays === 0 || plan.exerciseSlots === 0) {
+    return {
+      state: "hold",
+      title: "ظبّط جدول التمرين الأول",
+      detail: "Gain Mode محتاج جدول فعلي عشان يربط زيادة الوزن بالقوة والالتزام، مش بالأكل والميزان بس.",
+      reasonCode: "training_plan_missing",
       suggestedCalorieTargetKcal: null,
       calorieDeltaKcal: null,
       canApply: false,
@@ -161,7 +209,7 @@ function buildDecision(input: {
   if (nutrition.daysLogged < 5) {
     return {
       state: "collect",
-      title: "ثبّتي تسجيل الأكل",
+      title: "ثبّت تسجيل الأكل",
       detail: `مسجل ${nutrition.daysLogged} من 7 أيام. محتاجين 5 أيام على الأقل عشان القرار يبقى له معنى.`,
       reasonCode: "nutrition_logging",
       suggestedCalorieTargetKcal: null,
@@ -171,11 +219,11 @@ function buildDecision(input: {
     };
   }
 
-  if (adherence.weeklyScheduled > 0 && adherence.weekly !== null && adherence.weekly < 0.67) {
+  if (workoutsScheduled > 0 && trainingAdherence !== null && trainingAdherence < 0.67) {
     return {
       state: "hold",
-      title: "ثبّتي التمرين الأول",
-      detail: "التمرين الأسبوعي لسه مش ثابت كفاية. خليه منتظم قبل تعديل الخطة الغذائية.",
+      title: "ثبّت التمرين الأول",
+      detail: "التمرين الأسبوعي لسه مش ثابت كفاية. خلّيه منتظم قبل تعديل الخطة الغذائية.",
       reasonCode: "training_consistency",
       suggestedCalorieTargetKcal: null,
       calorieDeltaKcal: null,
@@ -187,7 +235,7 @@ function buildDecision(input: {
   if (nutrition.averageCalorieTargetRatio !== null && nutrition.averageCalorieTargetRatio < 0.9) {
     return {
       state: "hold",
-      title: "وصّلي للهدف الحالي الأول",
+      title: "وصّل للهدف الحالي الأول",
       detail: "متوسط أكلك أقل من هدف السعرات الحالي؛ زيادة الهدف دلوقتي مش هتحل المشكلة.",
       reasonCode: "current_target_not_met",
       suggestedCalorieTargetKcal: null,
@@ -202,7 +250,7 @@ function buildDecision(input: {
     return {
       state: "hold",
       title: "الوزن بيتحرك بسرعة",
-      detail: "ثبّتي السعرات دلوقتي وراجعي اتجاه الوزن والقياسات بدل ما نزود أكتر.",
+      detail: "ثبّت السعرات دلوقتي وراجع اتجاه الوزن والقياسات بدل ما نزود أكتر.",
       reasonCode: "fast_gain",
       suggestedCalorieTargetKcal: null,
       calorieDeltaKcal: null,
@@ -227,7 +275,7 @@ function buildDecision(input: {
 
   return {
     state: "on_track",
-    title: "كمّلي بنفس الخطة",
+    title: "كمّل بنفس الخطة",
     detail: "الوزن بيتحرك والتسجيل كفاية للحكم. مفيش داعي نغيّر السعرات دلوقتي.",
     reasonCode: "on_track",
     suggestedCalorieTargetKcal: null,
@@ -271,12 +319,12 @@ export async function fetchGainReviewSnapshot(userId: UUID): Promise<GainReviewS
   const profile = await fetchGainModeProfile(userId);
   if (!profile || profile.status !== "active") return null;
 
-  const [body, adherence, intelligence, history, adjustments] = await Promise.all([
+  const [body, intelligence, history, adjustments, plan] = await Promise.all([
     fetchBodyProgress(userId),
-    fetchAdherenceSummary(userId),
     fetchProgressIntelligence(userId),
     fetchWorkoutHistory(userId),
     fetchGainCalorieAdjustments(userId).catch(() => []),
+    fetchPlanAudit(userId),
   ]);
 
   const currentWeightKg = body.latest?.weightKg ?? body.start?.weightKg ?? null;
@@ -285,6 +333,7 @@ export async function fetchGainReviewSnapshot(userId: UUID): Promise<GainReviewS
     heightCm: body.goal?.heightCm ?? null,
     ageYears: profile.ageYears,
     activityLevel: profile.activityLevel,
+    equationSex: profile.equationSex,
   });
   const calorieTargetKcal = profile.calorieTargetKcal ?? estimatedCalories;
   const proteinTargetGrams = profile.proteinTargetGrams ?? (currentWeightKg ? Math.round(currentWeightKg * 1.6) : null);
@@ -299,21 +348,26 @@ export async function fetchGainReviewSnapshot(userId: UUID): Promise<GainReviewS
   const monthStartISO = toISODateOnly(monthStart);
   const monthEndISO = toISODateOnly(monthEnd);
 
-  const [weekNutrition, monthNutrition] = await Promise.all([
+  const [weekNutrition, monthNutrition, weekTraining, monthTraining] = await Promise.all([
     fetchNutritionWindow(userId, weekStartISO, weekEndISO, calorieTargetKcal, proteinTargetGrams),
     fetchNutritionWindow(userId, monthStartISO, monthEndISO, calorieTargetKcal, proteinTargetGrams),
+    fetchTrainingWindow(userId, weekStartISO, weekEndISO, history),
+    fetchTrainingWindow(userId, monthStartISO, monthEndISO, history),
   ]);
 
   const weeklyWeightChangeKg = estimateRecentWeeklyWeightChange(body.measurements);
   const validWeights = body.measurements.filter((item) => Number.isFinite(item.weightKg));
   const weightSpanDays = measurementSpanDays(validWeights);
   const lastAdjustment = adjustments[0] ?? null;
+  const planCompatibility = buildGainPlanCompatibility(profile.physiqueFocus, plan);
   const decision = buildDecision({
     calorieTargetKcal,
     currentWeightKg,
     weeklyWeightChangeKg,
     nutrition: weekNutrition,
-    adherence,
+    trainingAdherence: weekTraining.adherence,
+    workoutsScheduled: weekTraining.scheduled,
+    plan,
     lastAdjustment,
     weightReadingCount: validWeights.length,
     weightSpanDays,
@@ -330,16 +384,13 @@ export async function fetchGainReviewSnapshot(userId: UUID): Promise<GainReviewS
 
   const latestCircumference = body.latestCircumference;
   const circumferenceBaseline = chooseCircumferenceBaseline(body.measurements, latestCircumference);
-  const workouts7Days = history.filter((session) => session.scheduledDate >= weekStartISO && session.scheduledDate <= weekEndISO).length;
-  const workouts28Days = history.filter((session) => session.scheduledDate >= monthStartISO && session.scheduledDate <= monthEndISO).length;
-
   const weekly: GainReviewWindow = {
     startDate: weekStartISO,
     endDate: weekEndISO,
     nutrition: weekNutrition,
-    workoutsCompleted: workouts7Days,
-    workoutsScheduled: null,
-    trainingAdherence: adherence.weekly,
+    workoutsCompleted: weekTraining.completed,
+    workoutsScheduled: weekTraining.scheduled,
+    trainingAdherence: weekTraining.adherence,
     weightChangeKg: weeklyWeightChangeKg,
     improvingExercises: intelligence.improvingCount,
     trackedExercises: intelligence.trackedExercises,
@@ -348,9 +399,9 @@ export async function fetchGainReviewSnapshot(userId: UUID): Promise<GainReviewS
     startDate: monthStartISO,
     endDate: monthEndISO,
     nutrition: monthNutrition,
-    workoutsCompleted: workouts28Days,
-    workoutsScheduled: null,
-    trainingAdherence: null,
+    workoutsCompleted: monthTraining.completed,
+    workoutsScheduled: monthTraining.scheduled,
+    trainingAdherence: monthTraining.adherence,
     weightChangeKg: monthWeightDeltaKg,
     improvingExercises: intelligence.improvingCount,
     trackedExercises: intelligence.trackedExercises,
@@ -370,5 +421,6 @@ export async function fetchGainReviewSnapshot(userId: UUID): Promise<GainReviewS
       comparedTo: latestCircumference?.measuredAt ?? null,
     },
     adjustments,
+    planCompatibility,
   };
 }

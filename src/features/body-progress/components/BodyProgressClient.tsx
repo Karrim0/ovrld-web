@@ -23,6 +23,7 @@ import { getArabicErrorMessage } from "@/lib/localization";
 import { addBodyMeasurement, fetchBodyProgress, saveBodyGoal } from "../services/body-progress.service";
 import type { BodyProgressSnapshot } from "../types";
 import { BodyMeasurementsPanel } from "./BodyMeasurementsPanel";
+import { BodyShapeOverview } from "./BodyShapeOverview";
 
 function asNumber(value: string): number | null {
   if (!value.trim()) return null;
@@ -111,7 +112,7 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
   const [message, setMessage] = useState<string | null>(null);
 
   const [intervalDays, setIntervalDays] = useState("7");
-  const [activeView, setActiveView] = useState<"weight" | "measurements">("weight");
+  const [activeView, setActiveView] = useState<"overview" | "weight" | "measurements">("overview");
 
   const [weight, setWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
@@ -134,16 +135,38 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
     }
   }, [userId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    void fetchBodyProgress(userId)
+      .then((next) => {
+        if (!active) return;
+        setSnapshot(next);
+        if (next.goal) setIntervalDays(next.goal.weighInIntervalDays.toString());
+        setWeight(next.latest?.weightKg.toString() ?? "");
+        setError(null);
+      })
+      .catch((caught) => {
+        if (active) setError(getBodyProgressLoadMessage(caught));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [userId]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash === "#measurements") setActiveView("measurements");
+    if (typeof window === "undefined") return;
+    const frame = window.requestAnimationFrame(() => {
+      if (window.location.hash === "#measurements") setActiveView("measurements");
+      else if (window.location.hash === "#weight") setActiveView("weight");
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
-  function selectView(view: "weight" | "measurements") {
+  function selectView(view: "overview" | "weight" | "measurements") {
     setActiveView(view);
     if (typeof window !== "undefined") {
-      const next = view === "measurements" ? `${window.location.pathname}#measurements` : window.location.pathname;
+      const next = view === "measurements" ? `${window.location.pathname}#measurements` : view === "weight" ? `${window.location.pathname}#weight` : window.location.pathname;
       window.history.replaceState(null, "", next);
     }
   }
@@ -164,6 +187,7 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
             icon: "/icons/icon-192x192.png",
             badge: "/icons/icon-192x192.png",
             tag: "ovrld-weigh-in",
+            data: { url: "/progress/body" },
           });
           return;
         }
@@ -285,12 +309,15 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
       {error ? <p className="rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm font-semibold text-red-300">{error}</p> : null}
       {message ? <p className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm font-semibold text-emerald-300">{message}</p> : null}
 
-      <div className="gc-body-view-tabs">
+      <div className="gc-body-view-tabs gc-body-view-tabs-three">
+        <button type="button" onClick={() => selectView("overview")} className={activeView === "overview" ? "gc-body-view-tab-active" : ""}>نظرة عامة</button>
         <button type="button" onClick={() => selectView("weight")} className={activeView === "weight" ? "gc-body-view-tab-active" : ""}>الوزن</button>
         <button type="button" onClick={() => selectView("measurements")} className={activeView === "measurements" ? "gc-body-view-tab-active" : ""}>القياسات</button>
       </div>
 
-      {activeView === "measurements" ? (
+      {activeView === "overview" ? (
+        <BodyShapeOverview snapshot={snapshot} />
+      ) : activeView === "measurements" ? (
         <BodyMeasurementsPanel userId={userId} snapshot={snapshot} onSaved={load} />
       ) : (
         <>

@@ -24,9 +24,9 @@ This release completes the Gym Crew → OVRLD migration, aligns the web client w
 
 ## Current product iteration
 
-**OVRLD V2 — Phase 7: Product Clarity & UX Polish**
+**OVRLD V2 — Phase 13: Gain Architecture Cleanup**
 
-Phase 7 keeps the existing training and Gain Mode capabilities while simplifying how they are presented: a compact brand mark and PWA icon family, a Today-first Home, clearer Training/Body progress tabs, lighter plan editing, and a quieter Account surface. It adds no database migration. See [`docs/OVRLD_V2_PHASE_7_PRODUCT_CLARITY.md`](docs/OVRLD_V2_PHASE_7_PRODUCT_CLARITY.md).
+Phase 13 turns Gain Mode into a compact control center with dedicated Nutrition, Body, Training, and History sections. Body progress now has a measurement map and trend view, the training section scores plan compatibility against the selected physique focus, and AI food logging is shown honestly as a Premium coming-soon capability while manual logging and saved meals remain available. See [`docs/OVRLD_V2_PHASE_13_GAIN_ARCHITECTURE.md`](docs/OVRLD_V2_PHASE_13_GAIN_ARCHITECTURE.md).
 
 ## Stack
 
@@ -59,12 +59,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_KEY
 NEXT_PUBLIC_APP_URL=https://YOUR_OVRLD_DOMAIN.example
 ```
 
-Smart Plan Import optionally uses these server-only values:
+Smart Plan Import and optional AI food estimation use these server-only values:
 
 ```env
 OPENAI_API_KEY=YOUR_SERVER_ONLY_KEY
 OPENAI_PLAN_IMPORT_MODEL=gpt-5.6-luna
+OPENAI_FOOD_LOG_MODEL=gpt-5.6-luna
 ```
+
+The AI key is optional. If it is absent or the provider quota is unavailable, manual food logging and saved meals continue to work normally.
 
 Never expose service-role keys, private API keys, or signing credentials through `NEXT_PUBLIC_` variables.
 
@@ -82,7 +85,7 @@ Open `http://localhost:3000`.
 Run the complete final gate:
 
 ```bash
-npm run phase7:check
+npm run phase13:check
 ```
 
 On Windows:
@@ -91,7 +94,7 @@ On Windows:
 VERIFY_OVRLD_WEB_FINAL.cmd
 ```
 
-The gate covers the cumulative Phase 1→7 product contracts, TypeScript, ESLint, and the production build. The Windows final verifier also runs Git whitespace validation.
+The gate covers the cumulative Phase 1→13 product contracts, TypeScript, ESLint, and the production build. The Windows final verifier also runs Git whitespace validation.
 
 Validate production environment values before deployment:
 
@@ -169,3 +172,22 @@ The body-progress and flexible-week-swap migrations still need to be applied to 
 - Gym Mode offers a small progression hint from the previous matching set and the current rep range.
 - Active sessions older than 18 hours are treated as stale so abandoned workouts never display or save multi-day gym timers.
 - No Phase 5 database migration is required.
+
+## OVRLD V2 Phase 12
+
+- Gym Mode opens on the next active set and keeps reorder/add/delete/notes behind compact controls.
+- Progression suggestions use previous-set performance and the rep range; the user always confirms the values.
+- Gain Mode is available to any adult user and asks for the sex reference only for the starting calorie equation.
+- Gain reviews combine nutrition, weight, measurements, training-plan execution, adherence, and strength trends.
+- One additive migration connects the universal Gain profile to the new equation input while preserving existing users.
+
+See `docs/OVRLD_V2_PHASE_12_PREMIUM_INTEGRATION.md`.
+
+
+## OVRLD V2 Phase 13
+
+- Gain Mode is a compact overview with dedicated Nutrition, Body, Training, and History routes.
+- Body progress adds a measurement-location silhouette and trend charts without pretending to predict body shape.
+- Split analysis can use balanced, lower-body, or glutes-and-legs physique focus and reports plan compatibility separately from nutrition.
+- AI food logging is presented as an honest Premium coming-soon capability; manual logging and saved meals remain available.
+- One additive migration adds `physique_focus` to the private Gain Mode profile.

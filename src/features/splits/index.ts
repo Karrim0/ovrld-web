@@ -1,7 +1,3 @@
-export * from "./components/EditSplitDayDialog";
-export * from "./components/ResetToGroupSplitButton";
-export * from "./components/SplitDayCard";
-export * from "./components/SplitExerciseItem";
-export * from "./components/WeeklySplit";
+// Public API for the splits feature.
 export * from "./hooks";
 export * from "./types";

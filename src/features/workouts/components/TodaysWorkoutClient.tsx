@@ -25,11 +25,6 @@ function getDayTitle(day: Pick<SplitDayWithDetails, "displayName" | "workoutType
   return translateWorkoutLabel(day.displayName?.trim()) || (day.workoutType === "rest" ? "راحة" : "يوم تمرين");
 }
 
-function estimateMinutes(day: Pick<WeeklyScheduleDayWithDetails, "exercises">) {
-  const workingSets = day.exercises.reduce((total, exercise) => total + exercise.targetSets, 0);
-  return Math.max(20, Math.round((workingSets * 3.5) / 5) * 5);
-}
-
 interface TodaysWorkoutClientProps { userId: UUID; compact?: boolean }
 
 export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutClientProps) {
@@ -174,7 +169,6 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
 
   const title = translateWorkoutLabel(today.displayName) || "تمرين النهارده";
   const displayedExercises = compact ? today.exercises.slice(0, 3) : today.exercises;
-  const estimatedMinutes = estimateMinutes(today);
   const totalTargetSets = today.exercises.reduce((total, exercise) => total + exercise.targetSets, 0);
 
   return (

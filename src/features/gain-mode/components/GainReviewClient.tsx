@@ -47,11 +47,20 @@ export function GainReviewClient({ userId }: { userId: UUID }) {
   }, [userId]);
 
   useEffect(() => {
-    void load().catch((caught: unknown) => {
-      setReview(null);
-      setError(getArabicErrorMessage(caught, "معرفناش نحمّل المراجعة."));
-    });
-  }, [load]);
+    let active = true;
+    void fetchGainReviewSnapshot(userId)
+      .then((next) => {
+        if (!active) return;
+        setReview(next);
+        setError(null);
+      })
+      .catch((caught: unknown) => {
+        if (!active) return;
+        setReview(null);
+        setError(getArabicErrorMessage(caught, "معرفناش نحمّل المراجعة."));
+      });
+    return () => { active = false; };
+  }, [userId]);
 
   const measurementRows = useMemo(() => {
     if (!review) return [];
@@ -105,7 +114,7 @@ export function GainReviewClient({ userId }: { userId: UUID }) {
             <small>kcal</small>
           </div>
         ) : null}
-        {review.decision.canApply ? <button type="button" disabled={busy} onClick={() => void applySuggestion()} className="gc-primary-button mt-4 w-full">{busy ? "بنطبّق…" : "طبّقي التعديل"}</button> : null}
+        {review.decision.canApply ? <button type="button" disabled={busy} onClick={() => void applySuggestion()} className="gc-primary-button mt-4 w-full">{busy ? "بنطبّق…" : "طبّق التعديل"}</button> : null}
         <p className="mt-3 text-[11px] leading-5 text-neutral-500">OVRLD يقترح فقط. السعرات لا تتغير إلا بعد موافقتك.</p>
       </section>
 
@@ -113,6 +122,11 @@ export function GainReviewClient({ userId }: { userId: UUID }) {
       {saved ? <p className="gc-inline-success">{saved}</p> : null}
 
       <WindowMetrics title="آخر 7 أيام مكتملة" window={review.weekly} />
+
+      <section className={`gc-review-section gc-gain-plan-${review.planCompatibility.state}`}>
+        <div className="flex items-start gap-3"><Dumbbell className="mt-0.5 h-4 w-4 text-indigo-400" /><div className="min-w-0 flex-1"><p className="gc-eyebrow">الجدول × Gain Mode</p><h3 className="mt-0.5 text-sm font-black">{review.planCompatibility.title}</h3><p className="mt-1 text-xs leading-5 text-neutral-500">{review.planCompatibility.detail}</p></div><strong className="text-lg tabular-nums">{review.planCompatibility.score === null ? "—" : `${review.planCompatibility.score}%`}</strong></div>
+      </section>
+
       <WindowMetrics title="آخر 28 يوم" window={review.month28} />
 
       <section className="gc-review-section">

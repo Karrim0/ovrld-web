@@ -15,10 +15,17 @@ function formatWeight(value: number | null) {
 export function BodyProgressPreview({ userId }: { userId: UUID }) {
   const [data, setData] = useState<BodyProgressSnapshot | null>(null);
   const [failed, setFailed] = useState(false);
+  const [weighInDue, setWeighInDue] = useState(false);
 
   useEffect(() => {
     let active = true;
-    void fetchBodyProgress(userId).then((next) => { if (active) setData(next); }).catch(() => { if (active) setFailed(true); });
+    void fetchBodyProgress(userId)
+      .then((next) => {
+        if (!active) return;
+        setData(next);
+        setWeighInDue(Boolean(next.nextWeighInAt && new Date(next.nextWeighInAt).getTime() <= Date.now()));
+      })
+      .catch(() => { if (active) setFailed(true); });
     return () => { active = false; };
   }, [userId]);
 
@@ -36,7 +43,6 @@ export function BodyProgressPreview({ userId }: { userId: UUID }) {
   }
 
   const delta = data.latest && data.previous ? data.latest.weightKg - data.previous.weightKg : null;
-  const weighInDue = Boolean(data.nextWeighInAt && new Date(data.nextWeighInAt).getTime() <= Date.now());
 
   return (
     <Link href="/progress/body" className={`gc-card-interactive block overflow-hidden p-0 ${weighInDue ? "gc-body-checkin-due" : ""}`}>

@@ -111,17 +111,17 @@ export function BodyMeasurementsPanel({
     setError(null); setMessage(null);
     const weightKg = asNumber(weight);
     if (weightKg === null || weightKg < 20 || weightKg > 500) {
-      setError("اكتبي الوزن وقت القياس.");
+      setError("اكتب الوزن وقت القياس.");
       return;
     }
 
     const values = Object.fromEntries(Object.entries(formValues).map(([key, value]) => [key, asNumber(value)])) as Record<FormKey, number | null>;
     if (!Object.values(values).some((value) => value !== null)) {
-      setError("سجّلي قياس واحد على الأقل.");
+      setError("سجّل قياس واحد على الأقل.");
       return;
     }
     if (Object.values(values).some((value) => value !== null && (value < 10 || value > 400))) {
-      setError("راجعي القياسات بالسنتيمتر قبل الحفظ.");
+      setError("راجع القياسات بالسنتيمتر قبل الحفظ.");
       return;
     }
 
@@ -155,7 +155,7 @@ export function BodyMeasurementsPanel({
   async function saveCadence() {
     const days = Number(cadence);
     if (!Number.isInteger(days) || days < 7 || days > 90) {
-      setError("اختاري فترة قياسات من أسبوع لـ 90 يوم.");
+      setError("اختار فترة قياسات من أسبوع لـ 90 يوم.");
       return;
     }
     setBusy(true); setError(null); setMessage(null);
@@ -205,7 +205,7 @@ export function BodyMeasurementsPanel({
           </div>
         ) : (
           <div className="gc-measurements-empty mt-4">
-            <strong>سجّلي نقطة البداية</strong>
+            <strong>سجّل نقطة البداية</strong>
             <span>بعد القياس الجاي هنقارن التغيرات بدل الاعتماد على الوزن لوحده.</span>
           </div>
         )}
@@ -215,7 +215,7 @@ export function BodyMeasurementsPanel({
         <details open={!latest} className="group">
           <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden">
             <Ruler className="h-4 w-4 text-emerald-500" />
-            <span className="min-w-0 flex-1 font-bold">سجّلي قياسات جديدة</span>
+            <span className="min-w-0 flex-1 font-bold">سجّل قياسات جديدة</span>
             <ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" />
           </summary>
           <div className="border-t border-[var(--border)] p-3">
@@ -248,7 +248,7 @@ export function BodyMeasurementsPanel({
               </div>
             </details>
 
-            <button type="button" disabled={busy} onClick={() => void logMeasurements()} className="gc-primary-button mt-3 w-full min-h-11 disabled:opacity-50"><Check className="h-4 w-4" /> {busy ? "بنسجّل…" : "احفظي القياسات"}</button>
+            <button type="button" disabled={busy} onClick={() => void logMeasurements()} className="gc-primary-button mt-3 w-full min-h-11 disabled:opacity-50"><Check className="h-4 w-4" /> {busy ? "بنسجّل…" : "احفظ القياسات"}</button>
           </div>
         </details>
       </section>
@@ -277,7 +277,7 @@ export function BodyMeasurementsPanel({
         </details>
         <details className="group border-t border-[var(--border)]">
           <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><Info className="h-4 w-4 text-neutral-500" /><span className="min-w-0 flex-1 font-bold">إزاي آخد قياس ثابت؟</span><ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" /></summary>
-          <div className="px-4 pb-4 text-xs leading-6 text-neutral-500">نفس مكان الشريط ونفس الوقت قدر الإمكان، من غير شدّ زائد. لو قراءتين مختلفين بوضوح، خدي القياس مرة تانية.</div>
+          <div className="px-4 pb-4 text-xs leading-6 text-neutral-500">نفس مكان الشريط ونفس الوقت قدر الإمكان، من غير شدّ زائد. لو قراءتين مختلفين بوضوح، خد القياس مرة تانية.</div>
         </details>
       </section>
 

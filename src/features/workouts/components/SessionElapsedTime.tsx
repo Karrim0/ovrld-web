@@ -14,15 +14,25 @@ interface SessionElapsedTimeProps {
 export function SessionElapsedTime({ startedAt, completedAt, compact = false }: SessionElapsedTimeProps) {
   const fixedEnd = useMemo(() => completedAt ? new Date(completedAt).getTime() : null, [completedAt]);
   const stale = fixedEnd === null && isStaleActiveWorkout(startedAt);
-  const [seconds, setSeconds] = useState(() => getSessionElapsedSeconds(startedAt, fixedEnd ?? Date.now()));
+  const [seconds, setSeconds] = useState(() => fixedEnd === null ? 0 : getSessionElapsedSeconds(startedAt, fixedEnd));
 
   useEffect(() => {
-    setSeconds(getSessionElapsedSeconds(startedAt, fixedEnd ?? Date.now()));
-    if (fixedEnd !== null || stale) return;
-    const interval = window.setInterval(() => {
-      setSeconds(getSessionElapsedSeconds(startedAt));
-    }, 1000);
-    return () => window.clearInterval(interval);
+    if (stale) return;
+
+    const tick = () => {
+      setSeconds(getSessionElapsedSeconds(startedAt, fixedEnd ?? undefined));
+    };
+
+    const frame = window.requestAnimationFrame(tick);
+    if (fixedEnd !== null) {
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    const interval = window.setInterval(tick, 1000);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearInterval(interval);
+    };
   }, [fixedEnd, stale, startedAt]);
 
   if (compact) {

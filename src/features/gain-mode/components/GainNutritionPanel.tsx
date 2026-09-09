@@ -65,8 +65,20 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
   }, [snapshot.calorieTargetKcal, snapshot.nutritionAvailable, snapshot.proteinTargetGrams, userId]);
 
   useEffect(() => {
-    void refresh().catch(() => undefined);
-  }, [refresh]);
+    if (!snapshot.nutritionAvailable) return;
+    let active = true;
+    void Promise.all([
+      fetchGainNutritionDay(userId, undefined, snapshot.calorieTargetKcal, snapshot.proteinTargetGrams),
+      fetchGainNutritionWeek(userId, snapshot.calorieTargetKcal, snapshot.proteinTargetGrams),
+    ])
+      .then(([nextToday, nextWeek]) => {
+        if (!active) return;
+        setToday(nextToday);
+        setWeek(nextWeek);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [snapshot.calorieTargetKcal, snapshot.nutritionAvailable, snapshot.proteinTargetGrams, userId]);
 
   const calorieLeft = useMemo(() => today.calorieTargetKcal === null ? null : Math.max(0, today.calorieTargetKcal - today.caloriesKcal), [today]);
   const proteinLeft = useMemo(() => today.proteinTargetGrams === null ? null : Math.max(0, Math.round(today.proteinTargetGrams - today.proteinGrams)), [today]);
@@ -77,7 +89,7 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
     const caloriesKcal = Number(calories || 0);
     const proteinGrams = Number(protein || 0);
     if ((!calories.trim() && !protein.trim()) || !Number.isFinite(caloriesKcal) || !Number.isFinite(proteinGrams)) {
-      setError("اكتبي السعرات أو البروتين على الأقل.");
+      setError("اكتب السعرات أو البروتين على الأقل.");
       return;
     }
     setBusy(true);
@@ -152,7 +164,7 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
           <p className="gc-eyebrow">النهارده</p>
           <h3 className="mt-0.5 text-lg font-black">الأكل</h3>
         </div>
-        <span className={`gc-day-status ${closeToPlan ? "gc-day-status-good" : ""}`}>{closeToPlan ? "قريب من الخطة" : today.entries.length ? "لسه فاضل" : "ابدئي التسجيل"}</span>
+        <span className={`gc-day-status ${closeToPlan ? "gc-day-status-good" : ""}`}>{closeToPlan ? "قريب من الخطة" : today.entries.length ? "لسه فاضل" : "ابدأ التسجيل"}</span>
       </div>
 
       <div className="mt-4 space-y-3">

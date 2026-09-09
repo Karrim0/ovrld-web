@@ -58,8 +58,9 @@ assert.match(elapsed, /isStaleActiveWorkout/);
 const gym = read("src/features/workouts/components/ActiveWorkoutClient.tsx");
 assert.match(gym, /resumeStaleSession/);
 assert.match(gym, /كمّل من دلوقتي/);
-assert.match(gym, /buildProgressionHint/);
-assert.match(gym, /اقتراح صغير، مش أمر/);
+assert.match(gym, /buildProgression(?:Hint|Suggestion)/);
+assert.match(gym, /progressionSuggestion/);
+assert.match(gym, /استخدم/);
 assert.match(gym, /getSafeWorkoutDurationSeconds/);
 
 const service = read("src/features/workouts/services/workout-session.service.ts");

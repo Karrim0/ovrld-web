@@ -43,7 +43,8 @@ for (const token of ["fetchGainNutritionWeek", "addGainNutritionEntry", "deleteG
 
 const gain = read("src/features/gain-mode/services/gain-mode.service.ts");
 assert.match(gain, /estimateCalorieTarget/);
-assert.match(gain, /10 \* weightKg \+ 6\.25 \* heightCm - 5 \* ageYears - 161/);
+assert.match(gain, /10 \* weightKg \+ 6\.25 \* heightCm - 5 \* ageYears \+ sexConstant/);
+assert.match(gain, /equationSex === "male" \? 5 : -161/);
 assert.match(gain, /\+ 300/);
 assert.match(gain, /estimateProteinTarget/);
 assert.match(gain, /fetchGainNutritionDay/);
@@ -51,17 +52,17 @@ assert.match(gain, /nutritionAvailable/);
 
 const panel = read("src/features/gain-mode/components/GainNutritionPanel.tsx");
 for (const phrase of ["السعرات", "البروتين", "آخر 7 أيام", "أهداف الأكل"]) assert.ok(panel.includes(phrase));
-assert.ok(panel.includes("سجّلي أكلك") || panel.includes("GainAiFoodLogger") || panel.includes("إدخال أرقام يدويًا"));
+assert.ok(panel.includes("سجّل أكلك") || panel.includes("GainAiFoodLogger") || panel.includes("إدخال أرقام يدويًا"));
 assert.match(panel, /gc-progress-track/);
 assert.match(panel, /gc-nutrition-week/);
 
 const home = read("src/features/gain-mode/components/GainModeHomeCard.tsx");
 assert.match(home, /todayNutrition/);
-assert.match(home, /سجّلي أكلك/);
+assert.match(home, /سجّل أكلك/);
 assert.doesNotMatch(home, /شوفي الرحلة/);
 
 const hub = read("src/features/gain-mode/components/GainModeHubClient.tsx");
-assert.match(hub, /GainNutritionPanel/);
+assert.ok(/GainNutritionPanel/.test(hub) || hub.includes("/progress/gain/nutrition"), "Gain nutrition must remain accessible from Gain Mode.");
 assert.match(hub, /gc-gain-dashboard/);
 assert.match(hub, /المراجعة الحالية|GainReviewPreview/);
 

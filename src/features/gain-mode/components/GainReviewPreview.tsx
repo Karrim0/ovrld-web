@@ -43,7 +43,7 @@ export function GainReviewPreview({ userId }: { userId: UUID }) {
         <div className="border-x border-[var(--border)]"><span className="gc-mini-label">التمرين</span><strong className="block text-sm">{review.weekly.workoutsCompleted}{review.weekly.workoutsScheduled === null ? "" : `/${review.weekly.workoutsScheduled}`}</strong></div>
         <div><span className="gc-mini-label">الوزن</span><strong className="block text-sm">{review.weekly.weightChangeKg === null ? "—" : `${review.weekly.weightChangeKg >= 0 ? "+" : ""}${review.weekly.weightChangeKg.toFixed(2)}`}</strong></div>
       </div>
-      <Link href="/progress/gain/review" className="gc-review-action mt-3">راجعي الأسبوع<ArrowUpLeft className="h-4 w-4" /></Link>
+      <Link href="/progress/gain/review" className="gc-review-action mt-3">راجع الأسبوع<ArrowUpLeft className="h-4 w-4" /></Link>
     </section>
   );
 }

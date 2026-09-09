@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v15";
+const CACHE_VERSION = "v17";
 const STATIC_CACHE = `ovrld-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `ovrld-pages-${CACHE_VERSION}`;
 const APP_CACHE_PREFIXES = ["ovrld-", "gym-crew-"];
@@ -120,14 +120,17 @@ self.addEventListener("message", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const target = typeof event.notification.data?.url === "string"
+    ? event.notification.data.url
+    : "/dashboard";
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       const existing = clients.find((client) => "focus" in client);
       if (existing) {
-        if ("navigate" in existing) existing.navigate("/progress/body");
+        if ("navigate" in existing) existing.navigate(target);
         return existing.focus();
       }
-      return self.clients.openWindow ? self.clients.openWindow("/progress/body") : undefined;
+      return self.clients.openWindow ? self.clients.openWindow(target) : undefined;
     }),
   );
 });

@@ -1,14 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ArrowUpLeft, ChevronDown, Dumbbell, Scale, Settings2, Sparkles, TrendingUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowUpLeft,
+  CalendarDays,
+  ChevronDown,
+  Dumbbell,
+  Flame,
+  History,
+  Ruler,
+  Settings2,
+  Sparkles,
+  Utensils,
+} from "lucide-react";
 import type { UUID } from "@/types";
-import { fetchGainModeSnapshot } from "../services/gain-mode.service";
+import { fetchGainModeSnapshot, getDailyNutritionStatus } from "../services/gain-mode.service";
 import type { GainModeSnapshot } from "../types";
 import { GainModeActivationClient } from "./GainModeActivationClient";
-import { GainNutritionPanel } from "./GainNutritionPanel";
-import { GainBodyMeasurementsCard } from "./GainBodyMeasurementsCard";
 import { GainReviewPreview } from "./GainReviewPreview";
 
 function kg(value: number | null | undefined) {
@@ -16,10 +25,15 @@ function kg(value: number | null | undefined) {
   return `${Number.isInteger(value) ? value : value.toFixed(1)} كجم`;
 }
 
+function percent(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return "—";
+  return `${Math.round(value * 100)}%`;
+}
+
 function deltaText(value: number | null) {
-  if (value === null || !Number.isFinite(value)) return "لسه محتاجين قياسات";
+  if (value === null || !Number.isFinite(value)) return "لسه بنبني الاتجاه";
   const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)} كجم / أسبوع`;
+  return `${sign}${value.toFixed(2)} كجم/أسبوع`;
 }
 
 export function GainModeHubClient({ userId }: { userId: UUID }) {
@@ -33,48 +47,95 @@ export function GainModeHubClient({ userId }: { userId: UUID }) {
     return () => { active = false; };
   }, [userId]);
 
+  const body = snapshot?.body;
+  const latest = body?.latest ?? null;
+  const start = body?.start ?? null;
+  const target = body?.goal?.targetWeightKg ?? null;
+  const totalDelta = latest && start ? latest.weightKg - start.weightKg : null;
+  const nutritionStatus = useMemo(() => snapshot ? getDailyNutritionStatus(snapshot) : "", [snapshot]);
+
   if (snapshot === undefined) return <div className="mt-4 h-48 animate-pulse rounded-[18px] border border-[var(--border)] bg-[var(--surface-elevated)]" />;
   if (!snapshot) return <GainModeActivationClient userId={userId} />;
 
-  const latest = snapshot.body.latest;
-  const start = snapshot.body.start;
-  const target = snapshot.body.goal?.targetWeightKg ?? null;
-  const delta = latest && start ? latest.weightKg - start.weightKg : null;
+  const quickLinks = [
+    {
+      href: "/progress/gain/nutrition",
+      icon: Utensils,
+      title: "التغذية",
+      value: `${snapshot.todayNutrition.caloriesKcal.toLocaleString("en-US")} / ${snapshot.todayNutrition.calorieTargetKcal?.toLocaleString("en-US") ?? "—"} kcal`,
+      note: nutritionStatus,
+      tone: "amber",
+    },
+    {
+      href: "/progress/body",
+      icon: Ruler,
+      title: "الجسم",
+      value: kg(latest?.weightKg),
+      note: body?.latestCircumference ? "الوزن والقياسات في مكان واحد" : "سجّل أول قياسات جسم",
+      tone: "emerald",
+    },
+    {
+      href: "/progress/gain/training",
+      icon: Dumbbell,
+      title: "التمرين",
+      value: snapshot.training.compatibility.score === null ? "اربط الجدول" : `${snapshot.training.compatibility.score}% توافق`,
+      note: `${snapshot.training.workoutsCompleted}/${snapshot.training.workoutsScheduled || snapshot.training.trainingDays} تمرينات · ${percent(snapshot.training.adherence)}`,
+      tone: "indigo",
+    },
+    {
+      href: "/progress/gain/history",
+      icon: History,
+      title: "السجل",
+      value: "كل التواريخ",
+      note: "وزن · أكل · قياسات · تمرين",
+      tone: "slate",
+    },
+  ] as const;
 
   return (
     <div className="space-y-3 pb-24 pt-3">
-      <section className="gc-gain-dashboard">
+      <section className="gc-gain-dashboard gc-gain-dashboard-compact">
         <div className="flex items-center gap-3">
           <span className="gc-gain-mode-icon"><Sparkles className="h-4 w-4" /></span>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2"><h2 className="text-lg font-black">Gain Mode</h2><span className="gc-mini-badge">زيادة الوزن</span></div>
-            <p className="mt-0.5 text-xs font-semibold text-neutral-500">أكلك · وزنك · تمرينك</p>
+            <p className="mt-0.5 text-xs font-semibold text-neutral-500">اليوم قدامك · التفاصيل جوه كل قسم</p>
           </div>
-          <Link href="/progress/body" className="gc-compact-link"><Scale className="h-3.5 w-3.5" /> الوزن</Link>
+          <Link href="/progress/gain/review" className="gc-compact-link"><CalendarDays className="h-3.5 w-3.5" /> مراجعة</Link>
         </div>
 
         <div className="gc-gain-weight-grid mt-4">
           <div><span>البداية</span><strong>{kg(start?.weightKg)}</strong></div>
-          <div className="gc-gain-current"><span>الحالي</span><strong>{kg(latest?.weightKg)}</strong><small>{delta === null ? "—" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} كجم`}</small></div>
+          <div className="gc-gain-current"><span>الحالي</span><strong>{kg(latest?.weightKg)}</strong><small>{totalDelta === null ? "—" : `${totalDelta >= 0 ? "+" : ""}${totalDelta.toFixed(1)} كجم`}</small></div>
           <div><span>الهدف</span><strong>{kg(target)}</strong></div>
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-[var(--border)] pt-3 text-xs">
-          <span className="inline-flex items-center gap-1.5 font-bold text-neutral-500"><TrendingUp className="h-3.5 w-3.5" /> اتجاه آخر أسابيع</span>
+          <span className="font-bold text-neutral-500">اتجاه الوزن</span>
           <strong className="tabular-nums">{deltaText(snapshot.review.weeklyWeightChangeKg)}</strong>
         </div>
       </section>
 
-      <GainNutritionPanel userId={userId} snapshot={snapshot} />
+      <section className="gc-gain-today-strip">
+        <div className="gc-gain-today-metric"><Flame className="h-4 w-4 text-amber-400" /><span>السعرات</span><strong>{snapshot.todayNutrition.caloriesKcal.toLocaleString("en-US")}</strong><small>/ {snapshot.todayNutrition.calorieTargetKcal?.toLocaleString("en-US") ?? "—"}</small></div>
+        <div className="gc-gain-today-metric"><Utensils className="h-4 w-4 text-emerald-400" /><span>البروتين</span><strong>{Math.round(snapshot.todayNutrition.proteinGrams)}g</strong><small>/ {snapshot.todayNutrition.proteinTargetGrams ? `${Math.round(snapshot.todayNutrition.proteinTargetGrams)}g` : "—"}</small></div>
+        <div className="gc-gain-today-metric"><Dumbbell className="h-4 w-4 text-indigo-400" /><span>التمرين</span><strong>{snapshot.training.workoutsCompleted}/{snapshot.training.workoutsScheduled || snapshot.training.trainingDays}</strong><small>{percent(snapshot.training.adherence)}</small></div>
+      </section>
 
-      <GainBodyMeasurementsCard body={snapshot.body} />
+      <section className="gc-gain-section-grid" aria-label="أقسام Gain Mode">
+        {quickLinks.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link key={item.href} href={item.href} className={`gc-gain-section-link gc-gain-section-${item.tone}`}>
+              <span className="gc-gain-section-icon"><Icon className="h-5 w-5" /></span>
+              <span className="min-w-0 flex-1"><strong>{item.title}</strong><small>{item.note}</small></span>
+              <span className="text-end"><b>{item.value}</b><ArrowUpLeft className="ms-auto mt-1 h-3.5 w-3.5 text-neutral-500" /></span>
+            </Link>
+          );
+        })}
+      </section>
 
       <GainReviewPreview userId={userId} />
-
-      <section className="gc-list-panel">
-        <Link href="/workout/today" className="gc-list-row"><Dumbbell className="h-4 w-4 text-indigo-400" /><span className="min-w-0 flex-1 font-bold">تمرين النهارده</span><ArrowUpLeft className="h-4 w-4 text-neutral-500" /></Link>
-        <Link href="/progress/body" className="gc-list-row"><Scale className="h-4 w-4 text-emerald-400" /><span className="min-w-0 flex-1 font-bold">الوزن</span><ArrowUpLeft className="h-4 w-4 text-neutral-500" /></Link>
-      </section>
 
       <details className="gc-list-panel group">
         <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><Settings2 className="h-4 w-4 text-neutral-500" /><span className="min-w-0 flex-1 font-bold">إعدادات Gain Mode</span><ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" /></summary>

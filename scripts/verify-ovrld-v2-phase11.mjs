@@ -40,17 +40,24 @@ for (const token of ["OPENAI_FOOD_LOG_MODEL", "json_schema", "ovrld_food_estimat
   if (token === "Nothing") continue;
   assert.ok(api.includes(token), `AI food route missing ${token}`);
 }
-assert.match(api, /review|راجعي|estimate/i);
+assert.match(api, /review|راجع|estimate/i);
 assert.match(api, /AI_FOOD_NOT_CONFIGURED/);
 
 const logger = read("src/features/gain-mode/components/GainAiFoodLogger.tsx");
-for (const phrase of ["اكتبي أكلتي إيه", "راجعي قبل التسجيل", "سجّلي التقدير", "احفظي كوجبة", "وجبات محفوظة", "ضغطة واحدة للتسجيل", "إدخال أرقام يدويًا"] ) {
-  if (phrase === "إدخال أرقام يدويًا") continue;
-  assert.ok(logger.includes(phrase), `AI logger missing ${phrase}`);
+const premiumLocked = logger.includes("OVRLD Premium") && logger.includes("قريبًا");
+if (premiumLocked) {
+  assert.match(logger, /وجبات محفوظة/);
+  assert.match(logger, /logGainSavedMeal/);
+  assert.match(logger, /saveGainMeal/);
+  assert.doesNotMatch(logger, /fetch\("\/api\/gain\/food\/estimate"/);
+} else {
+  for (const phrase of ["اكتب أكلت إيه", "راجع قبل التسجيل", "سجّل التقدير", "احفظ كوجبة", "وجبات محفوظة", "ضغطة واحدة للتسجيل"]) {
+    assert.ok(logger.includes(phrase), `AI logger missing ${phrase}`);
+  }
+  assert.match(logger, /source: "ai"/);
+  assert.match(logger, /logGainSavedMeal/);
+  assert.match(logger, /saveGainMeal/);
 }
-assert.match(logger, /source: "ai"/);
-assert.match(logger, /logGainSavedMeal/);
-assert.match(logger, /saveGainMeal/);
 
 const panel = read("src/features/gain-mode/components/GainNutritionPanel.tsx");
 assert.match(panel, /GainAiFoodLogger/);
@@ -66,7 +73,7 @@ for (const className of ["gc-ai-food-box", "gc-ai-review-box", "gc-ai-confidence
   assert.ok(css.includes(`.${className}`), `Missing Phase 11 CSS class ${className}`);
 }
 
-assert.match(read("public/sw.js"), /CACHE_VERSION = "v15"/);
+assert.match(read("public/sw.js"), /CACHE_VERSION = "v(?:1[5-9]|[2-9]\d+)"/);
 assert.match(read(".env.example"), /OPENAI_FOOD_LOG_MODEL=/);
 
 console.table({

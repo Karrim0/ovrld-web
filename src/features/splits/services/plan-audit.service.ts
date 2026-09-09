@@ -98,7 +98,7 @@ export async function fetchPlanAudit(userId: UUID): Promise<PlanAuditResult> {
       for (const secondaryMuscle of item.exercise.secondaryMuscles) {
         const secondary = loads.get(secondaryMuscle)!;
         secondary.secondarySets += item.targetSets;
-        secondary.weightedSets += item.targetSets * 0.35;
+        secondary.weightedSets += item.targetSets * 0.5;
         musclesSeenToday.add(secondaryMuscle);
       }
     }

@@ -49,8 +49,8 @@ assert.match(onboardingService, /onboarding_completed_at/);
 assert.match(onboardingService, /\/body-goal/);
 
 const goalSetup = read("src/features/onboarding/components/GoalSetupClient.tsx");
-assert.match(goalSetup, /OVRLD العادي/);
-assert.match(goalSetup, /Gain Mode · زيادة الوزن للبنات/);
+assert.match(goalSetup, /جدول · Gym Mode · تقدم/);
+assert.match(goalSetup, /Gain Mode · زيادة الوزن/);
 assert.match(goalSetup, /goalType: "gain_weight"/);
 assert.match(goalSetup, /saveGainModeProfile/);
 assert.match(goalSetup, /completeOnboarding/);
@@ -103,9 +103,9 @@ assert.match(sw, /\/progress\/gain/);
 
 const localizationMap = read("src/lib/localization/ar-en-map.ts");
 for (const phrase of [
-  "Gain Mode · زيادة الوزن للبنات",
+  "Gain Mode · زيادة الوزن",
   "رحلتك في مكان واحد",
-  "محتاجين 3 قراءات على الأقل عبر حوالي أسبوعين قبل أي تعديل. كمّلي القياسات والتمرين.",
+  "محتاجين 3 قراءات على الأقل عبر حوالي أسبوعين قبل أي تعديل. كمّل القياسات والتمرين.",
 ]) {
   assert.ok(localizationMap.includes(phrase), `Missing English localization bridge for: ${phrase}`);
 }

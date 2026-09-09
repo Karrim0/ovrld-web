@@ -194,7 +194,7 @@ function ExerciseEditor({ item, index, count, canEdit, onReload, onError }: Exer
         ) : null}
       </div>
 
-      {canEdit ? (
+      {canEdit && editing ? (
         <div className="gc-exercise-mobile-actions">
           <button type="button" disabled={busy || index === 0} onClick={() => void run(() => moveSplitExercise(item.id, -1))} className="gc-exercise-mobile-action disabled:opacity-30"><ArrowUp className="h-4 w-4" /> طلّع</button>
           <button type="button" disabled={busy || index === count - 1} onClick={() => void run(() => moveSplitExercise(item.id, 1))} className="gc-exercise-mobile-action disabled:opacity-30"><ArrowDown className="h-4 w-4" /> نزّل</button>
