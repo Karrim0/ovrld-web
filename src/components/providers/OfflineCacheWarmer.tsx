@@ -8,6 +8,7 @@ const CORE_OFFLINE_ROUTES = [
   "/dashboard",
   "/workout/today",
   "/workout/active",
+  "/workout/quick",
   "/workout/history",
   "/split/personal",
   "/progress",

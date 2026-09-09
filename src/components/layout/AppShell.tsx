@@ -13,7 +13,9 @@ export interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
-  const gymMode = pathname.startsWith("/workout/active");
+  const activeWorkoutMode = pathname.startsWith("/workout/active");
+  const quickLogMode = pathname.startsWith("/workout/quick");
+  const gymMode = activeWorkoutMode || quickLogMode;
 
   return (
     <div className={`gc-shell flex flex-col md:flex-row ${gymMode ? "gc-shell-gym-mode" : ""}`}>
@@ -26,7 +28,7 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
         <BottomNavigation />
-        <RestTimerLauncher />
+        {quickLogMode ? null : <RestTimerLauncher />}
       </div>
     </div>
   );

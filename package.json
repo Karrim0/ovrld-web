@@ -50,7 +50,9 @@
     "pass3:check": "npm run verify:pass3 && npm run typecheck && npm run lint && npm run build",
     "verify:pass4": "node scripts/verify-ovrld-finalization-pass4.mjs",
     "pass4:check": "npm run phase15:check",
-    "phase15:check": "npm run phase14:check && npm run verify:pass2 && npm run verify:pass3 && npm run verify:pass4"
+    "phase15:check": "npm run phase14:check && npm run verify:pass2 && npm run verify:pass3 && npm run verify:pass4 && npm run verify:pass5",
+    "verify:pass5": "node scripts/verify-ovrld-finalization-pass5.mjs",
+    "pass5:check": "npm run phase15:check"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

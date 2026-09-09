@@ -3,62 +3,61 @@
 
 :root,
 html.light {
-  --background: #f7faf8;
-  --foreground: #182033;
+  --background: #f5f6f7;
+  --foreground: #181b20;
   --surface: #ffffff;
   --surface-elevated: #ffffff;
-  --surface-soft: #eef5f1;
-  --surface-subtle: #f8fbf9;
-  --surface-glass: rgba(255, 255, 255, 0.92);
-  --surface-overlay: rgba(255, 255, 255, 0.76);
-  --border: rgba(24, 32, 51, 0.1);
-  --border-strong: rgba(24, 32, 51, 0.17);
-  --muted: #667085;
-  --muted-strong: #475467;
-  --accent: #14a874;
-  --accent-strong: #087a54;
-  --accent-soft: rgba(20, 168, 116, 0.11);
+  --surface-soft: #eef0f2;
+  --surface-subtle: #f8f9fa;
+  --surface-glass: rgba(255, 255, 255, 0.94);
+  --surface-overlay: rgba(255, 255, 255, 0.78);
+  --border: rgba(24, 27, 32, 0.09);
+  --border-strong: rgba(24, 27, 32, 0.16);
+  --muted: #737985;
+  --muted-strong: #505762;
+  --accent: #4f8f73;
+  --accent-strong: #39715b;
+  --accent-soft: rgba(79, 143, 115, 0.10);
   --accent-contrast: #ffffff;
-  --brand-accent: #10b981;
-  --danger: #d92d20;
-  --danger-soft: rgba(217, 45, 32, 0.08);
-  --success: #178f5b;
-  --success-soft: rgba(23, 143, 91, 0.09);
-  --shadow-card: 0 10px 30px rgba(23, 31, 56, 0.07), 0 2px 8px rgba(23, 31, 56, 0.035);
-  --shadow-float: 0 18px 55px rgba(23, 31, 56, 0.16);
+  --brand-accent: #5f997f;
+  --danger: #c94141;
+  --danger-soft: rgba(201, 65, 65, 0.08);
+  --success: #4f8f73;
+  --success-soft: rgba(79, 143, 115, 0.09);
+  --shadow-card: 0 8px 24px rgba(17, 24, 39, 0.055), 0 2px 7px rgba(17, 24, 39, 0.025);
+  --shadow-float: 0 18px 55px rgba(17, 24, 39, 0.14);
   --body-gradient:
-    radial-gradient(circle at 88% -12%, rgba(20, 168, 116, 0.12), transparent 30rem),
-    radial-gradient(circle at 5% 35%, rgba(63, 190, 145, 0.055), transparent 24rem),
-    linear-gradient(180deg, #fbfdfc 0%, #f3f8f5 100%);
+    radial-gradient(circle at 88% -12%, rgba(79, 143, 115, 0.055), transparent 28rem),
+    linear-gradient(180deg, #f8f9fa 0%, #f3f4f5 100%);
 }
 
 html.dark {
-  --background: #07100d;
-  --foreground: #f4f5f8;
-  --surface: #0c1511;
-  --surface-elevated: #111c17;
-  --surface-soft: #17241e;
-  --surface-subtle: #09110e;
-  --surface-glass: rgba(7, 16, 13, 0.92);
+  --background: #0d0f12;
+  --foreground: #f2f3f5;
+  --surface: #13161a;
+  --surface-elevated: #181c21;
+  --surface-soft: #1e2329;
+  --surface-subtle: #101317;
+  --surface-glass: rgba(13, 15, 18, 0.94);
   --surface-overlay: rgba(255, 255, 255, 0.035);
-  --border: rgba(255, 255, 255, 0.075);
-  --border-strong: rgba(255, 255, 255, 0.13);
-  --muted: #979eae;
-  --muted-strong: #c2c7d2;
-  --accent: #5ee0aa;
-  --accent-strong: #34d399;
-  --accent-soft: rgba(52, 211, 153, 0.12);
-  --accent-contrast: #062419;
-  --brand-accent: #6ee7b7;
-  --danger: #fb7185;
-  --danger-soft: rgba(251, 113, 133, 0.1);
-  --success: #57d39a;
-  --success-soft: rgba(87, 211, 154, 0.1);
-  --shadow-card: 0 14px 42px rgba(0, 0, 0, 0.2);
-  --shadow-float: 0 24px 70px rgba(0, 0, 0, 0.5);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --muted: #8d939d;
+  --muted-strong: #c0c4cb;
+  --accent: #76a98f;
+  --accent-strong: #5f9178;
+  --accent-soft: rgba(118, 169, 143, 0.10);
+  --accent-contrast: #0d1511;
+  --brand-accent: #83b49a;
+  --danger: #e06b74;
+  --danger-soft: rgba(224, 107, 116, 0.1);
+  --success: #76a98f;
+  --success-soft: rgba(118, 169, 143, 0.1);
+  --shadow-card: 0 12px 34px rgba(0, 0, 0, 0.18);
+  --shadow-float: 0 24px 70px rgba(0, 0, 0, 0.46);
   --body-gradient:
-    radial-gradient(circle at 88% -12%, rgba(52, 211, 153, 0.12), transparent 28rem),
-    linear-gradient(180deg, #08130f 0%, #060c0a 100%);
+    radial-gradient(circle at 88% -12%, rgba(118, 169, 143, 0.045), transparent 26rem),
+    linear-gradient(180deg, #0f1115 0%, #0b0d10 100%);
 }
 
 @theme inline {
@@ -3942,3 +3941,253 @@ html[data-gc-i18n-ready="true"] body {
 .gc-rir-chip-active { border-color:color-mix(in srgb,#34d399 45%,var(--border)); background:color-mix(in srgb,#34d399 10%,var(--surface)); color:#6ee7b7; }
 .gc-pr-badge { display:inline-flex; align-items:center; border-radius:999px; background:color-mix(in srgb,#34d399 13%,transparent); padding:.08rem .35rem; color:#6ee7b7; font-size:.58rem; font-weight:900; }
 .gc-gym-next-card { display:block; width:100%; border:1px solid var(--border); border-radius:16px; background:var(--surface-subtle); padding:.75rem .8rem; text-align:start; }
+
+/* OVRLD Pass 5 — calmer identity + restored home hierarchy + focused workout logging */
+.dark .gc-eyebrow { color: var(--accent); }
+.gc-primary-button { box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 16%, transparent); }
+.gc-primary-button:hover { box-shadow: 0 13px 28px color-mix(in srgb, var(--accent) 20%, transparent); }
+
+.gc-home-train-card,
+.gc-home-log-cta,
+.gc-home-quick-data {
+  border-color: var(--border);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-card);
+}
+.gc-home-train-card-active { border-color: color-mix(in srgb, var(--accent) 26%, var(--border)); }
+.gc-home-train-icon { background: var(--accent); color: var(--accent-contrast); }
+.gc-home-action-label { color: var(--accent-strong); }
+.dark .gc-home-action-label { color: var(--accent); }
+.gc-home-log-icon,
+.gc-home-log-option-icon { background: var(--accent-soft); color: var(--accent-strong); }
+.dark .gc-home-log-icon,
+.dark .gc-home-log-option-icon { color: var(--accent); }
+
+.gc-home-train-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .55rem;
+}
+.gc-home-quick-log-button {
+  min-width: 7.4rem;
+  padding-inline: .85rem;
+  white-space: nowrap;
+}
+.gc-home-quick-data {
+  display: flex;
+  min-height: 4.3rem;
+  align-items: center;
+  gap: .75rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: .72rem .85rem;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+.gc-home-quick-data:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+.gc-home-quick-data-icon {
+  display: grid;
+  width: 2.3rem;
+  height: 2.3rem;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--surface-soft);
+  color: var(--accent-strong);
+}
+.dark .gc-home-quick-data-icon { color: var(--accent); }
+
+.gc-gym-mode { max-width: 34rem; }
+.gc-workout-header { background: color-mix(in srgb, var(--background) 88%, transparent); backdrop-filter: blur(18px); }
+.gc-workout-header .bg-emerald-300 { background: var(--accent) !important; }
+.gc-gym-exercise-head { border-bottom: 0; padding: .1rem .05rem .15rem; }
+
+.gc-gym-context-line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .45rem;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface-subtle);
+  padding: .5rem .6rem;
+  font-size: .66rem;
+  font-weight: 760;
+  color: var(--muted);
+}
+.gc-gym-context-target {
+  border-inline-end: 1px solid var(--border);
+  padding-inline-end: .5rem;
+  color: var(--muted-strong);
+  white-space: nowrap;
+}
+.gc-gym-context-history {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: .35rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gc-gym-context-next {
+  border-radius: 999px;
+  background: var(--accent-soft);
+  padding: .22rem .42rem;
+  color: var(--accent-strong);
+  white-space: nowrap;
+}
+.dark .gc-gym-context-next { color: var(--accent); }
+
+.gc-gym-set-tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(4.8rem, 1fr);
+  gap: .4rem;
+  overflow-x: auto;
+  padding-bottom: .1rem;
+  scrollbar-width: none;
+}
+.gc-gym-set-tabs::-webkit-scrollbar { display: none; }
+.gc-gym-set-tab {
+  display: grid;
+  min-height: 3.25rem;
+  align-content: center;
+  gap: .16rem;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface-subtle);
+  padding: .45rem .55rem;
+  text-align: center;
+}
+.gc-gym-set-tab span { font-size: .6rem; font-weight: 850; color: var(--muted); }
+.gc-gym-set-tab strong { display: inline-flex; align-items: center; justify-content: center; gap: .2rem; font-size: .72rem; font-weight: 900; color: var(--muted-strong); white-space: nowrap; }
+.gc-gym-set-tab-current { border-color: color-mix(in srgb, var(--accent) 34%, var(--border)); background: var(--accent-soft); }
+.gc-gym-set-tab-current span,
+.gc-gym-set-tab-current strong { color: var(--accent-strong); }
+.dark .gc-gym-set-tab-current span,
+.dark .gc-gym-set-tab-current strong { color: var(--accent); }
+.gc-gym-set-tab-done { opacity: .72; }
+.gc-gym-set-tab-done strong { color: var(--success); }
+
+.gc-gym-set-panel {
+  border-radius: 20px;
+  background: var(--surface-elevated);
+  padding: .9rem;
+}
+.gc-gym-current-set-kind {
+  border-radius: 999px;
+  background: var(--surface-soft);
+  padding: .28rem .5rem;
+  font-size: .65rem;
+  font-weight: 850;
+  color: var(--muted-strong);
+}
+.gc-gym-set-panel .gc-quick-set-control {
+  min-height: 6.2rem;
+  border-color: var(--border);
+  background: var(--surface-subtle);
+}
+.gc-gym-set-panel .gc-quick-set-value { border-color: var(--border); background: var(--surface-elevated); }
+.gc-gym-log-button {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.gc-gym-saved-strip {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: .5rem;
+  border: 1px solid color-mix(in srgb, var(--success) 18%, var(--border));
+  border-radius: 12px;
+  background: var(--success-soft);
+  padding: .45rem .6rem;
+  font-size: .68rem;
+  font-weight: 760;
+  color: var(--muted-strong);
+}
+.gc-gym-saved-strip > svg { color: var(--success); }
+.gc-gym-saved-strip button { flex: none; font-weight: 900; color: var(--accent-strong); }
+.dark .gc-gym-saved-strip button { color: var(--accent); }
+.gc-gym-post-strip { border-color: color-mix(in srgb, var(--success) 18%, var(--border)); background: var(--success-soft); }
+.gc-gym-post-strip .bg-emerald-400 { background: var(--success) !important; color: var(--accent-contrast) !important; }
+.gc-gym-complete-strip { color: var(--success); }
+.gc-gym-set-state-done { background: var(--success); color: var(--accent-contrast); }
+.gc-gym-warmup-toggle input { accent-color: var(--accent); }
+.gc-rir-chip-active { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); background: var(--accent-soft); color: var(--accent-strong); }
+.dark .gc-rir-chip-active { color: var(--accent); }
+.gc-pr-badge { background: var(--accent-soft); color: var(--accent-strong); }
+.dark .gc-pr-badge { color: var(--accent); }
+.gc-step-chip-active { background: var(--accent); color: var(--accent-contrast); }
+
+.gc-quick-workout-header { background: color-mix(in srgb, var(--background) 88%, transparent); backdrop-filter: blur(18px); }
+.gc-quick-workout-intro,
+.gc-quick-workout-exercise {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-card);
+}
+.gc-quick-workout-intro { padding: .85rem .95rem; }
+.gc-quick-workout-intro strong { display: block; font-size: .86rem; font-weight: 900; }
+.gc-quick-workout-intro p { margin-top: .2rem; font-size: .7rem; line-height: 1.05rem; font-weight: 650; color: var(--muted); }
+.gc-quick-workout-exercise { padding: .85rem; }
+.gc-quick-workout-index {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: none;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--surface-soft);
+  font-size: .72rem;
+  font-weight: 900;
+  color: var(--muted-strong);
+}
+.gc-quick-last-label { display: inline-flex; align-items: center; gap: .25rem; font-size: .58rem; font-weight: 850; color: var(--muted); }
+.gc-quick-workout-set {
+  display: grid;
+  grid-template-columns: 1.8rem minmax(0, 1fr) minmax(0, 1fr) 1.5rem;
+  align-items: end;
+  gap: .45rem;
+  border-top: 1px solid var(--border);
+  padding-top: .55rem;
+}
+.gc-quick-workout-set:first-child { border-top: 0; padding-top: 0; }
+.gc-quick-workout-set-number {
+  display: grid;
+  width: 1.7rem;
+  height: 2.55rem;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--surface-subtle);
+  font-size: .68rem;
+  font-weight: 900;
+  color: var(--muted);
+}
+.gc-quick-workout-set label > span { display: block; margin-bottom: .2rem; font-size: .55rem; font-weight: 850; color: var(--muted); }
+.gc-quick-workout-input {
+  width: 100%;
+  height: 2.55rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+  padding: 0 .55rem;
+  font-size: .88rem;
+  font-weight: 900;
+  text-align: center;
+  color: var(--foreground);
+}
+.gc-quick-workout-input:focus { outline: 2px solid color-mix(in srgb, var(--accent) 25%, transparent); outline-offset: 1px; border-color: color-mix(in srgb, var(--accent) 34%, var(--border)); }
+.gc-quick-workout-set-state { display: grid; width: 1.5rem; height: 2.55rem; place-items: center; color: var(--success); }
+.gc-quick-workout-set-done { opacity: .82; }
+
+@media (max-width: 420px) {
+  .gc-home-train-actions { grid-template-columns: 1fr; }
+  .gc-home-quick-log-button { width: 100%; }
+  .gc-gym-context-line { grid-template-columns: auto minmax(0, 1fr); }
+  .gc-gym-context-next { grid-column: 1 / -1; justify-self: start; }
+}
+.gc-home-gain-card { border-color: var(--border); background: var(--surface-elevated); }
+.gc-home-gain-icon { background: var(--accent-soft); color: var(--accent-strong); }
+.dark .gc-home-gain-icon { color: var(--accent); }

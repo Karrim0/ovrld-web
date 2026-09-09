@@ -22,7 +22,6 @@ import {
   List,
   ListPlus,
   LogOut,
-  MessageSquareText,
   Minus,
   MoreHorizontal,
   Play,
@@ -32,7 +31,6 @@ import {
   SkipForward,
   Smartphone,
   TimerReset,
-  TrendingUp,
   Trash2,
   VolumeX,
   X,
@@ -46,7 +44,7 @@ import { CustomExerciseForm } from "@/features/exercises/components/CustomExerci
 import { addSplitExercise, fetchPersonalSplit } from "@/features/splits/services/split.service";
 import type { Exercise, WorkoutSet } from "@/types";
 import { formatDuration } from "@/lib/utils/format";
-import { formatDateArEg, muscleLabelAr, translateExerciseName, translateWorkoutLabel } from "@/lib/localization";
+import { muscleLabelAr, translateExerciseName, translateWorkoutLabel } from "@/lib/localization";
 import { useActiveWorkout } from "../hooks/use-active-workout";
 import { usePreviousPerformances } from "../hooks/use-previous-performance";
 import {
@@ -61,11 +59,10 @@ import {
   updateWorkoutSet,
 } from "../services/workout-session.service";
 import { SessionElapsedTime } from "./SessionElapsedTime";
-import { SetElapsedClock } from "./SetElapsedClock";
 import { getSafeWorkoutDurationSeconds, isStaleActiveWorkout } from "../utils/session-time";
 import { getSessionWorkoutMetrics } from "../utils/workout-metrics";
 
-type GymPhase = "overview" | "ready" | "working" | "logging" | "post";
+type GymPhase = "overview" | "ready" | "logging" | "post";
 
 type LoggedSetSnapshot = {
   exerciseId: string;
@@ -90,10 +87,6 @@ function formatNumber(value: number) {
   return Number.isInteger(value)
     ? value.toString()
     : value.toFixed(1).replace(/\.0$/, "");
-}
-
-function formatWorkoutDate(value: string) {
-  return formatDateArEg(value);
 }
 
 function tapFeedback(pattern: number | number[] = 8) {
@@ -230,11 +223,9 @@ export function ActiveWorkoutClient() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [showCustomExercise, setShowCustomExercise] = useState(false);
-  const [showExerciseNotes, setShowExerciseNotes] = useState(false);
   const [queueEditing, setQueueEditing] = useState(false);
   const [showWorkoutOptions, setShowWorkoutOptions] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const [showQueue, setShowQueue] = useState(false);
   const [workoutTitle, setWorkoutTitle] = useState<string>(language === "ar" ? "التمرين" : "Workout");
   const [keepAwake, setKeepAwake] = useState(false);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
@@ -263,7 +254,6 @@ export function ActiveWorkoutClient() {
     if (hapticsEnabled) tapFeedback(pattern);
   }
   const [weightStep, setWeightStep] = useState<number>(2.5);
-  const [setStartedAt, setSetStartedAt] = useState<number | null>(null);
   const [lastLogged, setLastLogged] = useState<LoggedSetSnapshot | null>(null);
   const [draggingExerciseId, setDraggingExerciseId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -447,7 +437,6 @@ export function ActiveWorkoutClient() {
     setShowCustomWeight(false);
     setShowCustomReps(false);
     setLastLogged(null);
-    setSetStartedAt(null);
     setPhase("ready");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -530,14 +519,6 @@ export function ActiveWorkoutClient() {
     setShowCustomWeight(false);
     setShowCustomReps(false);
     setLastLogged(null);
-    setSetStartedAt(null);
-  }
-
-  function startSet() {
-    if (!activeSet) return;
-    setError(null);
-    setSetStartedAt(Date.now());
-    setPhase("working");
   }
 
   async function logSet() {
@@ -558,6 +539,7 @@ export function ActiveWorkoutClient() {
     setError(null);
 
     const isFinalPlannedSet = totals.totalSets > 0 && totals.completedSets + 1 >= totals.totalSets;
+    const hasAnotherSetInExercise = currentExercise.sets.some((set) => set.id !== activeSet.id && !set.isCompleted);
 
     // Start inside the user's tap so mobile browsers unlock the completion sound.
     // The final planned set does not need a rest timer; it should flow straight to workout completion.
@@ -584,10 +566,10 @@ export function ActiveWorkoutClient() {
         previousWeightKg: previousSet?.weightKg ?? null,
         previousReps: previousSet?.reps ?? null,
       });
-      setSetStartedAt(null);
-      feedback(isFinalPlannedSet ? [18, 35, 18] : 14);
+        feedback(isFinalPlannedSet ? [18, 35, 18] : 14);
       await reload();
-      setPhase("post");
+      preparedSet.current = null;
+      setPhase(hasAnotherSetInExercise ? "ready" : "post");
     } catch (caught) {
       if (!isFinalPlannedSet) {
         restTimer.reset();
@@ -791,7 +773,7 @@ export function ActiveWorkoutClient() {
             aria-label={ar ? "افتح قائمة التمرين" : "Open workout queue"}
           >
             <span className="block truncate text-sm font-black">{workoutTitle}</span>
-            <span className="block truncate text-[10px] font-bold text-neutral-500">{ar ? `تمرين ${currentIndex + 1} من ${session.exercises.length} · ${totals.completedSets}/${totals.totalSets} سِت` : `Exercise ${currentIndex + 1} of ${session.exercises.length} · ${totals.completedSets}/${totals.totalSets} sets`}</span>
+            <span className="block truncate text-[10px] font-bold text-neutral-500">{ar ? `تمرين ${currentIndex + 1}/${session.exercises.length} · ${totals.completedSets}/${totals.totalSets} سِت` : `Exercise ${currentIndex + 1} of ${session.exercises.length} · ${totals.completedSets}/${totals.totalSets} sets`}</span>
           </button>
           <span className="hidden rounded-lg bg-white/[0.04] px-2 py-1.5 text-[11px] font-bold text-neutral-400 min-[375px]:block">
             <SessionElapsedTime startedAt={session.startedAt} compact />
@@ -807,10 +789,6 @@ export function ActiveWorkoutClient() {
         </div>
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
           <div className="h-full rounded-full bg-emerald-300 transition-[width] duration-300" style={{ width: `${progress}%` }} />
-        </div>
-        <div className="mt-1 flex items-center justify-between text-[10px] font-bold text-neutral-600">
-          <span>{totals.completedSets}/{totals.totalSets} {ar ? "سِت" : "sets"}</span>
-          <span>{Math.round(progress)}%</span>
         </div>
       </header>
 
@@ -830,7 +808,7 @@ export function ActiveWorkoutClient() {
         <section className="space-y-3">
           <div className="gc-gym-queue-toolbar">
             <div className="min-w-0">
-              <p className="text-sm font-black">{ar ? "تمارين النهارده" : "Today’s exercises"}</p>
+              <p className="text-sm font-black">{ar ? "قائمة التمرين" : "Workout Queue"}</p>
               <p className="mt-0.5 text-[11px] font-semibold text-neutral-500">{totals.completedExercises}/{session.exercises.length} {ar ? "خلصوا" : "done"} · {totals.completedSets}/{totals.totalSets} {ar ? "سِت" : "sets"}</p>
             </div>
             <button
@@ -918,29 +896,25 @@ export function ActiveWorkoutClient() {
             </div>
           </div>
 
-          <div className="gc-gym-history-line">
-            <History className="h-3.5 w-3.5 shrink-0 text-emerald-200" />
-            {previousPerformanceLoading ? (
-              <span>{ar ? "بنجيب آخر أرقام…" : "Loading previous numbers…"}</span>
-            ) : previousPerformance ? (
-              <span className="min-w-0"><strong>{ar ? "آخر مرة" : "Last time"}</strong> · {t(formatWorkoutDate(previousPerformance.scheduledDate))}<span className="ms-1">{previousSets.filter((set) => !set.isWarmup).map((set) => `${set.weightKg ?? 0}${ar ? "كجم" : "kg"}×${set.reps ?? 0}`).join(" · ")}</span></span>
-            ) : (
-              <span>{ar ? "أول مرة · هنثبت نقطة البداية" : "First time · setting your baseline"}</span>
-            )}
+          <div className="gc-gym-context-line">
+            <span className="gc-gym-context-target">{ar ? "الهدف" : "Target"} · {currentExercise.targetRepsMin}–{currentExercise.targetRepsMax}</span>
+            <span className="gc-gym-context-history">
+              <History className="h-3.5 w-3.5 shrink-0" />
+              {previousPerformanceLoading ? (ar ? "بنجيب آخر أرقام…" : "Loading last time…") : previousPerformance ? previousSets.filter((set) => !set.isWarmup).map((set) => `${set.weightKg ?? 0}${ar ? "كجم" : "kg"}×${set.reps ?? 0}`).join(" · ") : (ar ? "أول مرة" : "First time")}
+            </span>
+            {progressionSuggestion ? <span className="gc-gym-context-next">{ar ? "التالي" : "Next"}: {progressionSuggestion.label}</span> : null}
           </div>
 
-          <div className="gc-gym-set-rows" aria-label={ar ? "سِتات التمرين" : "Exercise sets"}>
+          <div className="gc-gym-set-tabs" aria-label={ar ? "سِتات التمرين" : "Exercise sets"}>
             {currentExercise.sets.map((set, index) => {
               const isCurrent = activeSet?.id === set.id;
               const previous = previousSets[index];
+              const weight = set.weightKg ?? (isCurrent ? selectedWeight : previous?.weightKg) ?? "—";
+              const reps = set.reps ?? (isCurrent ? selectedReps : previous?.reps) ?? "—";
               return (
-                <button key={set.id} type="button" disabled={set.isCompleted} onClick={() => { prepareSetValues(index); setPhase("ready"); }} className={`gc-gym-set-row ${set.isCompleted ? "gc-gym-set-row-done" : isCurrent ? "gc-gym-set-row-current" : ""}`}>
-                  <span className="gc-gym-set-number">{set.setNumber}</span>
-                  <span className="min-w-0 flex-1 text-start">
-                    <strong className="block text-sm tabular-nums">{set.weightKg ?? (isCurrent ? selectedWeight : previous?.weightKg) ?? "—"} {ar ? "كجم" : "kg"} · {set.reps ?? (isCurrent ? selectedReps : previous?.reps) ?? "—"} {ar ? "عدات" : "reps"}</strong>
-                    <small className="flex items-center gap-1 text-[10px] font-semibold text-neutral-500">{set.isWarmup ? (ar ? "إحماء" : "Warm-up") : (ar ? "Working set" : "Working set")}{set.isPersonalRecord ? <span className="gc-pr-badge">PR ↑</span> : null}</small>
-                  </span>
-                  <span className={`gc-gym-set-state ${set.isCompleted ? "gc-gym-set-state-done" : ""}`}>{set.isCompleted ? <Check className="h-3.5 w-3.5" /> : isCurrent ? "●" : "○"}</span>
+                <button key={set.id} type="button" disabled={set.isCompleted} onClick={() => { prepareSetValues(index); setPhase("ready"); }} className={`gc-gym-set-tab ${set.isCompleted ? "gc-gym-set-tab-done" : isCurrent ? "gc-gym-set-tab-current" : ""}`}>
+                  <span>{ar ? "سِت" : "Set"} {set.setNumber}</span>
+                  <strong>{set.isCompleted ? <><Check className="h-3.5 w-3.5" /> {weight}×{reps}</> : isCurrent ? (ar ? "دلوقتي" : "Now") : `${weight}×${reps}`}</strong>
                 </button>
               );
             })}
@@ -958,6 +932,14 @@ export function ActiveWorkoutClient() {
             </div>
           ) : null}
 
+          {phase === "ready" && lastLogged ? (
+            <div className="gc-gym-saved-strip" aria-live="polite">
+              <Check className="h-4 w-4 shrink-0" />
+              <span className="min-w-0 flex-1 truncate">{ar ? "آخر سِت اتحفظت" : "Last set saved"} · {lastLogged.weightKg ?? 0} {ar ? "كجم" : "kg"} × {lastLogged.reps}</span>
+              <button type="button" disabled={busy} onClick={() => void undoLastSet()}>{ar ? "تراجع" : "Undo"}</button>
+            </div>
+          ) : null}
+
           {phase === "ready" && activeSet ? (
             <div className="gc-gym-set-panel">
               <div className="flex items-center justify-between gap-3">
@@ -965,28 +947,9 @@ export function ActiveWorkoutClient() {
                   <p className="gc-eyebrow">{ar ? "سِت" : "Set"} {activeSet.setNumber}</p>
                   <h2 className="mt-0.5 text-lg font-black">{completedCurrentSets}/{currentExercise.sets.length} {ar ? "خلصوا" : "completed"}</h2>
                 </div>
-                <div className="flex items-center gap-2"><span className="text-xs font-bold text-neutral-500">{ar ? "هدف" : "Target"} {currentExercise.targetRepsMin}–{currentExercise.targetRepsMax}</span><button type="button" onClick={startSet} className="gc-set-timer-button" aria-label={ar ? "ابدأ مؤقت السِت" : "Start set timer"}><TimerReset className="h-3.5 w-3.5" /></button></div>
+                <span className="gc-gym-current-set-kind">{activeSet.isWarmup ? (ar ? "إحماء" : "Warm-up") : (ar ? "Working set" : "Working set")}</span>
               </div>
 
-              {progressionSuggestion ? (
-                <div className={`gc-gym-suggestion gc-gym-suggestion-${progressionSuggestion.kind}`}>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2"><TrendingUp className="h-3.5 w-3.5" /><strong>{progressionSuggestion.label}</strong></div>
-                    <p>{progressionSuggestion.detail}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (progressionSuggestion.weightKg !== null) setSelectedWeight(formatNumber(progressionSuggestion.weightKg));
-                      setSelectedReps(String(progressionSuggestion.reps));
-                      feedback();
-                    }}
-                    className="gc-gym-suggestion-action"
-                  >
-                    {ar ? "استخدم" : "Use"}
-                  </button>
-                </div>
-              ) : null}
 
               <div className="gc-gym-set-grid mt-3 grid grid-cols-2 gap-2" aria-label={ar ? "تسجيل السِت" : "Log set"}>
                 <div className="gc-quick-set-control">
@@ -1007,17 +970,6 @@ export function ActiveWorkoutClient() {
                 </div>
               </div>
 
-              <details className="gc-gym-effort mt-3">
-                <summary className="gc-gym-effort-summary">{ar ? "RIR / Failure (اختياري)" : "RIR / Failure (optional)"}<span>{selectedRir ? (selectedRir === "failure" ? "Failure" : `RIR ${selectedRir}`) : (ar ? "بدون" : "Skip")}</span></summary>
-                <div className="mt-2 grid grid-cols-5 gap-1.5">
-                  {(["0", "1", "2", "3+", "failure"] as const).map((value) => <button key={value} type="button" onClick={() => setSelectedRir((current) => current === value ? "" : value)} className={`gc-rir-chip ${selectedRir === value ? "gc-rir-chip-active" : ""}`}>{value === "failure" ? "Failure" : `RIR ${value}`}</button>)}
-                </div>
-              </details>
-
-              <label className="gc-gym-warmup-toggle mt-3">
-                <input type="checkbox" checked={activeSet.isWarmup} onChange={(event) => void updateWorkoutSet(activeSet.id, { weightKg: parseOptionalNumber(selectedWeight), reps: parseOptionalNumber(selectedReps), isCompleted: false, isWarmup: event.target.checked }).then(reload).catch((caught: Error) => setError(t(getArabicErrorMessage(caught, "معرفناش نغيّر نوع السِت."))))} />
-                <span><strong>{ar ? "Warm-up" : "Warm-up"}</strong><small>{ar ? "تتسجل، لكن مش تدخل في الحجم أو الـPR" : "Logged, but excluded from working volume and PRs"}</small></span>
-              </label>
 
               <button type="button" disabled={busy || selectedReps === ""} onClick={() => void logSet()} className="gc-primary-button gc-gym-log-button mt-3 w-full min-h-14 text-base disabled:opacity-40">
                 <Check className="h-5 w-5" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : (ar ? "أكمل السِت" : "Complete Set")}
@@ -1027,16 +979,6 @@ export function ActiveWorkoutClient() {
             </div>
           ) : null}
 
-          {phase === "working" && activeSet ? (
-            <div className="gc-gym-set-panel text-center">
-              <p className="gc-eyebrow">{ar ? "سِت" : "Set"} {activeSet.setNumber}</p>
-              <p className="mt-2 text-5xl font-black tracking-[-0.06em]"><SetElapsedClock key={activeSet.id} startedAt={setStartedAt} /></p>
-              <button type="button" onClick={() => { setSelectedWeight((current) => current || activeSet.weightKg?.toString() || previousSet?.weightKg?.toString() || ""); setSelectedReps((current) => current || activeSet.reps?.toString() || previousSet?.reps?.toString() || String(currentExercise.targetRepsMin)); setWeightStep(readWeightStep(currentExercise.exerciseId, previousSets)); setPhase("logging"); }} className="gc-primary-button mt-5 w-full">
-                <Check className="h-4 w-4" /> {ar ? "خلصت السِت" : "Set finished"}
-              </button>
-              <button type="button" onClick={() => { setSetStartedAt(null); setPhase("ready"); }} className="mt-1 min-h-10 w-full text-xs font-bold text-neutral-500">{ar ? "إلغاء" : "Cancel"}</button>
-            </div>
-          ) : null}
 
           {phase === "logging" && activeSet ? (
             <div className="gc-gym-set-panel">
@@ -1104,36 +1046,6 @@ export function ActiveWorkoutClient() {
             </div>
           ) : null}
 
-          {nextExercisePreview ? (
-            <button type="button" onClick={() => { const index = session.exercises.findIndex((item) => item.id === nextExercisePreview.id); if (index >= 0) selectExercise(index); }} className="gc-gym-next-card">
-              <span className="text-[10px] font-black uppercase tracking-[0.12em] text-neutral-500">{ar ? "التمرين اللي بعده" : "Next Exercise"}</span>
-              <strong className="mt-1 block truncate text-sm">{t(translateExerciseName(nextExercisePreview.exercise.name))}</strong>
-              <small className="mt-0.5 block text-xs font-semibold text-neutral-500">{nextExercisePreview.sets.length} {ar ? "سِتات" : "sets"} · {nextExercisePreview.targetRepsMin}–{nextExercisePreview.targetRepsMax} {ar ? "عدات" : "reps"}</small>
-            </button>
-          ) : null}
-
-          <div className="gc-gym-collapsed-queue">
-            <button type="button" onClick={() => setShowQueue((value) => !value)} className="gc-gym-queue-toggle">
-              <span>{ar ? "قائمة التمرين" : "Workout Queue"} · {session.exercises.filter((exercise) => !exerciseIsComplete(exercise.sets)).length} {ar ? "متبقي" : "remaining"}</span>
-              <ChevronLeft className={`h-4 w-4 transition-transform ${showQueue ? "-rotate-90" : "rotate-90"}`} />
-            </button>
-            {showQueue ? (
-              <div className="mt-2 space-y-1.5">
-                {session.exercises.map((exercise, index) => {
-                  const done = exerciseIsComplete(exercise.sets);
-                  const current = index === currentIndex;
-                  return <button key={exercise.id} type="button" onClick={() => selectExercise(index)} className={`gc-gym-mini-queue-row ${current ? "gc-gym-mini-queue-row-current" : ""}`}><span>{done ? "✓" : current ? "●" : "○"}</span><span className="min-w-0 flex-1 truncate text-start">{t(translateExerciseName(exercise.exercise.name))}</span><small>{exercise.sets.length} {ar ? "سِت" : "sets"}</small></button>;
-                })}
-              </div>
-            ) : null}
-          </div>
-
-          {previousPerformance?.exerciseNotes ? (
-            <button type="button" onClick={() => setShowExerciseNotes((value) => !value)} className="gc-gym-note-row">
-              <MessageSquareText className="h-4 w-4 shrink-0 text-emerald-200" />
-              <span className={`min-w-0 flex-1 text-start text-xs text-neutral-400 ${showExerciseNotes ? "" : "truncate"}`}>{previousPerformance.exerciseNotes}</span>
-            </button>
-          ) : null}
         </section>
       )}
 
@@ -1203,6 +1115,22 @@ export function ActiveWorkoutClient() {
                 {ar ? "ملاحظة التمرين" : "Exercise note"}
                 <textarea defaultValue={currentExercise.notes} onBlur={(event) => void updateWorkoutExerciseNotes(currentExercise.id, event.target.value).catch((caught: Error) => setError(caught.message))} rows={2} placeholder={ar ? "مسكة، وضع جهاز، ملاحظة…" : "Grip, machine setup, note…"} className="gc-input mt-2 font-normal" />
               </label>
+            ) : null}
+
+            {phase !== "overview" && activeSet ? (
+              <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-3">
+                <p className="text-xs font-black uppercase tracking-[0.08em] text-neutral-500">{ar ? "خيارات السِت" : "Set options"}</p>
+                <label className="gc-gym-warmup-toggle mt-2">
+                  <input type="checkbox" checked={activeSet.isWarmup} onChange={(event) => void updateWorkoutSet(activeSet.id, { weightKg: parseOptionalNumber(selectedWeight), reps: parseOptionalNumber(selectedReps), isCompleted: false, isWarmup: event.target.checked }).then(reload).catch((caught: Error) => setError(t(getArabicErrorMessage(caught, "معرفناش نغيّر نوع السِت."))))} />
+                  <span><strong>{ar ? "Warm-up" : "Warm-up"}</strong><small>{ar ? "تتسجل، لكن مش تدخل في الحجم أو الـPR" : "Logged, but excluded from working volume and PRs"}</small></span>
+                </label>
+                <details className="gc-gym-effort mt-2">
+                  <summary className="gc-gym-effort-summary">{ar ? "RIR / Failure (اختياري)" : "RIR / Failure (optional)"}<span>{selectedRir ? (selectedRir === "failure" ? "Failure" : `RIR ${selectedRir}`) : (ar ? "بدون" : "Skip")}</span></summary>
+                  <div className="mt-2 grid grid-cols-5 gap-1.5">
+                    {(["0", "1", "2", "3+", "failure"] as const).map((value) => <button key={value} type="button" onClick={() => setSelectedRir((current) => current === value ? "" : value)} className={`gc-rir-chip ${selectedRir === value ? "gc-rir-chip-active" : ""}`}>{value === "failure" ? "Failure" : `RIR ${value}`}</button>)}
+                  </div>
+                </details>
+              </div>
             ) : null}
 
             <div className="gc-timer-sound mt-4 flex min-w-0 items-center justify-between gap-3 p-3 text-start">

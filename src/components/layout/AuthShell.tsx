@@ -25,7 +25,7 @@ export function AuthShell({ children }: AuthShellProps) {
               <span className="gc-brand-mark grid h-12 w-12 place-items-center rounded-2xl">
                 <BrandMark className="h-7 w-7" />
               </span>
-              <p className="gc-eyebrow">TRAIN · LOG · PROGRESS</p>
+              <p data-no-localize className="gc-eyebrow">TRAIN · LOG · PROGRESS</p>
             </div>
             <h2 className="mt-20 max-w-md text-5xl font-bold leading-[1.02] tracking-[-0.055em]">
               تمرينك وأرقامك، من غير زحمة.
@@ -54,7 +54,7 @@ export function AuthShell({ children }: AuthShellProps) {
               <span className="gc-brand-mark grid h-11 w-11 place-items-center rounded-2xl">
                 <BrandMark className="h-6 w-6" />
               </span>
-              <p className="gc-muted min-w-0 truncate text-xs font-black uppercase tracking-[0.16em]">TRAIN · LOG · PROGRESS</p>
+              <p data-no-localize className="gc-muted min-w-0 truncate text-xs font-black uppercase tracking-[0.16em]">TRAIN · LOG · PROGRESS</p>
             </div>
             {children}
           </div>

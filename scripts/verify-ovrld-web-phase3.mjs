@@ -64,7 +64,7 @@ assert.match(readme, /docs\/PRODUCTION_DEPLOYMENT\.md/);
 assert.doesNotMatch(readme, /Current alignment phase/);
 
 const workflow = read(".github/workflows/ovrld-web-ci.yml");
-assert.match(workflow, /npm run phase(?:[3-9]|[1-9]\d+):check/);
+assert.match(workflow, /npm run (?:check|phase(?:[3-9]|[1-9]\d+):check)/);
 assert.match(workflow, /node-version:\s*22/);
 assert.doesNotMatch(workflow, /npm audit fix --force/);
 

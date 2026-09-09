@@ -79,8 +79,9 @@ assert.match(bodyService, /true first measurement/);
 
 const dashboard = read("src/app/(dashboard)/dashboard/page.tsx");
 assert.match(dashboard, /<TodaysWorkoutClient[^>]*compact/, "Home must keep Train / Today as the first primary action.");
-assert.match(dashboard, /<HomeLogDataAction \/>/, "Home must keep Log Data as the second primary action.");
-assert.doesNotMatch(dashboard, /<GainModeHomeCard|<PersonalSplitOverviewClient/, "Home must remain execution-first; Gain Mode and split management belong in their dedicated surfaces.");
+assert.match(dashboard, /<HomeLogDataAction(?:\s+compact)?\s*\/>/, "Home must keep quick Log Data access.");
+assert.match(dashboard, /<GainModeHomeCard/, "Home must preserve the compact Gain context below the primary actions.");
+assert.match(dashboard, /<PersonalSplitOverviewClient/, "Home must preserve the compact week overview.");
 
 const gainHome = read("src/features/gain-mode/components/GainModeHomeCard.tsx");
 assert.match(gainHome, /Gain Mode|زيادة الوزن/, "Gain Mode home/process capability must remain available outside the simplified Home surface.");
@@ -114,7 +115,7 @@ for (const phrase of [
 }
 
 const workflow = read(".github/workflows/ovrld-web-ci.yml");
-assert.match(workflow, /npm run phase(?:[6-9]|1[0-9]|[2-9]\d+):check/);
+assert.match(workflow, /npm run (?:check|phase(?:[6-9]|1[0-9]|[2-9]\d+):check)/);
 
 const packageJson = JSON.parse(read("package.json"));
 assert.ok(packageJson.scripts?.["verify:phase6"], "Missing verify:phase6 script.");

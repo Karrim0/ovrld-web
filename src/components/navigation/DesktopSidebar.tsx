@@ -11,13 +11,13 @@ export function DesktopSidebar() {
   const { language } = useLanguage();
   const ar = language === "ar";
 
-  if (pathname.startsWith("/workout/active")) return null;
+  if ((pathname.startsWith("/workout/active") || pathname.startsWith("/workout/quick"))) return null;
 
   return (
     <aside className="gc-desktop-sidebar gc-navigation-surface fixed inset-y-0 z-40 hidden w-[16.5rem] flex-col p-4 md:flex">
       <Link href="/dashboard" className="flex items-center gap-3 rounded-xl px-2 py-2">
         <span className="gc-brand-mark grid h-10 w-10 place-items-center rounded-xl"><BrandMark className="h-6 w-6" /></span>
-        <span className="gc-muted min-w-0 truncate text-[11px] font-black tracking-[0.14em]">TRAIN · LOG · PROGRESS</span>
+        <span data-no-localize className="gc-muted min-w-0 truncate text-[11px] font-black tracking-[0.14em]">TRAIN · LOG · PROGRESS</span>
       </Link>
 
       <nav className="mt-7 flex flex-col gap-1.5" aria-label={ar ? "التنقل الرئيسي" : "Main navigation"}>

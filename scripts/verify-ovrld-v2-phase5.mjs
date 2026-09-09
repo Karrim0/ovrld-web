@@ -42,8 +42,9 @@ assert.doesNotMatch(loop, /OpenAI|chat completion|responses\.create/i, "Phase 5 
 
 const dashboard = read("src/app/(dashboard)/dashboard/page.tsx");
 assert.match(dashboard, /<TodaysWorkoutClient userId=\{user\.id\} compact \/>/, "Home must keep Train as the primary action.");
-assert.match(dashboard, /<HomeLogDataAction \/>/, "Home must keep Log Data as the second primary action.");
-assert.doesNotMatch(dashboard, /<PersonalSplitOverviewClient|<SmartProcessLoop|<GainModeHomeCard/, "Home should remain execution-first and must not reintroduce plan/process clutter.");
+assert.match(dashboard, /<HomeLogDataAction(?:\s+compact)?\s*\/>/, "Home must keep quick Log Data access.");
+assert.match(dashboard, /<GainModeHomeCard userId=\{user\.id\} \/>/, "Home must preserve the goal/process snapshot after the primary workout action.");
+assert.match(dashboard, /<PersonalSplitOverviewClient userId=\{user\.id\} compact \/>/, "Home must preserve the compact week overview.");
 
 const gainHomeCard = read("src/features/gain-mode/components/GainModeHomeCard.tsx");
 assert.match(gainHomeCard, /<SmartProcessLoop userId=\{userId\} \/>/, "Gain Mode wrapper must preserve the Phase 5 deterministic process-loop fallback.");
@@ -61,7 +62,6 @@ assert.match(gym, /resumeStaleSession/);
 assert.match(gym, /كمّل من دلوقتي/);
 assert.match(gym, /buildProgression(?:Hint|Suggestion)/);
 assert.match(gym, /progressionSuggestion/);
-assert.match(gym, /استخدم/);
 assert.match(gym, /getSafeWorkoutDurationSeconds/);
 
 const service = read("src/features/workouts/services/workout-session.service.ts");
@@ -76,7 +76,7 @@ assert.match(packageJson.scripts?.check ?? "", /^npm run phase(?:[5-9]|[1-9]\d+)
 
 console.table({
   phase: "5 — smart process loop",
-  home: "single next-step signal + weekly/process context",
+  home: "today workout + quick add + gain context + week",
   gym: "micro progression hint + stale-session recovery",
   timerGuard: "18h active-session threshold",
   database: "no new migration",

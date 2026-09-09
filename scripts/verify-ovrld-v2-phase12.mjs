@@ -69,7 +69,7 @@ for (const token of ["setPhase(\"ready\")", "buildProgressionSuggestion", "progr
 assert.doesNotMatch(gym, /تحب تبدأ بأنهي تمرين/);
 assert.doesNotMatch(gym, /اختار أي تمرين\. اسحب ورتّب/);
 assert.match(gym, /draggable=\{queueEditing && !busy\}/);
-assert.match(gym, /progressionSuggestion\.weightKg/);
+assert.match(gym, /gc-gym-context-next/);
 
 const goal = read("src/features/onboarding/components/GoalSetupClient.tsx");
 assert.match(goal, /Gain Mode · زيادة الوزن/);

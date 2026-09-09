@@ -27,7 +27,7 @@ const checks = [
   ["summary does not label every improvement as a PR", "src/features/workouts/components/WorkoutDetailsClient.tsx", "topProgressHasPr"],
   ["bottom navigation still has a single active class", "src/components/navigation/BottomNavigation.tsx", "gc-bottom-nav-active"],
   ["mobile safe area remains enabled", "src/app/globals.css", "safe-area-inset-bottom"],
-  ["service worker cache bumped for pass 4", "public/sw.js", 'CACHE_VERSION = "v21"'],
+  ["service worker cache version is pass 4 or newer", "public/sw.js", 'CACHE_VERSION = "v22"'],
 ];
 
 let failed = 0;

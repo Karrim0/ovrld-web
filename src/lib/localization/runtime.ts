@@ -154,12 +154,27 @@ function translateEnglishDynamic(value: string): string {
     .replace(/Set\s+(\d+)/giu, "السِت $1");
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function replaceKnownPhraseSafely(value: string, source: string, target: string): string {
+  if (!value.includes(source)) return value;
+
+  const startsWithWord = /^[\p{L}\p{N}]/u.test(source);
+  const endsWithWord = /[\p{L}\p{N}]$/u.test(source);
+  const leftBoundary = startsWithWord ? "(?<![\\p{L}\\p{N}])" : "";
+  const rightBoundary = endsWithWord ? "(?![\\p{L}\\p{N}])" : "";
+  const pattern = new RegExp(`${leftBoundary}${escapeRegExp(source)}${rightBoundary}`, "gu");
+  return value.replace(pattern, target);
+}
+
 function replaceKnownPhrases(value: string, language: AppLanguage): string {
   const phrases = language === "en" ? ARABIC_PHRASES : ENGLISH_PHRASES;
   let output = value;
 
   for (const [source, target] of phrases) {
-    if (output.includes(source)) output = output.replaceAll(source, target);
+    output = replaceKnownPhraseSafely(output, source, target);
   }
 
   return output;

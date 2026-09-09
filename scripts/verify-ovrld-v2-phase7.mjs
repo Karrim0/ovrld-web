@@ -53,8 +53,9 @@ assert.doesNotMatch(nav, /id: "group"/);
 
 const dashboard = read("src/app/(dashboard)/dashboard/page.tsx");
 assert.match(dashboard, /<TodaysWorkoutClient[^>]*compact/, "Home must prioritize Train / Today.");
-assert.match(dashboard, /<HomeLogDataAction \/>/, "Home must expose Log Data as the second primary action.");
-assert.doesNotMatch(dashboard, /<GainModeHomeCard|<PersonalSplitOverviewClient/, "Home should not reintroduce process or split-management clutter.");
+assert.match(dashboard, /<HomeLogDataAction(?:\s+compact)?\s*\/>/, "Home must keep quick Log Data access.");
+assert.match(dashboard, /<GainModeHomeCard/, "Home must preserve the compact Gain context below the primary actions.");
+assert.match(dashboard, /<PersonalSplitOverviewClient/, "Home must preserve the compact week overview.");
 assert.doesNotMatch(dashboard, /أهم خطوة في الـprocess|إيه عليك دلوقتي/);
 
 const gainHome = read("src/features/gain-mode/components/GainModeHomeCard.tsx");

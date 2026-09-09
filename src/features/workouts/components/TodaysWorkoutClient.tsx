@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
-import { ArrowLeft, Dumbbell, Play, RotateCcw } from "lucide-react";
+import { ArrowLeft, Dumbbell, ListChecks, Play, RotateCcw } from "lucide-react";
 import type { UUID, Weekday } from "@/types";
 import { WEEKDAY_LABELS_AR, translateExerciseName, translateWorkoutLabel } from "@/lib/localization";
 import type { SplitDayWithDetails, WeeklyScheduleDayWithDetails } from "@/features/splits/types";
@@ -77,13 +77,13 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   const trainableDays = baseDays.filter((day) => day.workoutType !== "rest" && day.exercises.length > 0);
   const alternateDay = trainableDays.find((day) => day.id === alternateDayId) ?? null;
 
-  async function startScheduled(day: WeeklyScheduleDayWithDetails | null = today) {
+  async function startScheduled(day: WeeklyScheduleDayWithDetails | null = today, mode: "guided" | "quick" = "guided") {
     if (!day || day.workoutType === "rest" || !currentDate || !day.sourceDay) return;
     setIsStarting(true);
     setError(null);
     try {
       const session = await startWorkoutSession(userId, day.sourceDay, currentDate);
-      router.push(`/workout/active?session=${session.id}`);
+      router.push(mode === "quick" ? `/workout/quick?session=${session.id}` : `/workout/active?session=${session.id}`);
     } catch (caught) {
       setError(getArabicErrorMessage(caught, "معرفناش نبدأ التمرينة."));
     } finally {
@@ -91,13 +91,13 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
     }
   }
 
-  async function startExtra(day: SplitDayWithDetails | null) {
+  async function startExtra(day: SplitDayWithDetails | null, mode: "guided" | "quick" = "guided") {
     if (!day || day.workoutType === "rest" || !currentDate) return;
     setIsStarting(true);
     setError(null);
     try {
       const session = await startWorkoutSession(userId, day, currentDate);
-      router.push(`/workout/active?session=${session.id}`);
+      router.push(mode === "quick" ? `/workout/quick?session=${session.id}` : `/workout/active?session=${session.id}`);
     } catch (caught) {
       setError(getArabicErrorMessage(caught, "معرفناش نبدأ التمرينة."));
     } finally {
@@ -121,17 +121,20 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
               <p className="mt-1 text-sm font-semibold text-neutral-500">{completedSets}/{totalSets} {ar ? "سِتات مكتملة" : "sets completed"}</p>
             </div>
           </div>
-          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.07]"><div className="h-full rounded-full bg-emerald-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
-          <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-4 w-full min-h-12"><Play className="h-4 w-4" /> {ar ? "كمّل التمرينة" : "Resume workout"}</Link>
+          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.07]"><div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
+          <div className="gc-home-train-actions mt-4">
+            <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button min-h-12 min-w-0 flex-1"><Play className="h-4 w-4" /> {ar ? "كمّل التمرينة" : "Resume workout"}</Link>
+            <Link href={`/workout/quick?session=${activeSession.id}`} className="gc-secondary-button gc-home-quick-log-button min-h-12"><ListChecks className="h-4 w-4" /> <span>{ar ? "تسجيل سريع" : "Quick log"}</span></Link>
+          </div>
         </section>
       );
     }
     return (
-      <section className="gc-card border-emerald-300/20 p-5 sm:p-6">
+      <section className="gc-card border-[color:color-mix(in_srgb,var(--accent)_22%,var(--border))] p-5 sm:p-6">
         <p className="gc-eyebrow">{ar ? "فيه تمرينة شغالة" : "Workout in progress"}</p>
         <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">{ar ? "كمّل تمرينتك" : "Resume workout"}</h2>
         <p className="mt-2 text-sm text-neutral-500">{ar ? `خلصت ${completedSets} من ${totalSets} سِتات.` : `${completedSets} of ${totalSets} sets completed.`}</p>
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-emerald-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
         <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-5 w-full sm:w-auto"><Play className="h-4 w-4" /> {ar ? "كمّل التمرينة" : "Resume workout"}</Link>
       </section>
     );
@@ -191,11 +194,14 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
       <section className={`${compact ? "gc-home-train-card" : "gc-card overflow-hidden p-0"}`}>
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
-            <span className={`grid shrink-0 place-items-center rounded-xl bg-emerald-300 text-[#11131a] ${compact ? "h-10 w-10" : "h-12 w-12"}`}><Dumbbell className={compact ? "h-5 w-5" : "h-6 w-6"} /></span>
+            <span className={`gc-home-train-icon ${compact ? "h-10 w-10" : "h-12 w-12"}`}><Dumbbell className={compact ? "h-5 w-5" : "h-6 w-6"} /></span>
             <div className="min-w-0 flex-1"><p className="gc-eyebrow">{compact ? (ar ? "تدرّب" : "Train") : `${t(WEEKDAY_LABELS_AR[weekday])} · ${ar ? "النهارده" : "Today"}`}</p><h2 className={`mt-1 truncate font-black tracking-[-0.03em] ${compact ? "text-2xl" : "text-2xl"}`}>{t(title)}</h2><p className="mt-1 text-xs font-semibold text-neutral-500">{plannedMetrics.exerciseCount} {ar ? "تمارين" : "exercises"} · {totalTargetSets} {ar ? "سِتات" : "sets"}</p></div>
           </div>
           {!compact && today.dayNotes ? <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3 text-sm leading-6 text-neutral-400">{today.dayNotes}</p> : null}
-          <button type="button" disabled={isStarting || today.exercises.length === 0 || !today.sourceDay} onClick={() => void startScheduled()} className="gc-primary-button mt-5 w-full disabled:opacity-50"><Play className="h-5 w-5" /> {isStarting ? (ar ? "بنبدأ…" : "Starting…") : compact ? (ar ? "ابدأ التمرينة" : "Start workout") : (ar ? "ابدأ التمرينة" : "Start workout")}</button>
+          <div className="gc-home-train-actions mt-5">
+            <button type="button" disabled={isStarting || today.exercises.length === 0 || !today.sourceDay} onClick={() => void startScheduled(today, "guided")} className="gc-primary-button min-h-12 min-w-0 flex-1 disabled:opacity-50"><Play className="h-5 w-5" /> {isStarting ? (ar ? "بنبدأ…" : "Starting…") : (ar ? "ابدأ التمرينة" : "Start workout")}</button>
+            <button type="button" disabled={isStarting || today.exercises.length === 0 || !today.sourceDay} onClick={() => void startScheduled(today, "quick")} className="gc-secondary-button gc-home-quick-log-button min-h-12 disabled:opacity-50"><ListChecks className="h-4 w-4" /> <span>{ar ? "تسجيل سريع" : "Quick log"}</span></button>
+          </div>
         </div>
 
         {compact ? (

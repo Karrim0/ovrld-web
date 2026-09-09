@@ -19,7 +19,7 @@ const [css, brand, gainHub, gainTraining, setupChooser, activeWorkout, progress,
   read("public/sw.js"),
 ]);
 
-add("Emerald brand tokens", css.includes("--accent: #14a874") && css.includes("--brand-accent: #6ee7b7"));
+add("Muted OVRLD brand tokens", css.includes("--accent: #4f8f73") && css.includes("--brand-accent: #83b49a") && css.includes("--background: #0d0f12"));
 add("New progression brand mark", brand.includes("var(--brand-accent") && brand.includes("45.8 15.8"));
 add("Gain Mode uses one top options control", (gainHub.match(/MoreHorizontal/g) ?? []).length === 2, "One import + one rendered icon expected");
 add("Gain options sheet exists", gainHub.includes("gc-gain-options-sheet"));
@@ -27,7 +27,7 @@ add("Gain training screen is language-aware", gainTraining.includes("useLanguage
 add("Gain plan is exposed in plan selection", setupChooser.includes('key: "gain_glutes_4"') && setupChooser.includes("Recommended for Gain Mode"));
 add("Ready plan chooser includes all starter templates", setupChooser.includes("STARTERS.map") && !setupChooser.includes("filter((starter) => starter.key !== \"gain_glutes_4\")"));
 add("Plan selection offers import + manual paths", setupChooser.includes("Import your plan") && setupChooser.includes("Build from scratch"));
-add("Workout logging card has dedicated timer", activeWorkout.includes("gc-set-timer-button"));
+add("Workout logging keeps rest timing without set-timer clutter", activeWorkout.includes("useRestTimer") && !activeWorkout.includes("gc-set-timer-button"));
 add("Workout options no duplicate add-exercise row", !activeWorkout.includes('<strong>{ar ? "ضيف تمرين" : "Add exercise"}</strong><small>{ar ? "للجلسة دي أو للجدول الأساسي"'));
 add("Old unused Save icon removed", !activeWorkout.match(/\bSave,\n/));
 add("Progress page does not restore Gain promo card", !progress.includes("GainModeQuickAccess"));

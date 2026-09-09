@@ -12,7 +12,7 @@ export function BottomNavigation() {
   const { language } = useLanguage();
   const ar = language === "ar";
 
-  if (pathname.startsWith("/workout/active") || keyboardOpen) return null;
+  if ((pathname.startsWith("/workout/active") || pathname.startsWith("/workout/quick")) || keyboardOpen) return null;
 
   return (
     <nav className="gc-bottom-nav gc-navigation-surface fixed z-50 mx-auto max-w-lg rounded-[20px] p-1.5 md:hidden" aria-label={ar ? "التنقل الرئيسي" : "Main navigation"}>

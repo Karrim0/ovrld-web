@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronRight, Ruler, Scale, Utensils, X } from "lucide-react";
+import { ChevronRight, Plus, Ruler, Scale, Utensils, X } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 
-export function HomeLogDataAction() {
+export function HomeLogDataAction({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const { language } = useLanguage();
   const ar = language === "ar";
@@ -36,22 +36,33 @@ export function HomeLogDataAction() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="gc-home-log-cta group w-full text-start"
+        className={compact ? "gc-home-quick-data group w-full text-start" : "gc-home-log-cta group w-full text-start"}
         aria-haspopup="dialog"
       >
-        <span className="gc-home-log-icon"><Scale className="h-5 w-5" /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-neutral-500">
-            {ar ? "سجّل بيانات" : "Log Data"}
-          </span>
-          <strong className="mt-0.5 block text-lg font-black tracking-[-0.025em]">
-            {ar ? "أكل · وزن · قياسات" : "Food · Weight · Measurements"}
-          </strong>
-          <span className="mt-1 block text-xs font-semibold text-neutral-500">
-            {ar ? "كل تسجيلاتك السريعة في مكان واحد" : "Your quick logs in one place"}
-          </span>
+        <span className={compact ? "gc-home-quick-data-icon" : "gc-home-log-icon"}>
+          {compact ? <Plus className="h-4 w-4" /> : <Scale className="h-5 w-5" />}
         </span>
-        <ChevronRight className="h-5 w-5 shrink-0 text-neutral-500 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
+        <span className="min-w-0 flex-1">
+          {compact ? (
+            <>
+              <strong className="block text-sm font-black">{ar ? "إضافة سريعة" : "Quick add"}</strong>
+              <span className="mt-0.5 block text-xs font-semibold text-neutral-500">{ar ? "أكل · وزن · قياسات" : "Food · Weight · Measurements"}</span>
+            </>
+          ) : (
+            <>
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-neutral-500">
+                {ar ? "سجّل بيانات" : "Log Data"}
+              </span>
+              <strong className="mt-0.5 block text-lg font-black tracking-[-0.025em]">
+                {ar ? "أكل · وزن · قياسات" : "Food · Weight · Measurements"}
+              </strong>
+              <span className="mt-1 block text-xs font-semibold text-neutral-500">
+                {ar ? "كل تسجيلاتك السريعة في مكان واحد" : "Your quick logs in one place"}
+              </span>
+            </>
+          )}
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-neutral-500 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
       </button>
 
       {open ? (
@@ -64,7 +75,7 @@ export function HomeLogDataAction() {
             <div className="gc-workout-options-handle" />
             <div className="flex items-start justify-between gap-3 px-4 pt-2 sm:px-5">
               <div>
-                <p className="gc-eyebrow">{ar ? "سجّل بيانات" : "Log Data"}</p>
+                <p className="gc-eyebrow">{ar ? "إضافة سريعة" : "Quick add"}</p>
                 <h2 className="mt-1 text-xl font-black">{ar ? "إيه اللي عايز تسجله؟" : "What do you want to log?"}</h2>
               </div>
               <button type="button" onClick={() => setOpen(false)} className="gc-icon-button" aria-label={ar ? "اقفل" : "Close"}><X className="h-4 w-4" /></button>
