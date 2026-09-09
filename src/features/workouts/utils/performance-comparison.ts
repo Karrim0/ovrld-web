@@ -9,7 +9,7 @@ export interface ExercisePerformanceComparison {
 }
 
 function completedSets(sets: WorkoutSet[]) {
-  return sets.filter((set) => set.isCompleted && set.reps !== null && set.reps > 0);
+  return sets.filter((set) => !set.isWarmup && set.isCompleted && set.reps !== null && set.reps > 0);
 }
 
 function performanceScore(sets: WorkoutSet[]) {

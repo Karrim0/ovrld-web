@@ -1,6 +1,6 @@
 # Dependency security audit
 
-During the Phase 2 installation, npm reported 12 high-severity findings. The audit endpoint was not available in the patch-build environment, so this release does not guess at the affected packages and does not apply broad dependency changes.
+The latest Windows install during finalization reported 8 advisories (1 moderate, 6 high, 1 critical). The patch-build environment cannot reliably reach npm advisory data, so this release does not guess at the affected dependency paths and does not apply broad dependency changes.
 
 ## Required local checks
 
@@ -27,7 +27,7 @@ Do not commit the report if it includes local paths or environment information.
 
 ```bash
 npm ci
-npm run phase3:check
+npm run pass4:check
 npm audit --omit=dev
 ```
 

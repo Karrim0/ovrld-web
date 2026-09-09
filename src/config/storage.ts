@@ -21,7 +21,13 @@ export const STORAGE_KEYS = {
   stopwatchPrefix: `${CURRENT_STORAGE_PREFIX}stopwatch`,
   legacyStopwatchPrefix: `${LEGACY_STORAGE_PREFIX}stopwatch`,
   weightStepPrefix: `${CURRENT_STORAGE_PREFIX}weight-step`,
+  setHaptics: `${CURRENT_STORAGE_PREFIX}set-haptics`,
+  restHaptics: `${CURRENT_STORAGE_PREFIX}rest-haptics`,
+  restSound: `${CURRENT_STORAGE_PREFIX}rest-sound`,
   legacyWeightStepPrefix: `${LEGACY_STORAGE_PREFIX}weight-step`,
+  legacySetHaptics: `${LEGACY_STORAGE_PREFIX}set-haptics`,
+  legacyRestHaptics: `${LEGACY_STORAGE_PREFIX}rest-haptics`,
+  legacyRestSound: `${LEGACY_STORAGE_PREFIX}rest-sound`,
   syncQueueChangedEvent: `${CURRENT_STORAGE_PREFIX}sync-queue-changed`,
   legacySyncQueueChangedEvent: `${LEGACY_STORAGE_PREFIX}sync-queue-changed`,
 } as const;

@@ -32,10 +32,10 @@ add("Workout options no duplicate add-exercise row", !activeWorkout.includes('<s
 add("Old unused Save icon removed", !activeWorkout.match(/\bSave,\n/));
 add("Progress page does not restore Gain promo card", !progress.includes("GainModeQuickAccess"));
 add("PWA shortcuts are language-neutral", !/[\u0600-\u06ff]/u.test(manifest));
-add("Localization map covers workout errors", map.includes("We could not log this set") && map.includes("Email or password is incorrect"));
+add("Localization map covers workout errors", map.includes("Unable to log this set") && map.includes("email or password is incorrect"));
 add("Runtime handles dynamic cm / plan-fit strings", runtime.includes('"$1 cm"') && runtime.includes('"$1% fit"'));
 add("Textarea placeholders can localize without touching user content", runtime.includes("SKIP_TEXT_SELECTOR") && runtime.includes("SKIP_ATTRIBUTE_SELECTOR"));
-add("PWA cache bumped for new identity assets", sw.includes('CACHE_VERSION = "v19"'));
+add("PWA cache is versioned for identity assets", /CACHE_VERSION = "v\d+"/.test(sw));
 
 for (const icon of [
   "public/icons/icon-192x192.png",

@@ -19,14 +19,14 @@ const checks = [
   ['collapsed workout queue', 'src/features/workouts/components/ActiveWorkoutClient.tsx', 'Workout Queue'],
   ['do later support', 'src/features/workouts/components/ActiveWorkoutClient.tsx', 'Do later'],
   ['keep screen awake', 'src/features/workouts/components/ActiveWorkoutClient.tsx', 'Keep screen awake'],
-  ['haptics setting', 'src/features/workouts/components/ActiveWorkoutClient.tsx', 'Workout haptics'],
+  ['haptics setting', 'src/features/workouts/components/ActiveWorkoutClient.tsx', 'Set haptic'],
   ['exit protection', 'src/features/workouts/components/ActiveWorkoutClient.tsx', 'Workout still in progress'],
   ['split overview first', 'src/features/splits/components/SplitManager.tsx', 'gc-split-overview-day'],
   ['this week vs repeating plan', 'src/features/splits/components/SplitManager.tsx', 'Repeating Plan'],
   ['separate exercises editor state', 'src/features/splits/components/SplitManager.tsx', 'editingExercises'],
   ['change workout secondary flow', 'src/features/splits/components/SplitManager.tsx', 'Change workout'],
   ['bottom nav only uses active state', 'src/components/navigation/BottomNavigation.tsx', 'gc-bottom-nav-active'],
-  ['service worker cache bumped', 'public/sw.js', 'v20'],
+  ['service worker cache versioned', 'public/sw.js', 'CACHE_VERSION'],
 ];
 
 let failed = 0;

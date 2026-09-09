@@ -200,3 +200,7 @@ See `docs/OVRLD_V2_PHASE_12_PREMIUM_INTEGRATION.md`.
 ## OVRLD V2 Phase 14
 
 Recommended Gain plan + flexible weekly execution + private support notes.
+
+## Finalization Pass 4 — Release Candidate polish
+
+Pass 4 completes the remaining workout-feedback controls, shared workout metrics, localization sweep, navigation consistency, and Workout Summary progression highlight. Run `npm run pass4:check` before release and use Node 22. See `docs/OVRLD_FINALIZATION_PASS_4.md`.

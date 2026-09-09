@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowDown,
+  Bell,
   ArrowUp,
   Check,
   ChevronLeft,
@@ -29,9 +30,11 @@ import {
   RefreshCcw,
   SlidersHorizontal,
   SkipForward,
+  Smartphone,
   TimerReset,
   TrendingUp,
   Trash2,
+  VolumeX,
   X,
   XCircle,
 } from "lucide-react";
@@ -60,6 +63,7 @@ import {
 import { SessionElapsedTime } from "./SessionElapsedTime";
 import { SetElapsedClock } from "./SetElapsedClock";
 import { getSafeWorkoutDurationSeconds, isStaleActiveWorkout } from "../utils/session-time";
+import { getSessionWorkoutMetrics } from "../utils/workout-metrics";
 
 type GymPhase = "overview" | "ready" | "working" | "logging" | "post";
 
@@ -234,6 +238,7 @@ export function ActiveWorkoutClient() {
   const [workoutTitle, setWorkoutTitle] = useState<string>(language === "ar" ? "التمرين" : "Workout");
   const [keepAwake, setKeepAwake] = useState(false);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const hapticsHydratedRef = useRef(false);
   const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const [showCustomWeight, setShowCustomWeight] = useState(false);
   const [showCustomReps, setShowCustomReps] = useState(false);
@@ -242,18 +247,16 @@ export function ActiveWorkoutClient() {
   const [selectedRir, setSelectedRir] = useState<"" | "0" | "1" | "2" | "3+" | "failure">("");
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("ovrld:haptics");
-    if (stored === null) return;
-
-    const timer = window.setTimeout(() => {
-      setHapticsEnabled(stored !== "off");
-    }, 0);
-
-    return () => window.clearTimeout(timer);
+    const stored = readCompatibleStorage(STORAGE_KEYS.setHaptics, "ovrld:haptics");
+    queueMicrotask(() => {
+      if (stored !== null) setHapticsEnabled(stored !== "off");
+      hapticsHydratedRef.current = true;
+    });
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("ovrld:haptics", hapticsEnabled ? "on" : "off");
+    if (!hapticsHydratedRef.current) return;
+    window.localStorage.setItem(STORAGE_KEYS.setHaptics, hapticsEnabled ? "on" : "off");
   }, [hapticsEnabled]);
 
   function feedback(pattern: number | number[] = 8) {
@@ -386,16 +389,12 @@ export function ActiveWorkoutClient() {
 
 
   const totals = useMemo(() => {
-    const exercises = session?.exercises ?? [];
-    const totalSets = exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
-    const completedSets = exercises.reduce(
-      (sum, exercise) => sum + exercise.sets.filter((set) => set.isCompleted).length,
-      0,
-    );
-    const completedExercises = exercises.filter((exercise) =>
-      exerciseIsComplete(exercise.sets),
-    ).length;
-    return { totalSets, completedSets, completedExercises };
+    const metrics = getSessionWorkoutMetrics(session?.exercises ?? []);
+    return {
+      totalSets: metrics.totalSets,
+      completedSets: metrics.completedSets,
+      completedExercises: metrics.completedExercises,
+    };
   }, [session]);
 
   const progress = totals.totalSets > 0 ? (totals.completedSets / totals.totalSets) * 100 : 0;
@@ -1211,9 +1210,26 @@ export function ActiveWorkoutClient() {
               <button type="button" role="switch" aria-checked={keepAwake} onClick={() => setKeepAwake((value) => !value)} className={`gc-switch ${keepAwake ? "gc-switch-active" : ""}`}><span className="gc-switch-thumb" /></button>
             </div>
 
-            <div className="gc-timer-sound mt-3 flex min-w-0 items-center justify-between gap-3 p-3 text-start">
-              <div className="min-w-0"><p className="text-sm font-bold">{ar ? "اهتزازات التمرين" : "Workout haptics"}</p><p className="mt-0.5 text-xs font-semibold text-neutral-500">{ar ? "عند تسجيل السِت وانتهاء الخطوات المهمة" : "Feedback on set completion and key actions"}</p></div>
-              <button type="button" role="switch" aria-checked={hapticsEnabled} onClick={() => setHapticsEnabled((value) => !value)} className={`gc-switch ${hapticsEnabled ? "gc-switch-active" : ""}`}><span className="gc-switch-thumb" /></button>
+            <div className="mt-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-2">
+              <div className="px-2 pb-2 pt-1">
+                <p className="text-xs font-black uppercase tracking-[0.08em] text-neutral-500">{ar ? "تنبيهات التمرين" : "Workout feedback"}</p>
+                <p className="mt-1 text-[11px] font-semibold text-neutral-600">{ar ? "تحكم في الاهتزاز والصوت من غير ما يقطعوا التمرين." : "Control haptics and sound without interrupting your workout."}</p>
+              </div>
+              <div className="grid gap-2">
+                <div className="gc-timer-sound flex min-w-0 items-center justify-between gap-3 p-3 text-start">
+                  <div className="flex min-w-0 items-center gap-3"><span className="gc-settings-icon h-9 w-9"><Smartphone className="h-4 w-4" /></span><div className="min-w-0"><p className="text-sm font-bold">{ar ? "اهتزاز تسجيل السِت" : "Set haptic"}</p><p className="mt-0.5 text-xs font-semibold text-neutral-500">{ar ? "تأكيد خفيف عند Complete Set" : "Light confirmation on Complete Set"}</p></div></div>
+                  <button type="button" role="switch" aria-checked={hapticsEnabled} onClick={() => setHapticsEnabled((value) => !value)} className={`gc-switch ${hapticsEnabled ? "gc-switch-active" : ""}`}><span className="gc-switch-thumb" /></button>
+                </div>
+                <div className="gc-timer-sound flex min-w-0 items-center justify-between gap-3 p-3 text-start">
+                  <div className="flex min-w-0 items-center gap-3"><span className="gc-settings-icon h-9 w-9"><Smartphone className="h-4 w-4" /></span><div className="min-w-0"><p className="text-sm font-bold">{ar ? "اهتزاز انتهاء الراحة" : "Rest-end haptic"}</p><p className="mt-0.5 text-xs font-semibold text-neutral-500">{ar ? "ينبهك لما التايمر يخلص" : "Alerts you when the timer ends"}</p></div></div>
+                  <button type="button" role="switch" aria-checked={restTimer.hapticsEnabled} onClick={() => restTimer.setHapticsEnabled(!restTimer.hapticsEnabled)} className={`gc-switch ${restTimer.hapticsEnabled ? "gc-switch-active" : ""}`}><span className="gc-switch-thumb" /></button>
+                </div>
+                <div className="gc-timer-sound flex min-w-0 items-center justify-between gap-3 p-3 text-start">
+                  <div className="flex min-w-0 items-center gap-3"><span className="gc-settings-icon h-9 w-9"><Bell className="h-4 w-4" /></span><div className="min-w-0"><p className="text-sm font-bold">{ar ? "صوت انتهاء الراحة" : "Rest-end sound"}</p><button type="button" onClick={restTimer.testSound} className="mt-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-200">{ar ? "جرّب الصوت" : "Test sound"}</button></div></div>
+                  <button type="button" role="switch" aria-checked={restTimer.soundEnabled} onClick={() => restTimer.setSoundEnabled(!restTimer.soundEnabled)} className={`gc-switch ${restTimer.soundEnabled ? "gc-switch-active" : ""}`}><span className="gc-switch-thumb" /></button>
+                </div>
+              </div>
+              <button type="button" onClick={() => { setHapticsEnabled(false); restTimer.setHapticsEnabled(false); restTimer.setSoundEnabled(false); }} className="gc-secondary-button mt-2 w-full"><VolumeX className="h-4 w-4" /> {ar ? "وضع صامت" : "Silent"}</button>
             </div>
 
             <label className="mt-4 block text-xs font-bold text-neutral-500">

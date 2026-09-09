@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, BellOff, Pause, Play, Plus, TimerReset, X } from "lucide-react";
+import { Bell, BellOff, Pause, Play, Plus, Smartphone, TimerReset, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useRestTimer } from "@/contexts/rest-timer-context";
 import { useVirtualKeyboard } from "@/hooks/use-virtual-keyboard";
@@ -83,14 +83,25 @@ export function RestTimerPanel() {
             <button type="button" onClick={timer.skip} className="gc-primary-button">{ar ? "إنهاء الراحة" : "End rest"}</button>
           </div>
 
-          <div className="gc-timer-sound mt-4 flex min-w-0 items-center justify-between gap-3 p-3 text-start">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="gc-settings-icon h-9 w-9">{timer.soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}</span>
-              <div className="min-w-0"><p className="truncate text-sm font-bold">{ar ? "صوت انتهاء الراحة" : "Rest-end sound"}</p><button type="button" onClick={timer.testSound} className="text-xs font-semibold text-emerald-600 dark:text-emerald-200">{ar ? "جرّب الصوت" : "Test sound"}</button></div>
+          <div className="mt-4 grid gap-2">
+            <div className="gc-timer-sound flex min-w-0 items-center justify-between gap-3 p-3 text-start">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="gc-settings-icon h-9 w-9">{timer.soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}</span>
+                <div className="min-w-0"><p className="truncate text-sm font-bold">{ar ? "صوت انتهاء الراحة" : "Rest-end sound"}</p><button type="button" onClick={timer.testSound} className="text-xs font-semibold text-emerald-600 dark:text-emerald-200">{ar ? "جرّب الصوت" : "Test sound"}</button></div>
+              </div>
+              <button type="button" role="switch" aria-checked={timer.soundEnabled} onClick={() => timer.setSoundEnabled(!timer.soundEnabled)} className={`gc-switch ${timer.soundEnabled ? "gc-switch-active" : ""}`}>
+                <span className="gc-switch-thumb" />
+              </button>
             </div>
-            <button type="button" role="switch" aria-checked={timer.soundEnabled} onClick={() => timer.setSoundEnabled(!timer.soundEnabled)} className={`gc-switch ${timer.soundEnabled ? "gc-switch-active" : ""}`}>
-              <span className="gc-switch-thumb" />
-            </button>
+            <div className="gc-timer-sound flex min-w-0 items-center justify-between gap-3 p-3 text-start">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="gc-settings-icon h-9 w-9"><Smartphone className="h-4 w-4" /></span>
+                <div className="min-w-0"><p className="truncate text-sm font-bold">{ar ? "اهتزاز انتهاء الراحة" : "Rest-end haptic"}</p><button type="button" onClick={timer.testHaptics} className="text-xs font-semibold text-emerald-600 dark:text-emerald-200">{ar ? "جرّب الاهتزاز" : "Test haptic"}</button></div>
+              </div>
+              <button type="button" role="switch" aria-checked={timer.hapticsEnabled} onClick={() => timer.setHapticsEnabled(!timer.hapticsEnabled)} className={`gc-switch ${timer.hapticsEnabled ? "gc-switch-active" : ""}`}>
+                <span className="gc-switch-thumb" />
+              </button>
+            </div>
           </div>
         </div>
       </section>

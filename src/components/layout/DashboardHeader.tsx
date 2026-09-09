@@ -4,6 +4,7 @@ import { BrandMark } from "@/components/brand/BrandMark";
 import { SyncStatusIndicator } from "@/components/feedback/SyncStatusIndicator";
 import { ProfileAvatarLink } from "@/components/layout/ProfileAvatarLink";
 import { LanguageSwitcher } from "@/components/localization/LanguageSwitcher";
+import { LocalizedText } from "@/components/localization/LocalizedText";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { getCurrentUser } from "@/features/auth/services/auth.server";
 import { createClient } from "@/lib/supabase/server";
@@ -47,7 +48,7 @@ export async function DashboardHeader({ title, showBackButton, actions, showProf
       <div className="mx-auto flex w-full max-w-6xl min-w-0 items-center justify-between gap-2.5">
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           {showBackButton ? <BackButton /> : <span className="gc-header-brand" aria-hidden><BrandMark className="h-5 w-5" /></span>}
-          <h1 className="min-w-0 truncate text-lg font-bold tracking-[-0.015em] sm:text-xl">{title}</h1>
+          <h1 className="min-w-0 truncate text-lg font-bold tracking-[-0.015em] sm:text-xl"><LocalizedText>{title}</LocalizedText></h1>
         </div>
         <div className="gc-header-actions flex shrink-0 items-center gap-1.5 sm:gap-2">
           {actions}

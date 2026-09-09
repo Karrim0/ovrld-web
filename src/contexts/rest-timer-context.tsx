@@ -10,6 +10,7 @@ export interface RestTimerContextValue {
   isOpen: boolean;
   completedAt: string | null;
   soundEnabled: boolean;
+  hapticsEnabled: boolean;
   setScope: (scopeId: string | null) => void;
   open: () => void;
   close: () => void;
@@ -21,7 +22,9 @@ export interface RestTimerContextValue {
   clear: () => void;
   addTime: (seconds: number) => void;
   setSoundEnabled: (enabled: boolean) => void;
+  setHapticsEnabled: (enabled: boolean) => void;
   testSound: () => void;
+  testHaptics: () => void;
 }
 
 export const RestTimerContext = createContext<RestTimerContextValue | undefined>(undefined);

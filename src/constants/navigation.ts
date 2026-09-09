@@ -3,16 +3,17 @@ import { ChartNoAxesCombined, Dumbbell, House, Rows3, UserRound } from "lucide-r
 
 export interface NavigationItem {
   id: "home" | "split" | "workout" | "progress" | "profile";
-  label: string;
+  labelAr: string;
+  labelEn: string;
   href: string;
   icon: LucideIcon;
   activePrefixes: readonly string[];
 }
 
 export const MAIN_NAVIGATION_ITEMS: readonly NavigationItem[] = [
-  { id: "home", label: "الرئيسية", href: "/dashboard", icon: House, activePrefixes: ["/dashboard"] },
-  { id: "split", label: "جدولي", href: "/split/personal", icon: Rows3, activePrefixes: ["/split"] },
-  { id: "workout", label: "التمرين", href: "/workout/today", icon: Dumbbell, activePrefixes: ["/workout"] },
-  { id: "progress", label: "تقدمي", href: "/progress", icon: ChartNoAxesCombined, activePrefixes: ["/progress", "/workout/history"] },
-  { id: "profile", label: "حسابي", href: "/profile", icon: UserRound, activePrefixes: ["/profile", "/more", "/group"] },
+  { id: "home", labelAr: "الرئيسية", labelEn: "Home", href: "/dashboard", icon: House, activePrefixes: ["/dashboard"] },
+  { id: "split", labelAr: "جدولي", labelEn: "My Split", href: "/split/personal", icon: Rows3, activePrefixes: ["/split"] },
+  { id: "workout", labelAr: "التمرين", labelEn: "Workout", href: "/workout/today", icon: Dumbbell, activePrefixes: ["/workout"] },
+  { id: "progress", labelAr: "تقدمي", labelEn: "Progress", href: "/progress", icon: ChartNoAxesCombined, activePrefixes: ["/progress", "/workout/history"] },
+  { id: "profile", labelAr: "حسابي", labelEn: "Account", href: "/profile", icon: UserRound, activePrefixes: ["/profile", "/more", "/group"] },
 ];

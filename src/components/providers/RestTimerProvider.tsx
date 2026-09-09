@@ -12,6 +12,8 @@ const STORAGE_PREFIX = STORAGE_KEYS.restTimerPrefix;
 const LEGACY_STORAGE_PREFIX = STORAGE_KEYS.legacyRestTimerPrefix;
 const SOUND_STORAGE_KEY = `${STORAGE_PREFIX}:sound`;
 const LEGACY_SOUND_STORAGE_KEY = `${LEGACY_STORAGE_PREFIX}:sound`;
+const REST_HAPTICS_STORAGE_KEY = STORAGE_KEYS.restHaptics;
+const LEGACY_REST_HAPTICS_STORAGE_KEY = STORAGE_KEYS.legacyRestHaptics;
 const DEFAULT_DURATION = 90;
 
 function clampDuration(seconds: number) { return Math.min(15 * 60, Math.max(15, Math.floor(seconds))); }
@@ -28,6 +30,7 @@ export function RestTimerProvider({ children }: RestTimerProviderProps) {
   const [completedAt, setCompletedAt] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [soundEnabled, setSoundEnabledState] = useState(true);
+  const [hapticsEnabled, setHapticsEnabledState] = useState(true);
   const audioContextRef = useRef<AudioContext | null>(null);
 
   const getAudioContext = useCallback(() => {
@@ -74,6 +77,7 @@ export function RestTimerProvider({ children }: RestTimerProviderProps) {
 
   useEffect(() => {
     setSoundEnabledState(readCompatibleStorage(SOUND_STORAGE_KEY, LEGACY_SOUND_STORAGE_KEY) !== "off");
+    setHapticsEnabledState(readCompatibleStorage(REST_HAPTICS_STORAGE_KEY, LEGACY_REST_HAPTICS_STORAGE_KEY) !== "off");
   }, []);
 
   useEffect(() => {
@@ -109,13 +113,13 @@ export function RestTimerProvider({ children }: RestTimerProviderProps) {
         setCompletedAt(new Date().toISOString());
         setIsOpen(true);
         playCompletionSound();
-        if ("vibrate" in navigator) navigator.vibrate([280, 100, 180, 100, 280]);
+        if (hapticsEnabled && "vibrate" in navigator) navigator.vibrate([280, 100, 180, 100, 280]);
       }
     };
     tick();
     const interval = window.setInterval(tick, 250);
     return () => window.clearInterval(interval);
-  }, [endsAt, isRunning, playCompletionSound]);
+  }, [endsAt, hapticsEnabled, isRunning, playCompletionSound]);
 
   const setScope = useCallback((nextScopeId: string | null) => setScopeId(nextScopeId), []);
   const setDuration = useCallback((seconds: number) => { const safe = clampDuration(seconds); setDurationSeconds(safe); setRemainingSeconds(safe); setEndsAt(null); setIsRunning(false); setCompletedAt(null); }, []);
@@ -126,12 +130,14 @@ export function RestTimerProvider({ children }: RestTimerProviderProps) {
   const clear = useCallback(() => { if (scopeId) window.localStorage.removeItem(storageKey(scopeId)); resetState(); }, [resetState, scopeId]);
   const addTime = useCallback((seconds: number) => { setCompletedAt(null); if (isRunning && endsAt) { const nextEnd = Math.max(Date.now(), endsAt + seconds * 1000); setEndsAt(nextEnd); setRemainingSeconds(Math.max(0, Math.ceil((nextEnd - Date.now()) / 1000))); return; } setRemainingSeconds((current) => Math.max(0, Math.min(15 * 60, current + seconds))); }, [endsAt, isRunning]);
   const setSoundEnabled = useCallback((enabled: boolean) => { setSoundEnabledState(enabled); window.localStorage.setItem(SOUND_STORAGE_KEY, enabled ? "on" : "off"); if (enabled) unlockAudio(); }, [unlockAudio]);
+  const setHapticsEnabled = useCallback((enabled: boolean) => { setHapticsEnabledState(enabled); window.localStorage.setItem(REST_HAPTICS_STORAGE_KEY, enabled ? "on" : "off"); }, []);
   const testSound = useCallback(() => { unlockAudio(); window.setTimeout(playCompletionSound, 60); }, [playCompletionSound, unlockAudio]);
+  const testHaptics = useCallback(() => { if (hapticsEnabled && "vibrate" in navigator) navigator.vibrate([80, 50, 120]); }, [hapticsEnabled]);
 
   const value = useMemo<RestTimerContextValue>(() => ({
-    scopeId, durationSeconds, remainingSeconds, isRunning, isOpen, completedAt, soundEnabled,
-    setScope, open: () => setIsOpen(true), close: () => setIsOpen(false), setDuration, start, pause, reset, skip, clear, addTime, setSoundEnabled, testSound,
-  }), [addTime, clear, completedAt, durationSeconds, isOpen, isRunning, pause, remainingSeconds, reset, scopeId, setDuration, setScope, setSoundEnabled, skip, soundEnabled, start, testSound]);
+    scopeId, durationSeconds, remainingSeconds, isRunning, isOpen, completedAt, soundEnabled, hapticsEnabled,
+    setScope, open: () => setIsOpen(true), close: () => setIsOpen(false), setDuration, start, pause, reset, skip, clear, addTime, setSoundEnabled, setHapticsEnabled, testSound, testHaptics,
+  }), [addTime, clear, completedAt, durationSeconds, hapticsEnabled, isOpen, isRunning, pause, remainingSeconds, reset, scopeId, setDuration, setHapticsEnabled, setScope, setSoundEnabled, skip, soundEnabled, start, testHaptics, testSound]);
 
   return <RestTimerContext value={value}>{children}</RestTimerContext>;
 }

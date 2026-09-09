@@ -62,6 +62,7 @@ import {
 } from "../services/split.service";
 import { SplitSetupChooser } from "./SplitSetupChooser";
 import { PlanAuditPanel } from "./PlanAuditPanel";
+import { getPlannedWorkoutMetrics } from "@/features/workouts/utils/workout-metrics";
 
 interface SplitManagerProps {
   mode: "group" | "personal";
@@ -149,6 +150,8 @@ interface ExerciseEditorProps {
 }
 
 function ExerciseEditor({ item, index, count, canEdit, alternatives, onReload, onError }: ExerciseEditorProps) {
+  const { language, t } = useLanguage();
+  const ar = language === "ar";
   const [sets, setSets] = useState(item.targetSets);
   const [min, setMin] = useState(item.targetRepsMin);
   const [max, setMax] = useState(item.targetRepsMax);
@@ -170,7 +173,7 @@ function ExerciseEditor({ item, index, count, canEdit, alternatives, onReload, o
 
   async function saveTargets() {
     if (!Number.isFinite(sets) || !Number.isFinite(min) || !Number.isFinite(max)) {
-      onError("اكتب عدد سِتات وعدات صحيح.");
+      onError(ar ? "اكتب عدد سِتات وعدات صحيح." : "Enter valid sets and reps.");
       return;
     }
     await run(() => updateSplitExerciseTargets(item.id, { targetSets: sets, targetRepsMin: min, targetRepsMax: max }));
@@ -183,17 +186,17 @@ function ExerciseEditor({ item, index, count, canEdit, alternatives, onReload, o
         <span className="gc-stat grid h-10 w-10 shrink-0 place-items-center p-0 text-sm font-bold">{index + 1}</span>
         <button type="button" onClick={() => canEdit && setEditing((value) => !value)} className="min-w-0 flex-1 text-start">
           <p className="truncate font-bold">{translateExerciseName(item.exercise.name)}</p>
-          <p className="mt-0.5 truncate text-xs capitalize text-neutral-500">{item.targetSets} سِتات · {item.targetRepsMin}–{item.targetRepsMax} عدات · {muscleLabelAr(item.exercise.primaryMuscle)}</p>
+          <p className="mt-0.5 truncate text-xs capitalize text-neutral-500">{item.targetSets} {ar ? "سِتات" : "sets"} · {item.targetRepsMin}–{item.targetRepsMax} {ar ? "عدات" : "reps"} · {t(muscleLabelAr(item.exercise.primaryMuscle))}</p>
         </button>
         {canEdit ? (
           <details className="gc-exercise-desktop-menu relative shrink-0">
-            <summary className="gc-icon-button list-none [&::-webkit-details-marker]:hidden" aria-label="خيارات التمرين"><MoreVertical className="h-4 w-4" /></summary>
+            <summary className="gc-icon-button list-none [&::-webkit-details-marker]:hidden" aria-label={ar ? "خيارات التمرين" : "Exercise options"}><MoreVertical className="h-4 w-4" /></summary>
             <div className="gc-action-menu">
-              <button type="button" disabled={busy || index === 0} onClick={() => void run(() => moveSplitExercise(item.id, -1))} className="gc-action-menu-item disabled:opacity-30"><ArrowUp className="h-4 w-4" /> طلّع لفوق</button>
-              <button type="button" disabled={busy || index === count - 1} onClick={() => void run(() => moveSplitExercise(item.id, 1))} className="gc-action-menu-item disabled:opacity-30"><ArrowDown className="h-4 w-4" /> نزّل لتحت</button>
+              <button type="button" disabled={busy || index === 0} onClick={() => void run(() => moveSplitExercise(item.id, -1))} className="gc-action-menu-item disabled:opacity-30"><ArrowUp className="h-4 w-4" /> {ar ? "طلّع لفوق" : "Move up"}</button>
+              <button type="button" disabled={busy || index === count - 1} onClick={() => void run(() => moveSplitExercise(item.id, 1))} className="gc-action-menu-item disabled:opacity-30"><ArrowDown className="h-4 w-4" /> {ar ? "نزّل لتحت" : "Move down"}</button>
               <button type="button" disabled={busy} onClick={() => {
-                if (window.confirm(`تشيل ${translateExerciseName(item.exercise.name)} من اليوم ده؟`)) void run(() => removeSplitExercise(item.id));
-              }} className="gc-action-menu-item text-red-500"><Trash2 className="h-4 w-4" /> شيل</button>
+                if (window.confirm(ar ? `تشيل ${translateExerciseName(item.exercise.name)} من اليوم ده؟` : `Remove ${t(translateExerciseName(item.exercise.name))} from this day?`)) void run(() => removeSplitExercise(item.id));
+              }} className="gc-action-menu-item text-red-500"><Trash2 className="h-4 w-4" /> {ar ? "شيل" : "Remove"}</button>
             </div>
           </details>
         ) : null}
@@ -201,33 +204,33 @@ function ExerciseEditor({ item, index, count, canEdit, alternatives, onReload, o
 
       {canEdit && editing ? (
         <div className="gc-exercise-mobile-actions">
-          <button type="button" disabled={busy || index === 0} onClick={() => void run(() => moveSplitExercise(item.id, -1))} className="gc-exercise-mobile-action disabled:opacity-30"><ArrowUp className="h-4 w-4" /> طلّع</button>
-          <button type="button" disabled={busy || index === count - 1} onClick={() => void run(() => moveSplitExercise(item.id, 1))} className="gc-exercise-mobile-action disabled:opacity-30"><ArrowDown className="h-4 w-4" /> نزّل</button>
+          <button type="button" disabled={busy || index === 0} onClick={() => void run(() => moveSplitExercise(item.id, -1))} className="gc-exercise-mobile-action disabled:opacity-30"><ArrowUp className="h-4 w-4" /> {ar ? "طلّع" : "Up"}</button>
+          <button type="button" disabled={busy || index === count - 1} onClick={() => void run(() => moveSplitExercise(item.id, 1))} className="gc-exercise-mobile-action disabled:opacity-30"><ArrowDown className="h-4 w-4" /> {ar ? "نزّل" : "Down"}</button>
           <button type="button" disabled={busy} onClick={() => {
-            if (window.confirm(`تشيل ${translateExerciseName(item.exercise.name)} من اليوم ده؟`)) void run(() => removeSplitExercise(item.id));
-          }} className="gc-exercise-mobile-action gc-exercise-mobile-action-danger"><Trash2 className="h-4 w-4" /> شيل</button>
+            if (window.confirm(ar ? `تشيل ${translateExerciseName(item.exercise.name)} من اليوم ده؟` : `Remove ${t(translateExerciseName(item.exercise.name))} from this day?`)) void run(() => removeSplitExercise(item.id));
+          }} className="gc-exercise-mobile-action gc-exercise-mobile-action-danger"><Trash2 className="h-4 w-4" /> {ar ? "شيل" : "Remove"}</button>
         </div>
       ) : null}
 
       {editing ? (
         <div className="mt-3 space-y-3 border-t border-white/[0.06] pt-3">
           <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
-            <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">السِتات<input type="number" inputMode="numeric" min={1} max={20} value={sets} onChange={(event) => setSets(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
-            <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">أقل عدات<input type="number" inputMode="numeric" min={1} max={100} value={min} onChange={(event) => setMin(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
-            <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">أعلى عدات<input type="number" inputMode="numeric" min={1} max={100} value={max} onChange={(event) => setMax(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
-            <button type="button" disabled={busy} onClick={() => void saveTargets()} className="gc-primary-button min-h-11 min-[360px]:col-span-3"><Save className="h-4 w-4" /> احفظ الأهداف</button>
+            <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">{ar ? "السِتات" : "Sets"}<input type="number" inputMode="numeric" min={1} max={20} value={sets} onChange={(event) => setSets(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
+            <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">{ar ? "أقل عدات" : "Min reps"}<input type="number" inputMode="numeric" min={1} max={100} value={min} onChange={(event) => setMin(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
+            <label className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">{ar ? "أعلى عدات" : "Max reps"}<input type="number" inputMode="numeric" min={1} max={100} value={max} onChange={(event) => setMax(event.target.valueAsNumber)} className="gc-input mt-1 min-h-11 text-center text-lg font-bold" /></label>
+            <button type="button" disabled={busy} onClick={() => void saveTargets()} className="gc-primary-button min-h-11 min-[360px]:col-span-3"><Save className="h-4 w-4" /> {ar ? "احفظ الأهداف" : "Save targets"}</button>
           </div>
           {alternatives.length ? (
             <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">بديل لنفس العضلة</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">{ar ? "بديل لنفس العضلة" : "Same-muscle alternative"}</p>
               <div className="mt-2 flex gap-2">
                 <select value={replacementId} onChange={(event) => setReplacementId(event.target.value)} className="gc-input min-w-0 flex-1 text-sm">
-                  <option value="">اختار بديل…</option>
-                  {alternatives.map((exercise) => <option key={exercise.id} value={exercise.id}>{translateExerciseName(exercise.name)}</option>)}
+                  <option value="">{ar ? "اختار بديل…" : "Choose alternative…"}</option>
+                  {alternatives.map((exercise) => <option key={exercise.id} value={exercise.id}>{t(translateExerciseName(exercise.name))}</option>)}
                 </select>
-                <button type="button" disabled={!replacementId || busy} onClick={() => void run(async () => { await replaceSplitExercise(item.id, replacementId as UUID); setReplacementId(""); })} className="gc-secondary-button shrink-0 px-3 disabled:opacity-40">بدّل</button>
+                <button type="button" disabled={!replacementId || busy} onClick={() => void run(async () => { await replaceSplitExercise(item.id, replacementId as UUID); setReplacementId(""); })} className="gc-secondary-button shrink-0 px-3 disabled:opacity-40">{ar ? "بدّل" : "Replace"}</button>
               </div>
-              <p className="mt-1.5 text-[10px] leading-4 text-neutral-600">بنحافظ على السِتات والعدات، والبدائل المعروضة لنفس العضلة الأساسية عشان هدف الخطة مايتغيرش.</p>
+              <p className="mt-1.5 text-[10px] leading-4 text-neutral-600">{ar ? "بنحافظ على السِتات والعدات، والبدائل المعروضة لنفس العضلة الأساسية عشان هدف الخطة مايتغيرش." : "Sets and rep targets stay the same, and alternatives match the same primary muscle."}</p>
             </div>
           ) : null}
         </div>
@@ -238,7 +241,7 @@ function ExerciseEditor({ item, index, count, canEdit, alternatives, onReload, o
 
 export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps) {
   const searchParams = useSearchParams();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const ar = language === "ar";
   const requestedWeekday = searchParams.get("day") as Weekday | null;
   const [view, setView] = useState<"week" | "base">(mode === "personal" ? "week" : "base");
@@ -493,13 +496,13 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
     return mode === "personal" ? (
       <div className="space-y-4 pb-20 pt-4">
         <section className="gc-plan-hero p-5">
-          <p className="gc-eyebrow">ابدأ خطتك</p>
-          <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">جدولك هو قلب OVRLD</h2>
-          <p className="mt-2 text-sm leading-6 text-neutral-500">اعمل جدول يدوي، استورده، أو ابدأ بقالب وبعدها عدّل أي يوم براحتك.</p>
+          <p className="gc-eyebrow">{ar ? "ابدأ خطتك" : "Start your plan"}</p>
+          <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">{ar ? "جدولك هو قلب OVRLD" : "Your plan is the core of OVRLD"}</h2>
+          <p className="mt-2 text-sm leading-6 text-neutral-500">{ar ? "اعمل جدول يدوي، استورده، أو ابدأ بقالب وبعدها عدّل أي يوم براحتك." : "Build manually, import a plan, or start from a template and edit any day later."}</p>
         </section>
         <SplitSetupChooser onChanged={loadAll} />
       </div>
-    ) : <p className="gc-card p-5 text-sm text-neutral-400">مفيش أيام في الجدول لسه.</p>;
+    ) : <p className="gc-card p-5 text-sm text-neutral-400">{ar ? "مفيش أيام في الجدول لسه." : "No plan days yet."}</p>;
   }
 
   const selected = view === "base" ? selectedBase : selectedWeek;
@@ -527,21 +530,21 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
       <section className="gc-card p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="gc-eyebrow">{view === "week" ? "الأسبوع ده" : mode === "group" ? "جدول الجروب" : "الجدول الأساسي"}</p>
-            <h2 className="mt-1 text-lg font-black">{view === "week" ? "اختار اليوم وعدّله" : "اختار اليوم وعدّل تمارينه"}</h2>
+            <p className="gc-eyebrow">{view === "week" ? (ar ? "الأسبوع ده" : "This Week") : mode === "group" ? (ar ? "جدول الجروب" : "Group plan") : (ar ? "الجدول الأساسي" : "Repeating Plan")}</p>
+            <h2 className="mt-1 text-lg font-black">{view === "week" ? (ar ? "اختار اليوم وعدّله" : "Choose a day to edit") : (ar ? "اختار اليوم وعدّل تمارينه" : "Choose a day and edit its workout")}</h2>
           </div>
-          {view === "week" ? <button type="button" disabled={busy} onClick={() => void resetCurrentWeek()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08]" aria-label="رجّع الأسبوع ده"><RotateCcw className="h-4 w-4" /></button> : mode === "personal" ? <button type="button" disabled={busy} onClick={() => void resetBase()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08]" aria-label="رجّع لجدول الجروب"><RotateCcw className="h-4 w-4" /></button> : null}
+          {view === "week" ? <button type="button" disabled={busy} onClick={() => void resetCurrentWeek()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08]" aria-label={ar ? "رجّع الأسبوع ده" : "Reset this week"}><RotateCcw className="h-4 w-4" /></button> : mode === "personal" ? <button type="button" disabled={busy} onClick={() => void resetBase()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/[0.08]" aria-label={ar ? "رجّع لجدول الجروب" : "Reset to group plan"}><RotateCcw className="h-4 w-4" /></button> : null}
         </div>
 
         {mode === "personal" ? (
           <div className="gc-plan-inline-stats mt-3">
-            <span><strong>{activeTrainingDays}</strong> تمرين</span>
-            <span><strong>{7 - activeTrainingDays}</strong> راحة</span>
-            <span><strong>{baseExerciseCount}</strong> تمرين محفوظ</span>
+            <span><strong>{activeTrainingDays}</strong> {ar ? "تمرين" : "training days"}</span>
+            <span><strong>{7 - activeTrainingDays}</strong> {ar ? "راحة" : "rest days"}</span>
+            <span><strong>{baseExerciseCount}</strong> {ar ? "تمرين محفوظ" : "saved exercises"}</span>
           </div>
         ) : null}
 
-        <div className="gc-week-strip mt-3" role="tablist" aria-label="اختار يوم من الجدول">
+        <div className="gc-week-strip mt-3" role="tablist" aria-label={ar ? "اختار يوم من الجدول" : "Choose a plan day"}>
           {(view === "week" ? orderedWeek : orderedDays).map((day) => {
             const isWeekDay = "scheduleDate" in day;
             const weekday = isWeekDay ? getWeekdayFromDate(parseISODateOnly(day.scheduleDate)) : day.weekday;
@@ -554,9 +557,9 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                 setEditingExercises(false);
                 setMessage(null);
               }} className={`gc-week-day-card ${active ? "gc-week-day-card-active gc-week-day-card-selected" : ""}`}>
-                <span className={`block text-[10px] font-black uppercase ${active ? "text-emerald-200" : "text-neutral-500"}`}>{SHORT_DAY[weekday]}</span>
+                <span className={`block text-[10px] font-black uppercase ${active ? "text-emerald-200" : "text-neutral-500"}`}>{t(SHORT_DAY[weekday])}</span>
                 <span className={`gc-week-day-icon ${day.workoutType === "rest" ? "gc-week-day-icon-rest" : ""}`}><Icon className="h-4 w-4" /></span>
-                <span className={`mt-1.5 block truncate text-[11px] font-bold ${day.workoutType === "rest" ? "text-neutral-500" : "text-neutral-200"}`}>{translateWorkoutLabel(day.displayName) || "تمرين"}</span>
+                <span className={`mt-1.5 block truncate text-[11px] font-bold ${day.workoutType === "rest" ? "text-neutral-500" : "text-neutral-200"}`}>{t(translateWorkoutLabel(day.displayName) || (ar ? "تمرين" : "Workout"))}</span>
                 {isWeekDay ? <span className="mt-1 block text-[9px] font-semibold text-neutral-600">{dateCaption(day.scheduleDate)}</span> : null}
               </button>
             );
@@ -565,14 +568,15 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
 
         {selected ? (() => {
           const exercises = view === "week" ? (selectedWeek?.exercises ?? []) : selectedBase.exercises;
-          const setCount = exercises.reduce((total, item) => total + item.targetSets, 0);
-          const minutes = Math.max(20, Math.round(setCount * 2.6 / 5) * 5);
+          const metrics = getPlannedWorkoutMetrics(exercises);
+          const setCount = metrics.totalSets;
+          const minutes = metrics.estimatedMinutes;
           return (
             <div className="gc-split-overview-day mt-4">
               <div className="min-w-0 flex-1">
-                <p className="gc-eyebrow">{view === "week" && selectedWeekday ? LONG_DAY[selectedWeekday] : LONG_DAY[selectedBase.weekday]}</p>
+                <p className="gc-eyebrow">{t(view === "week" && selectedWeekday ? LONG_DAY[selectedWeekday] : LONG_DAY[selectedBase.weekday])}</p>
                 <h3 className="mt-1 truncate text-xl font-black">{formType === "rest" ? (ar ? "راحة" : "Rest") : formName}</h3>
-                <p className="mt-1 text-xs font-semibold text-neutral-500">{formType === "rest" ? (ar ? "يوم راحة" : "Rest day") : `${exercises.length} ${ar ? "تمارين" : "exercises"} · ${setCount} ${ar ? "سِتات" : "sets"} · ~${minutes} min`}</p>
+                <p className="mt-1 text-xs font-semibold text-neutral-500">{formType === "rest" ? (ar ? "يوم راحة" : "Rest day") : `${metrics.exerciseCount} ${ar ? "تمارين" : "exercises"} · ${setCount} ${ar ? "سِتات" : "sets"} · ~${minutes} min`}</p>
               </div>
               {canEdit ? <button type="button" onClick={() => { setEditingDay(true); setEditingExercises(false); }} className="gc-secondary-button shrink-0">{ar ? "عدّل اليوم" : "Edit day"}</button> : null}
             </div>
@@ -593,7 +597,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
           <div className="space-y-3 border-t border-[var(--border)] p-3">
             <SplitSetupChooser onChanged={loadAll} />
             <details className="rounded-xl border border-[var(--border)]">
-              <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><Target className="h-4 w-4 text-emerald-400" /><span className="min-w-0 flex-1 font-bold">تحليل الخطة</span><ChevronDown className="h-4 w-4 text-neutral-500" /></summary>
+              <summary className="gc-list-row list-none [&::-webkit-details-marker]:hidden"><Target className="h-4 w-4 text-emerald-400" /><span className="min-w-0 flex-1 font-bold">{ar ? "تحليل الخطة" : "Plan analysis"}</span><ChevronDown className="h-4 w-4 text-neutral-500" /></summary>
               <div className="border-t border-[var(--border)] p-2"><PlanAuditPanel userId={userId} revision={planRevision} /></div>
             </details>
           </div>
@@ -607,14 +611,14 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
         <section className="gc-card overflow-visible">
           <div className="flex items-center gap-3 border-b border-[var(--border)] p-3 sm:px-5">
             <button type="button" onClick={() => { setEditingDay(false); setEditingExercises(false); }} className="gc-icon-button" aria-label={ar ? "ارجع" : "Back"}><ChevronLeft className="h-4 w-4 rtl:rotate-180" /></button>
-            <div><p className="gc-eyebrow">{ar ? "تعديل اليوم" : "Edit Day"}</p><strong className="text-sm">{view === "week" && selectedWeekday ? LONG_DAY[selectedWeekday] : LONG_DAY[selectedBase.weekday]}</strong></div>
+            <div><p className="gc-eyebrow">{ar ? "تعديل اليوم" : "Edit Day"}</p><strong className="text-sm">{t(view === "week" && selectedWeekday ? LONG_DAY[selectedWeekday] : LONG_DAY[selectedBase.weekday])}</strong></div>
           </div>
           <div className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="gc-eyebrow">{view === "week" && selectedWeekday ? `${LONG_DAY[selectedWeekday]} · ${dateCaption(selectedWeek!.scheduleDate)}` : LONG_DAY[selectedBase.weekday]}</p>
-                <h2 className="mt-1 text-xl font-black">{formName || "يوم تمرين"}</h2>
-                <p className="mt-1 text-xs font-semibold text-neutral-500">{formType === "rest" ? "راحة" : `${view === "week" ? selectedWeek?.exercises.length ?? 0 : selectedBase.exercises.length} تمارين`}</p>
+                <p className="gc-eyebrow">{view === "week" && selectedWeekday ? `${t(LONG_DAY[selectedWeekday])} · ${t(dateCaption(selectedWeek!.scheduleDate))}` : t(LONG_DAY[selectedBase.weekday])}</p>
+                <h2 className="mt-1 text-xl font-black">{t(formName || (ar ? "يوم تمرين" : "Training day"))}</h2>
+                <p className="mt-1 text-xs font-semibold text-neutral-500">{formType === "rest" ? (ar ? "راحة" : "Rest") : `${view === "week" ? selectedWeek?.exercises.length ?? 0 : selectedBase.exercises.length} ${ar ? "تمارين" : "exercises"}`}</p>
               </div>
               <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${COLOR_TONES[formColor]}`}><SelectedIcon className="h-4 w-4" /></span>
             </div>
@@ -623,15 +627,15 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
               <div className="mt-5 space-y-4">
                 {view === "week" ? (
                   <details className="rounded-xl border border-[var(--border)] bg-[var(--surface-overlay)] group">
-                    <summary className="flex min-h-11 list-none items-center gap-2 px-3 text-xs font-black [&::-webkit-details-marker]:hidden"><ArrowLeftRight className="h-4 w-4 text-neutral-500" /><span className="min-w-0 flex-1">بدّل اليوم مع يوم تاني</span><ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" /></summary>
+                    <summary className="flex min-h-11 list-none items-center gap-2 px-3 text-xs font-black [&::-webkit-details-marker]:hidden"><ArrowLeftRight className="h-4 w-4 text-neutral-500" /><span className="min-w-0 flex-1">{ar ? "بدّل اليوم مع يوم تاني" : "Swap with another day"}</span><ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" /></summary>
                     <div className="flex gap-2 border-t border-[var(--border)] p-3">
                       <select value={swapTargetDate} onChange={(event) => setSwapTargetDate(event.target.value as ISODateOnlyString | "")} className="gc-input min-w-0 flex-1 text-sm">
-                        <option value="">اختار يوم…</option>
+                        <option value="">{ar ? "اختار يوم…" : "Choose a day…"}</option>
                         {orderedWeek.filter((day) => day.scheduleDate !== selectedWeek?.scheduleDate).map((day) => (
                           <option key={day.scheduleDate} value={day.scheduleDate}>{LONG_DAY[getWeekdayFromDate(parseISODateOnly(day.scheduleDate))]} · {translateWorkoutLabel(day.displayName)}</option>
                         ))}
                       </select>
-                      <button type="button" disabled={!swapTargetDate || busy} onClick={() => void swapSelectedWeekDay()} className="gc-secondary-button shrink-0 px-3 disabled:opacity-40" aria-label="بدّل اليومين"><ArrowLeftRight className="h-4 w-4" /></button>
+                      <button type="button" disabled={!swapTargetDate || busy} onClick={() => void swapSelectedWeekDay()} className="gc-secondary-button shrink-0 px-3 disabled:opacity-40" aria-label={ar ? "بدّل اليومين" : "Swap days"}><ArrowLeftRight className="h-4 w-4" /></button>
                     </div>
                   </details>
                 ) : null}
@@ -655,13 +659,13 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                 ) : null}
 
                 <fieldset>
-                  <legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">خطة اليوم ده</legend>
+                  <legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">{ar ? "خطة اليوم ده" : "Day type"}</legend>
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <button type="button" onClick={setAsTrainingDay} className={`min-h-11 rounded-xl border text-sm font-bold ${formType !== "rest" ? "border-emerald-300/50 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>تمرين</button>
-                    <button type="button" onClick={() => { setFormType("rest"); setFormName("راحة"); setFormFocus("راحة"); setFormIcon("moon"); setFormColor("blue"); }} className={`min-h-11 rounded-xl border text-sm font-bold ${formType === "rest" ? "border-emerald-300/50 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>{view === "week" ? "راحة / إجازة" : "راحة"}</button>
+                    <button type="button" onClick={setAsTrainingDay} className={`min-h-11 rounded-xl border text-sm font-bold ${formType !== "rest" ? "border-emerald-300/50 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>{ar ? "تمرين" : "Training day"}</button>
+                    <button type="button" onClick={() => { setFormType("rest"); setFormName("راحة"); setFormFocus("راحة"); setFormIcon("moon"); setFormColor("blue"); }} className={`min-h-11 rounded-xl border text-sm font-bold ${formType === "rest" ? "border-emerald-300/50 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] text-neutral-400"}`}>{view === "week" ? (ar ? "راحة / إجازة" : "Rest / off") : (ar ? "راحة" : "Rest")}</button>
                   </div>
                 </fieldset>
-                {view === "week" ? <p className="text-[10px] leading-4 text-neutral-600">تغيير اليوم هنا للأسبوع ده بس. لو عندك مشوار أو محتاجة راحة، سجّليها عادي وGain Mode هيحسب الالتزام على الواقع بدل ما يمنعك.</p> : null}
+                {view === "week" ? <p className="text-[10px] leading-4 text-neutral-600">{ar ? "تغيير اليوم هنا للأسبوع ده بس. لو عندك مشوار أو محتاجة راحة، سجّليها عادي وGain Mode هيحسب الالتزام على الواقع بدل ما يمنعك." : "This change applies only to this week. Mark rest or schedule changes as they actually happen; Gain Mode will use the real adherence."}</p> : null}
 
                 <details className="rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)]">
                   <summary className="gc-list-row min-h-11 list-none text-sm font-bold [&::-webkit-details-marker]:hidden">{ar ? "اسم يوم مخصص" : "Custom day name"}<ChevronDown className="ms-auto h-4 w-4 text-neutral-500" /></summary>
@@ -672,17 +676,17 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                   <summary className="flex min-h-12 list-none items-center gap-3 px-3.5 text-sm font-bold [&::-webkit-details-marker]:hidden">
                     <MoreVertical className="h-4 w-4 text-neutral-500" />
                     <span className="min-w-0 flex-1">{ar ? "خيارات إضافية" : "More options"}</span>
-                    <span className="text-xs font-semibold text-neutral-600">تركيز · شكل · ملاحظات</span>
+                    <span className="text-xs font-semibold text-neutral-600">{ar ? "تركيز · شكل · ملاحظات" : "Focus · appearance · notes"}</span>
                     <ChevronDown className="h-4 w-4 text-neutral-600 transition-transform group-open:rotate-180" />
                   </summary>
                   <div className="space-y-4 border-t border-white/[0.06] p-3.5">
-                    <label className="text-xs font-bold uppercase tracking-wide text-neutral-500">تركيز اليوم<input value={formFocus} onChange={(event) => setFormFocus(event.target.value)} maxLength={32} placeholder="مثال: صدر وضهر" className="gc-input mt-1 normal-case" /></label>
+                    <label className="text-xs font-bold uppercase tracking-wide text-neutral-500">{ar ? "تركيز اليوم" : "Day focus"}<input value={formFocus} onChange={(event) => setFormFocus(event.target.value)} maxLength={32} placeholder={ar ? "مثال: صدر وضهر" : "e.g. Chest & back"} className="gc-input mt-1 normal-case" /></label>
                     {view === "base" && formType !== "rest" ? (
-                      <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">فلتر مكتبة التمارين</legend><div className="mt-2 flex flex-wrap gap-2">{WORKOUT_FILTERS.map((filter) => <button key={filter.value} type="button" onClick={() => setFormType(filter.value)} className={`rounded-full border px-3 py-2 text-xs font-bold ${formType === filter.value ? "border-emerald-300/45 bg-emerald-300/[0.12] text-emerald-100" : "border-white/[0.08] text-neutral-500"}`}>{filter.label}</button>)}</div></fieldset>
+                      <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">{ar ? "فلتر مكتبة التمارين" : "Exercise library filter"}</legend><div className="mt-2 flex flex-wrap gap-2">{WORKOUT_FILTERS.map((filter) => <button key={filter.value} type="button" onClick={() => setFormType(filter.value)} className={`rounded-full border px-3 py-2 text-xs font-bold ${formType === filter.value ? "border-emerald-300/45 bg-emerald-300/[0.12] text-emerald-100" : "border-white/[0.08] text-neutral-500"}`}>{t(filter.label)}</button>)}</div></fieldset>
                     ) : null}
-                    <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">الأيقونة</legend><div className="mt-2 flex flex-wrap gap-2">{ICON_OPTIONS.map(({ key, label }) => { const Icon = ICONS[key]; return <button key={key} type="button" title={label} aria-label={label} onClick={() => setFormIcon(key)} className={`grid h-11 w-11 place-items-center rounded-xl border ${formIcon === key ? "border-emerald-300/50 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] bg-white/[0.025] text-neutral-400"}`}><Icon className="h-4 w-4" /></button>; })}</div></fieldset>
-                    <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">اللون</legend><div className="mt-2 flex gap-2">{COLOR_OPTIONS.map(({ key, className }) => <button key={key} type="button" aria-label={`لون ${COLOR_LABELS[key]}`} onClick={() => setFormColor(key)} className={`relative grid h-10 w-10 place-items-center rounded-full border ${formColor === key ? "border-white/70" : "border-white/[0.08]"}`}><span className={`h-5 w-5 rounded-full ${className}`} />{formColor === key ? <Check className="absolute h-3 w-3 text-[#11131a]" /> : null}</button>)}</div></fieldset>
-                    <label className="block text-xs font-bold uppercase tracking-wide text-neutral-500">ملاحظات اليوم<textarea value={formNotes} onChange={(event) => setFormNotes(event.target.value)} maxLength={240} rows={3} placeholder="المسكة، سرعة الحركة، شدة التمرين…" className="gc-input mt-1 resize-none text-sm normal-case" /></label>
+                    <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">{ar ? "الأيقونة" : "Icon"}</legend><div className="mt-2 flex flex-wrap gap-2">{ICON_OPTIONS.map(({ key, label }) => { const Icon = ICONS[key]; return <button key={key} type="button" title={t(label)} aria-label={t(label)} onClick={() => setFormIcon(key)} className={`grid h-11 w-11 place-items-center rounded-xl border ${formIcon === key ? "border-emerald-300/50 bg-emerald-300 text-[#11131a]" : "border-white/[0.08] bg-white/[0.025] text-neutral-400"}`}><Icon className="h-4 w-4" /></button>; })}</div></fieldset>
+                    <fieldset><legend className="text-[10px] font-bold uppercase tracking-[0.09em] text-neutral-500">{ar ? "اللون" : "Color"}</legend><div className="mt-2 flex gap-2">{COLOR_OPTIONS.map(({ key, className }) => <button key={key} type="button" aria-label={ar ? `لون ${COLOR_LABELS[key]}` : `${t(COLOR_LABELS[key])} color`} onClick={() => setFormColor(key)} className={`relative grid h-10 w-10 place-items-center rounded-full border ${formColor === key ? "border-white/70" : "border-white/[0.08]"}`}><span className={`h-5 w-5 rounded-full ${className}`} />{formColor === key ? <Check className="absolute h-3 w-3 text-[#11131a]" /> : null}</button>)}</div></fieldset>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-neutral-500">{ar ? "ملاحظات اليوم" : "Day notes"}<textarea value={formNotes} onChange={(event) => setFormNotes(event.target.value)} maxLength={240} rows={3} placeholder={ar ? "المسكة، سرعة الحركة، شدة التمرين…" : "Grip, tempo, training intensity…"} className="gc-input mt-1 resize-none text-sm normal-case" /></label>
                   </div>
                 </details>
                 <button type="button" disabled={busy || formName.trim().length < 2 || formFocus.trim().length < 2 || (view === "week" && (!weekSourceId || !hasValidWeekSource))} onClick={() => void saveIdentity()} className="gc-primary-button w-full min-h-12 disabled:opacity-40"><Save className="h-4 w-4" /> {ar ? "احفظ" : "Save"}</button>
@@ -692,11 +696,11 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
 
           {view === "week" ? (
             <div className="border-t border-white/[0.06] p-4 sm:p-5">
-              <p className="text-sm leading-6 text-neutral-500">التمارين جاية من <strong className="text-neutral-300">{selectedWeek?.sourceDay ? titleFor(selectedWeek.sourceDay) : "جدولك الأساسي"}</strong>. عشان تغيّر قائمة التمارين، افتح تبويب الجدول الأساسي.</p>
-              <button type="button" onClick={() => { setView("base"); if (selectedWeek?.sourceSplitDayId) setSelectedBaseId(selectedWeek.sourceSplitDayId); setEditingDay(true); }} className="gc-secondary-button mt-3">عدّل تمارينه</button>
+              <p className="text-sm leading-6 text-neutral-500">{ar ? "التمارين جاية من" : "Exercises come from"} <strong className="text-neutral-300">{selectedWeek?.sourceDay ? t(titleFor(selectedWeek.sourceDay)) : (ar ? "جدولك الأساسي" : "your repeating plan")}</strong>. {ar ? "عشان تغيّر قائمة التمارين، افتح تبويب الجدول الأساسي." : "To change the exercise list, edit the repeating workout."}</p>
+              <button type="button" onClick={() => { setView("base"); if (selectedWeek?.sourceSplitDayId) setSelectedBaseId(selectedWeek.sourceSplitDayId); setEditingDay(true); }} className="gc-secondary-button mt-3">{ar ? "عدّل تمارينه" : "Edit workout exercises"}</button>
             </div>
           ) : selectedBase.workoutType === "rest" ? (
-            <div className="border-t border-white/[0.06] p-4 sm:p-5"><div className="rounded-2xl border border-dashed border-white/[0.1] p-5 text-center"><Moon className="mx-auto h-5 w-5 text-sky-200" /><p className="mt-2 font-bold">يوم راحة</p><p className="mt-1 text-sm text-neutral-500">التمارين المحفوظة هتفضل موجودة وترجع لو اليوم بقى تمرين تاني.</p></div></div>
+            <div className="border-t border-white/[0.06] p-4 sm:p-5"><div className="rounded-2xl border border-dashed border-white/[0.1] p-5 text-center"><Moon className="mx-auto h-5 w-5 text-sky-200" /><p className="mt-2 font-bold">{ar ? "يوم راحة" : "Rest day"}</p><p className="mt-1 text-sm text-neutral-500">{ar ? "التمارين المحفوظة هتفضل موجودة وترجع لو اليوم بقى تمرين تاني." : "Saved exercises stay attached and return if this becomes a training day again."}</p></div></div>
           ) : editingExercises ? (
             <div className="border-t border-white/[0.06] p-4 sm:p-5">
               <div className="mb-3 flex items-center gap-3">
@@ -708,7 +712,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
               {selectedBase.exercises.length === 0 ? <p className="rounded-2xl border border-dashed border-white/[0.1] p-5 text-center text-sm text-neutral-500">{ar ? "اليوم ده فاضي. ضيف التمارين اللي بتلعبها فعلًا في الجيم." : "This day is empty. Add the exercises you actually train."}</p> : null}
               {canEdit ? (
                 <div className="mt-4 space-y-3">
-                  <div className="flex gap-2"><select value={selectedExercise} onChange={(event) => setSelectedExercise(event.target.value)} className="gc-input min-w-0 flex-1 text-sm"><option value="">{ar ? "اختار تمرين…" : "Choose an exercise…"}</option>{availableExercises.map((exercise) => <option key={exercise.id} value={exercise.id}>{translateExerciseName(exercise.name)}</option>)}</select><button type="button" disabled={!selectedExercise || busy} onClick={() => void addExercise()} className="gc-primary-button min-h-12 px-4 disabled:opacity-40"><Plus className="h-4 w-4" /> {ar ? "ضيف" : "Add"}</button></div>
+                  <div className="flex gap-2"><select value={selectedExercise} onChange={(event) => setSelectedExercise(event.target.value)} className="gc-input min-w-0 flex-1 text-sm"><option value="">{ar ? "اختار تمرين…" : "Choose an exercise…"}</option>{availableExercises.map((exercise) => <option key={exercise.id} value={exercise.id}>{t(translateExerciseName(exercise.name))}</option>)}</select><button type="button" disabled={!selectedExercise || busy} onClick={() => void addExercise()} className="gc-primary-button min-h-12 px-4 disabled:opacity-40"><Plus className="h-4 w-4" /> {ar ? "ضيف" : "Add"}</button></div>
                   <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setShowCustomExercise((value) => !value)} className="gc-secondary-button"><Plus className="h-4 w-4" /> {ar ? "تمرين مخصص" : "Custom exercise"}</button><button type="button" disabled={selectedBase.exercises.length === 0 || busy} onClick={() => void clearDay()} className="gc-secondary-button text-red-300 disabled:opacity-40"><Trash2 className="h-4 w-4" /> {ar ? "فضّي اليوم" : "Clear day"}</button></div>
                   {showCustomExercise ? <CustomExerciseForm defaultWorkoutType={selectedBase.workoutType} onCreated={addExercise} onCancel={() => setShowCustomExercise(false)} /> : null}
                 </div>
@@ -717,7 +721,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
           ) : (
             <div className="border-t border-white/[0.06] p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3">
-                <div><p className="gc-eyebrow">{ar ? "التمرين" : "Workout"}</p><h3 className="mt-1 text-lg font-black">{formName}</h3><p className="mt-1 text-xs font-semibold text-neutral-500">{selectedBase.exercises.length} {ar ? "تمارين" : "exercises"} · {selectedBase.exercises.reduce((total, item) => total + item.targetSets, 0)} {ar ? "سِتات" : "sets"}</p></div>
+                <div><p className="gc-eyebrow">{ar ? "التمرين" : "Workout"}</p><h3 className="mt-1 text-lg font-black">{t(formName)}</h3><p className="mt-1 text-xs font-semibold text-neutral-500">{getPlannedWorkoutMetrics(selectedBase.exercises).exerciseCount} {ar ? "تمارين" : "exercises"} · {getPlannedWorkoutMetrics(selectedBase.exercises).totalSets} {ar ? "سِتات" : "sets"}</p></div>
                 <button type="button" onClick={() => setEditingExercises(true)} className="gc-secondary-button">{ar ? "عدّل التمارين" : "Edit exercises"}</button>
               </div>
             </div>

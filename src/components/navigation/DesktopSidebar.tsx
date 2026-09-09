@@ -4,9 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MAIN_NAVIGATION_ITEMS } from "@/constants/navigation";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { useLanguage } from "@/contexts/language-context";
 
 export function DesktopSidebar() {
   const pathname = usePathname();
+  const { language } = useLanguage();
+  const ar = language === "ar";
 
   if (pathname.startsWith("/workout/active")) return null;
 
@@ -17,22 +20,22 @@ export function DesktopSidebar() {
         <span className="gc-muted min-w-0 truncate text-[11px] font-black tracking-[0.14em]">TRAIN · LOG · PROGRESS</span>
       </Link>
 
-      <nav className="mt-7 flex flex-col gap-1.5" aria-label="التنقل الرئيسي">
+      <nav className="mt-7 flex flex-col gap-1.5" aria-label={ar ? "التنقل الرئيسي" : "Main navigation"}>
         {MAIN_NAVIGATION_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = item.activePrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
             && !(item.id === "workout" && pathname.startsWith("/workout/history"));
           return (
             <Link key={item.id} href={item.href} aria-current={active ? "page" : undefined} className={`gc-side-nav-item ${active ? "gc-side-nav-item-active" : ""}`}>
-              <Icon className="h-5 w-5" aria-hidden /> <span className="truncate">{item.label}</span>
+              <Icon className="h-5 w-5" aria-hidden /> <span className="truncate">{ar ? item.labelAr : item.labelEn}</span>
             </Link>
           );
         })}
       </nav>
 
       <div className="gc-sidebar-tip mt-auto p-4">
-        <p className="text-sm font-semibold">النهارده أولاً</p>
-        <p className="gc-muted mt-1 text-xs leading-5">تمرّن، سجّل، وسيب الأرقام تقولك إنت ماشي إزاي.</p>
+        <p className="text-sm font-semibold">{ar ? "النهارده أولاً" : "Today first"}</p>
+        <p className="gc-muted mt-1 text-xs leading-5">{ar ? "تمرّن، سجّل، وسيب الأرقام تقولك إنت ماشي إزاي." : "Train, log, and let the numbers show where you are headed."}</p>
       </div>
     </aside>
   );

@@ -11,6 +11,7 @@ import { WEEKDAY_LABELS_AR, translateExerciseName, translateWorkoutLabel } from 
 import type { SplitDayWithDetails, WeeklyScheduleDayWithDetails } from "@/features/splits/types";
 import { fetchEffectiveWeekSchedule, fetchPersonalSplit } from "@/features/splits/services/split.service";
 import type { WorkoutSessionWithDetails } from "../types";
+import { getPlannedWorkoutMetrics, getSessionWorkoutMetrics } from "../utils/workout-metrics";
 import { fetchActiveWorkoutSession, startWorkoutSession } from "../services/workout-session.service";
 
 const DAY_BY_JS_INDEX: Record<number, Weekday> = {
@@ -107,8 +108,8 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   if (isLoading || !currentDate || !weekday) return <div className="h-48 animate-pulse rounded-[20px] border border-white/[0.06] bg-white/[0.035]" />;
 
   if (activeSession) {
-    const totalSets = activeSession.exercises.reduce((total, exercise) => total + exercise.sets.length, 0);
-    const completedSets = activeSession.exercises.reduce((total, exercise) => total + exercise.sets.filter((set) => set.isCompleted).length, 0);
+    const activeMetrics = getSessionWorkoutMetrics(activeSession.exercises);
+    const { totalSets, completedSets } = activeMetrics;
     if (compact) {
       return (
         <section className="gc-home-train-card gc-home-train-card-active">
@@ -127,11 +128,11 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
     }
     return (
       <section className="gc-card border-emerald-300/20 p-5 sm:p-6">
-        <p className="gc-eyebrow">فيه تمرينة شغالة</p>
-        <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">كمّل تمرينتك</h2>
-        <p className="mt-2 text-sm text-neutral-500">خلصت {completedSets} من {totalSets} سِتات.</p>
+        <p className="gc-eyebrow">{ar ? "فيه تمرينة شغالة" : "Workout in progress"}</p>
+        <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">{ar ? "كمّل تمرينتك" : "Resume workout"}</h2>
+        <p className="mt-2 text-sm text-neutral-500">{ar ? `خلصت ${completedSets} من ${totalSets} سِتات.` : `${completedSets} of ${totalSets} sets completed.`}</p>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-emerald-300" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
-        <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-5 w-full sm:w-auto"><Play className="h-4 w-4" /> كمّل التمرينة</Link>
+        <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-5 w-full sm:w-auto"><Play className="h-4 w-4" /> {ar ? "كمّل التمرينة" : "Resume workout"}</Link>
       </section>
     );
   }
@@ -170,7 +171,7 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
         <section className="gc-card p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-300/10 text-sky-200"><RotateCcw className="h-5 w-5" /></span>
-            <div className="min-w-0 flex-1"><p className="gc-eyebrow">{translateWorkoutLabel(today.displayName)}</p><h2 className="mt-1 text-xl font-bold">راحة</h2></div>
+            <div className="min-w-0 flex-1"><p className="gc-eyebrow">{t(translateWorkoutLabel(today.displayName))}</p><h2 className="mt-1 text-xl font-bold">{ar ? "راحة" : "Rest"}</h2></div>
           </div>
           <a href="#alternate-workout" className="gc-secondary-button mt-4 w-full">{ar ? "تمرّن حاجة تانية" : "Train another workout"} <ArrowLeft className="h-4 w-4" /></a>
         </section>
@@ -179,9 +180,10 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
     );
   }
 
-  const title = translateWorkoutLabel(today.displayName) || "تمرين النهارده";
+  const title = translateWorkoutLabel(today.displayName) || (ar ? "تمرين النهارده" : "Today’s Workout");
   const displayedExercises = compact ? today.exercises.slice(0, 3) : today.exercises;
-  const totalTargetSets = today.exercises.reduce((total, exercise) => total + exercise.targetSets, 0);
+  const plannedMetrics = getPlannedWorkoutMetrics(today.exercises);
+  const totalTargetSets = plannedMetrics.totalSets;
 
   return (
     <div className="space-y-4">
@@ -190,7 +192,7 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <span className={`grid shrink-0 place-items-center rounded-xl bg-emerald-300 text-[#11131a] ${compact ? "h-10 w-10" : "h-12 w-12"}`}><Dumbbell className={compact ? "h-5 w-5" : "h-6 w-6"} /></span>
-            <div className="min-w-0 flex-1"><p className="gc-eyebrow">{compact ? (ar ? "تدرّب" : "Train") : `${t(WEEKDAY_LABELS_AR[weekday])} · ${ar ? "النهارده" : "Today"}`}</p><h2 className={`mt-1 truncate font-black tracking-[-0.03em] ${compact ? "text-2xl" : "text-2xl"}`}>{t(title)}</h2><p className="mt-1 text-xs font-semibold text-neutral-500">{today.exercises.length} {ar ? "تمارين" : "exercises"} · {totalTargetSets} {ar ? "سِتات" : "sets"}</p></div>
+            <div className="min-w-0 flex-1"><p className="gc-eyebrow">{compact ? (ar ? "تدرّب" : "Train") : `${t(WEEKDAY_LABELS_AR[weekday])} · ${ar ? "النهارده" : "Today"}`}</p><h2 className={`mt-1 truncate font-black tracking-[-0.03em] ${compact ? "text-2xl" : "text-2xl"}`}>{t(title)}</h2><p className="mt-1 text-xs font-semibold text-neutral-500">{plannedMetrics.exerciseCount} {ar ? "تمارين" : "exercises"} · {totalTargetSets} {ar ? "سِتات" : "sets"}</p></div>
           </div>
           {!compact && today.dayNotes ? <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3 text-sm leading-6 text-neutral-400">{today.dayNotes}</p> : null}
           <button type="button" disabled={isStarting || today.exercises.length === 0 || !today.sourceDay} onClick={() => void startScheduled()} className="gc-primary-button mt-5 w-full disabled:opacity-50"><Play className="h-5 w-5" /> {isStarting ? (ar ? "بنبدأ…" : "Starting…") : compact ? (ar ? "ابدأ التمرينة" : "Start workout") : (ar ? "ابدأ التمرينة" : "Start workout")}</button>
@@ -210,8 +212,8 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
           </div>
         ) : (
           <div className="border-t border-white/[0.06] p-4 sm:p-5">
-            <div className="mb-3 flex items-center justify-between gap-3"><h3 className="font-semibold">{ar ? "أهم التمارين" : "Key exercises"}</h3><span className="text-xs font-semibold text-neutral-500">{today.exercises.length} {ar ? "تمارين" : "exercises"}</span></div>
-            <ol className="space-y-2">{displayedExercises.map((item, index) => <li key={item.id} className="flex items-center gap-3 rounded-xl border border-white/[0.055] bg-white/[0.02] p-3"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.055] text-xs font-bold">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{t(translateExerciseName(item.exercise.name))}</p><p className="mt-0.5 text-xs text-neutral-500">{item.targetSets} سِتات · {item.targetRepsMin}–{item.targetRepsMax} عدات</p></div></li>)}</ol>
+            <div className="mb-3 flex items-center justify-between gap-3"><h3 className="font-semibold">{ar ? "أهم التمارين" : "Key exercises"}</h3><span className="text-xs font-semibold text-neutral-500">{plannedMetrics.exerciseCount} {ar ? "تمارين" : "exercises"}</span></div>
+            <ol className="space-y-2">{displayedExercises.map((item, index) => <li key={item.id} className="flex items-center gap-3 rounded-xl border border-white/[0.055] bg-white/[0.02] p-3"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.055] text-xs font-bold">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{t(translateExerciseName(item.exercise.name))}</p><p className="mt-0.5 text-xs text-neutral-500">{item.targetSets} {ar ? "سِتات" : "sets"} · {item.targetRepsMin}–{item.targetRepsMax} {ar ? "عدات" : "reps"}</p></div></li>)}</ol>
           </div>
         )}
       </section>
