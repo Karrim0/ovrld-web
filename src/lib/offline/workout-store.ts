@@ -272,6 +272,48 @@ export async function getCachedProfile(userId: UUID): Promise<UserProfile | null
   return row ? stripCachedAt(row) : null;
 }
 
+/**
+ * Clears product data for one user without touching device preferences such as
+ * language/theme. This is safe to run when that user is back in onboarding
+ * after an intentional server-side reset.
+ */
+export async function clearLocalUserProductData(userId: UUID): Promise<void> {
+  const db = getOfflineDatabase();
+  const sessions = await db.workoutSessions.where("userId").equals(userId).toArray();
+  const sessionIds = new Set(sessions.map((session) => session.id));
+  const exercises = sessionIds.size > 0
+    ? (await Promise.all([...sessionIds].map((sessionId) => db.workoutExercises.where("workoutSessionId").equals(sessionId).toArray()))).flat()
+    : [];
+  const exerciseIds = new Set(exercises.map((exercise) => exercise.id));
+
+  await db.transaction(
+    "rw",
+    [db.workoutSessions, db.workoutExercises, db.workoutSets, db.syncQueue, db.cachedSplits, db.cachedProfiles],
+    async () => {
+      const queued = await db.syncQueue.toArray();
+      const queueIds = queued
+        .filter((row) => {
+          const mutation = row.mutation;
+          if (mutation.entity === "workoutSession") return mutation.payload.userId === userId;
+          if (mutation.entity === "workoutExercise") return sessionIds.has(mutation.payload.workoutSessionId);
+          return exerciseIds.has(mutation.payload.workoutExerciseId);
+        })
+        .map((row) => row.id);
+      if (queueIds.length > 0) await db.syncQueue.bulkDelete(queueIds);
+
+      for (const exercise of exercises) {
+        await db.workoutSets.where("workoutExerciseId").equals(exercise.id).delete();
+      }
+      for (const sessionId of sessionIds) {
+        await db.workoutExercises.where("workoutSessionId").equals(sessionId).delete();
+      }
+      if (sessionIds.size > 0) await db.workoutSessions.bulkDelete([...sessionIds]);
+      await db.cachedSplits.where("ownerUserId").equals(userId).delete();
+      await db.cachedProfiles.delete(userId);
+    },
+  );
+}
+
 /** Clears all user-scoped offline data on this device. Call after sign-out. */
 export async function clearAllLocalPrivateData(): Promise<void> {
   const db = getOfflineDatabase();

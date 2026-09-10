@@ -203,16 +203,36 @@ export async function fetchWorkoutHistory(userId: UUID): Promise<WorkoutSessionW
       .limit(100);
 
     if (error) throw new Error(error.message);
-    for (const row of data as unknown as WorkoutSessionQueryRow[]) {
-      const session = mapSession(row);
+    const remoteRows = data as unknown as WorkoutSessionQueryRow[];
+    const remoteSessions = remoteRows.map((row) => mapSession(row));
+    const remoteIds = new Set(remoteSessions.map((session) => session.id));
+
+    for (const session of remoteSessions) {
       const local = merged.get(session.id);
       if (!local || session.updatedAt > local.updatedAt) {
         merged.set(session.id, session);
         await saveWorkoutLocally(session);
       }
     }
+
+    // While online, Supabase is authoritative for the fetched history window.
+    // Keep genuinely offline/pending sessions, but evict stale completed rows
+    // left behind by a server-side reset or a deletion from another client.
+    const remoteWindowIsComplete = remoteSessions.length < 100;
+    const oldestRemoteTimestamp = remoteSessions.length > 0
+      ? Math.min(...remoteSessions.map((session) => new Date(session.completedAt ?? session.updatedAt).getTime()))
+      : Number.POSITIVE_INFINITY;
+
+    for (const local of localHistory) {
+      if (remoteIds.has(local.id)) continue;
+      const localTimestamp = new Date(local.completedAt ?? local.updatedAt).getTime();
+      const withinFetchedWindow = remoteWindowIsComplete || localTimestamp >= oldestRemoteTimestamp;
+      if (!withinFetchedWindow || await hasPendingMutationsForWorkoutSession(local.id)) continue;
+      merged.delete(local.id);
+      await removeLocalWorkoutSession(local.id);
+    }
   } catch {
-    // Local history is the source of truth while offline.
+    // Local history remains the source of truth while offline or when refresh fails.
   }
 
   return [...merged.values()].sort((a, b) =>

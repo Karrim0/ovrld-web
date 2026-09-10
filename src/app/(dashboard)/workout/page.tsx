@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpLeft, CalendarDays, Clock3, Dumbbell, History, ListChecks } from "lucide-react";
+import { ArrowUpLeft, CalendarDays, Dumbbell, History, ListChecks } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 
@@ -27,9 +27,9 @@ export default function WorkoutPage() {
         </Link>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Link href="/workout/active" className="gc-card-interactive flex items-center gap-3 p-4">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-300/10 text-emerald-300"><Clock3 className="h-5 w-5" /></span>
-            <span className="min-w-0 flex-1"><span className="block font-bold">تمرينة شغالة</span><span className="block text-sm text-neutral-500">كمّل من مكان ما وقفت</span></span>
+          <Link href="/workout/today" className="gc-card-interactive flex items-center gap-3 p-4">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-300/10 text-emerald-300"><Dumbbell className="h-5 w-5" /></span>
+            <span className="min-w-0 flex-1"><span className="block font-bold">Gym Mode</span><span className="block text-sm text-neutral-500">ابدأ أو كمّل تمرينة النهارده</span></span>
             <ArrowUpLeft className="h-4 w-4 text-neutral-600" />
           </Link>
           <Link href="/workout/history" className="gc-card-interactive flex items-center gap-3 p-4">

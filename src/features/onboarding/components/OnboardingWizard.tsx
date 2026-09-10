@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -20,6 +20,7 @@ import { STARTER_PLANS, isGainPlanCompatibleGoal } from "@/features/splits/const
 import type { StarterPlanKey } from "@/features/splits/types";
 import type { ProfileSex, TrainingLevel, UUID } from "@/types";
 import { getArabicErrorMessage } from "@/lib/localization";
+import { clearLocalUserProductData } from "@/lib/offline";
 import { completeOnboarding, saveOnboardingSetup } from "../services/onboarding.service";
 import type { OnboardingGoal, TrainingSetupPath } from "../types";
 
@@ -27,10 +28,10 @@ type Step = "welcome" | "basic" | "goal" | "training" | "ready";
 
 const GOALS: Array<{ value: OnboardingGoal; ar: string; en: string; detailAr: string; detailEn: string }> = [
   { value: "muscle_gain", ar: "زيادة عضل", en: "Gain muscle", detailAr: "بناء عضل وتطور في الأداء.", detailEn: "Build muscle and progress your performance." },
-  { value: "lose_weight", ar: "خسارة وزن", en: "Lose weight", detailAr: "تابع التمرين والوزن بدون فرض نظام غذائي.", detailEn: "Track training and weight without forcing a diet mode." },
+  { value: "lose_weight", ar: "خسارة وزن", en: "Lose weight", detailAr: "تابع التمرين والوزن أثناء النزول.", detailEn: "Track training and body weight as you cut." },
   { value: "recomposition", ar: "إعادة تشكيل الجسم", en: "Body recomposition", detailAr: "تطور في القوة وشكل الجسم مع متابعة هادئة.", detailEn: "Improve strength and body composition with steady tracking." },
   { value: "maintain_weight", ar: "الحفاظ على الوزن", en: "Maintain weight", detailAr: "ثبت روتينك وحافظ على الأداء.", detailEn: "Keep a stable routine and maintain performance." },
-  { value: "track_only", ar: "لياقة عامة", en: "General fitness", detailAr: "استخدم OVRLD للتمرين والتقدم من غير Goal Mode.", detailEn: "Use OVRLD for training and progress without a Goal Mode." },
+  { value: "track_only", ar: "لياقة عامة", en: "General fitness", detailAr: "تابع تمرينك ولياقتك وتقدمك.", detailEn: "Track your training, fitness, and progress." },
 ];
 
 const LEVELS: Array<{ value: TrainingLevel; ar: string; en: string; detailAr: string; detailEn: string }> = [
@@ -82,6 +83,10 @@ export function OnboardingWizard({
   const selectedGoal = GOALS.find((item) => item.value === goal) ?? null;
   const selectedLevel = LEVELS.find((item) => item.value === trainingLevel) ?? null;
 
+  useEffect(() => {
+    void clearLocalUserProductData(userId);
+  }, [userId]);
+
   function goBack() {
     setError(null);
     if (step === "basic") setStep("welcome");
@@ -114,7 +119,7 @@ export function OnboardingWizard({
       return;
     }
     if (!sex) {
-      setError(ar ? "اختار الجنس عشان نعرض الحسابات ورسومات الجسم المناسبة." : "Choose sex so OVRLD can use the relevant calculations and body visuals.");
+      setError(ar ? "اختار الجنس." : "Choose sex.");
       return;
     }
     if (!heightCm || heightCm < 120 || heightCm > 230) {
@@ -206,21 +211,14 @@ export function OnboardingWizard({
         <>
           <section>
             <p className="gc-eyebrow">OVRLD</p>
-            <h1 className="mt-2 text-3xl font-black tracking-[-0.055em]">{ar ? "خلّي OVRLD يعرفك بالقدر اللي يخدم تمرينك." : "Give OVRLD just enough context to train with you."}</h1>
-            <p className="mt-2 text-sm leading-6 text-neutral-400">
-              {ar ? "هنسألك شوية بيانات أساسية، هدفك، وعدد أيامك. مفيش استمارة طويلة ومفيش حاجة مقفولة عليك بعد كده." : "We only need a few basics, your goal, and weekly availability. No long form, and nothing is locked afterward."}
-            </p>
+            <h1 className="mt-2 text-3xl font-black tracking-[-0.055em]">{ar ? "أهلاً بيك في OVRLD." : "Welcome to OVRLD."}</h1>
+            <p className="mt-2 text-sm leading-6 text-neutral-400">{ar ? "ظبّط بياناتك وخطتك ونبدأ." : "Set up your profile and training plan to get started."}</p>
           </section>
 
           <button type="button" onClick={() => void start()} disabled={busy} className="gc-primary-button w-full min-h-12 disabled:opacity-50">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-            {busy ? (ar ? "بنجهّز مساحتك…" : "Preparing your workspace…") : (ar ? "ابدأ الإعداد" : "Start setup")}
+            {busy ? (ar ? "بنجهّز…" : "Getting ready…") : (ar ? "ابدأ" : "Get started")}
           </button>
-
-          <div className="gc-onboarding-skip-note">
-            <Dumbbell className="h-5 w-5 shrink-0 text-emerald-300" />
-            <p className="text-xs leading-5 text-neutral-500">{ar ? "OVRLD يفضل Gym Tracker عام. Goal Modes والخطط الجاهزة أدوات تساعدك، مش قيود على حسابك." : "OVRLD stays a general gym tracker. Goal Modes and ready plans are helpers, not account restrictions."}</p>
-          </div>
 
           {!hasWorkspace ? (
             <div className="grid grid-cols-2 gap-2">
@@ -235,8 +233,7 @@ export function OnboardingWizard({
         <>
           <section>
             <p className="gc-eyebrow">{ar ? "Basic info" : "Basic info"}</p>
-            <h1 className="mt-2 text-3xl font-black tracking-[-0.055em]">{ar ? "نقطة البداية." : "Your starting point."}</h1>
-            <p className="mt-2 text-sm leading-6 text-neutral-400">{ar ? "السن والطول والوزن بيساعدونا نخلي المتابعة مفهومة من أول يوم." : "Age, height, and current weight give your progress a useful baseline."}</p>
+            <h1 className="mt-2 text-3xl font-black tracking-[-0.055em]">{ar ? "بياناتك الأساسية" : "Your basics"}</h1>
           </section>
 
           <div className="gc-card space-y-3 p-4">
@@ -249,7 +246,6 @@ export function OnboardingWizard({
                   </button>
                 ))}
               </div>
-              <p className="mt-1.5 text-[10px] leading-4 text-neutral-600">{ar ? "بنستخدمها فقط للحسابات ورسومات الجسم اللي تحتاجها." : "Used only for relevant calculations and body visuals."}</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
             <label className="text-xs font-bold text-neutral-500">{ar ? "السن" : "Age"}<input value={age} onChange={(e) => setAge(e.target.value)} inputMode="numeric" className="gc-input mt-1" placeholder="23" /></label>
@@ -323,7 +319,7 @@ export function OnboardingWizard({
             <section className="space-y-2">
               {!weeklyDays ? <p className="gc-onboarding-skip-note text-xs text-neutral-500">{ar ? "اختار عدد أيامك الأول عشان نعرض الخطط المناسبة." : "Choose your weekly availability first to see matching plans."}</p> : null}
               {weeklyDays && matchingPlans.length === 0 ? (
-                <div className="gc-onboarding-skip-note"><Dumbbell className="h-4 w-4 text-amber-300" /><p className="text-xs leading-5 text-neutral-500">{ar ? `مفيش خطة OVRLD جاهزة لـ ${weeklyDays} يوم حاليًا. اختار "جدولي" ومش هنفرض عليك أيام زيادة.` : `There is no ${weeklyDays}-day OVRLD starter yet. Choose your own split and OVRLD will not force extra days.`}</p></div>
+                <div className="gc-onboarding-skip-note"><Dumbbell className="h-4 w-4 text-amber-300" /><p className="text-xs leading-5 text-neutral-500">{ar ? `مفيش خطة OVRLD جاهزة لـ ${weeklyDays} يوم حاليًا. اختار جدولك الخاص.` : `There is no ${weeklyDays}-day OVRLD plan yet. Choose your own split.`}</p></div>
               ) : null}
               {matchingPlans.map((plan) => {
                 const active = readyPlanKey === plan.key;
@@ -355,8 +351,8 @@ export function OnboardingWizard({
           <section className="text-center">
             <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-emerald-300 text-neutral-950"><Check className="h-8 w-8" /></span>
             <p className="gc-eyebrow mt-4">{ar ? "Ready" : "Ready"}</p>
-            <h1 className="mt-2 text-3xl font-black tracking-[-0.055em]">{ar ? "إعدادك الأساسي جاهز." : "Your core setup is ready."}</h1>
-            <p className="mt-2 text-sm leading-6 text-neutral-400">{ar ? "تقدر تكمل باقي التفاصيل تدريجيًا من غير ما نوقفك عن التمرين." : "You can complete deeper profile details progressively without blocking training."}</p>
+            <h1 className="mt-2 text-3xl font-black tracking-[-0.055em]">{ar ? "كله جاهز." : "You’re ready."}</h1>
+            <p className="mt-2 text-sm leading-6 text-neutral-400">{ar ? "ابدأ أول يوم مع OVRLD." : "Start your first day with OVRLD."}</p>
           </section>
 
           <section className="gc-list-panel overflow-hidden">

@@ -151,7 +151,7 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
           <span className="gc-home-train-icon"><Check className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
             <span className="gc-home-action-label">{ar ? "تمرين النهارده" : "Today’s workout"}</span>
-            <h2 className="mt-1 text-2xl font-black tracking-[-0.04em]">{ar ? "اتسجل بالكامل" : "Workout logged"}</h2>
+            <h2 className="mt-1 text-2xl font-black tracking-[-0.04em]">{ar ? "التمرين مكتمل" : "Workout complete"}</h2>
             <p className="mt-1 text-sm font-semibold text-neutral-500">{doneMetrics.completedSets} {ar ? "سِت محفوظة · تقدر تعدّل أي رقم" : "sets saved · edit any number if needed"}</p>
           </div>
         </div>
