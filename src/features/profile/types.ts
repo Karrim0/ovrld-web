@@ -1,4 +1,4 @@
-import type { TrainingLevel } from "@/types";
+import type { ProfileSex, TrainingLevel } from "@/types";
 import type { BodyGoalType } from "@/features/body-progress/types";
 
 export type ProfileCompletenessItemKey =
@@ -30,6 +30,7 @@ export interface ProfileCompletenessSnapshot {
 
 export interface ProfileCompletenessSource {
   ageYears: number | null;
+  sex: ProfileSex | null;
   heightCm: number | null;
   goalType: BodyGoalType | null;
   trainingLevel: TrainingLevel | null;

@@ -3,7 +3,7 @@
 import { getArabicErrorMessage } from "@/lib/localization";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Activity, Award, ArrowUpLeft, BarChart3, Dumbbell, Flame, ScanLine, Target } from "lucide-react";
+import { Activity, Award, ArrowUpLeft, BarChart3, CalendarClock, Dumbbell, Flame, ScanLine, Target } from "lucide-react";
 import { translateExerciseName } from "@/lib/localization";
 import { formatWeight } from "@/lib/utils/format";
 import { formatAdherencePercentage } from "@/features/progress/utils/format-adherence";
@@ -65,6 +65,7 @@ export function ProgressDashboardClient({ userId }: ProgressDashboardClientProps
 
       <section className="gc-list-panel">
         {[
+          { href: "/progress/history", title: "سجل الرحلة", icon: CalendarClock },
           { href: "/progress/exercises", title: "تقدم التمارين", icon: BarChart3 },
           { href: "/progress/records", title: "الأرقام القياسية", icon: Award },
           { href: "/progress/body-map", title: "خريطة العضلات", icon: ScanLine },

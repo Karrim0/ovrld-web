@@ -24,7 +24,7 @@ export function calculateProfileCompleteness(
 ): ProfileCompletenessSnapshot {
   const weightStale = isProfileWeightStale(source.latestWeightAt, source.weighInIntervalDays, now);
   const items: ProfileCompletenessItem[] = [
-    { key: "basic_info", complete: source.ageYears !== null, href: "/profile/settings#profile-age" },
+    { key: "basic_info", complete: source.ageYears !== null && source.sex !== null, href: source.sex === null ? "/profile/settings#profile-sex" : "/profile/settings#profile-age" },
     { key: "current_weight", complete: source.latestWeightAt !== null && !weightStale, href: "/progress/body#weight" },
     { key: "height", complete: source.heightCm !== null, href: "/profile/settings#profile-height" },
     { key: "goal", complete: source.goalType !== null, href: "/profile/settings#profile-goal" },

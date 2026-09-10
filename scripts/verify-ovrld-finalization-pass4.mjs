@@ -27,7 +27,6 @@ const checks = [
   ["summary does not label every improvement as a PR", "src/features/workouts/components/WorkoutDetailsClient.tsx", "topProgressHasPr"],
   ["bottom navigation still has a single active class", "src/components/navigation/BottomNavigation.tsx", "gc-bottom-nav-active"],
   ["mobile safe area remains enabled", "src/app/globals.css", "safe-area-inset-bottom"],
-  ["service worker cache version is pass 4 or newer", "public/sw.js", 'CACHE_VERSION = "v22"'],
 ];
 
 let failed = 0;
@@ -37,6 +36,13 @@ for (const [label, file, needle] of checks) {
   console.log(`${ok ? "✓" : "✗"} ${label}`);
   if (!ok) failed += 1;
 }
+
+
+const sw = fs.readFileSync("public/sw.js", "utf8");
+const cacheVersion = Number(sw.match(/CACHE_VERSION\s*=\s*["\']v(\d+)["\']/)?.[1] ?? 0);
+const cacheVersionOk = cacheVersion >= 22;
+console.log(`${cacheVersionOk ? "✓" : "✗"} service worker cache version is pass 4 or newer`);
+if (!cacheVersionOk) failed += 1;
 
 // Catch the exact class of localization regression that broke Pass 2:
 // duplicate single-quoted keys in the AR_TO_EN object.

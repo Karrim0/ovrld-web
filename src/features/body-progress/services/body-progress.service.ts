@@ -194,3 +194,28 @@ export async function addBodyMeasurement(userId: UUID, input: AddBodyMeasurement
   if (error) throw new Error(error.message);
   return mapMeasurement(data as MeasurementRow);
 }
+
+
+export interface UpdateBodyMeasurementInput {
+  weightKg: number | null;
+  bodyFatPercentage?: number | null;
+  waistCm?: number | null;
+  chestCm?: number | null;
+  hipsCm?: number | null;
+  thighCm?: number | null;
+  upperArmCm?: number | null;
+  calfCm?: number | null;
+  neckCm?: number | null;
+}
+
+export async function updateBodyMeasurement(measurementId: UUID, input: UpdateBodyMeasurementInput): Promise<BodyMeasurement> {
+  if (input.weightKg == null || !Number.isFinite(input.weightKg) || input.weightKg < 20 || input.weightKg > 500) throw new Error("راجع الوزن.");
+  const values = [input.bodyFatPercentage, input.waistCm, input.chestCm, input.hipsCm, input.thighCm, input.upperArmCm, input.calfCm, input.neckCm].filter((value): value is number => value != null);
+  if (values.some((value) => !Number.isFinite(value) || value <= 0 || value > 400)) throw new Error("راجع القياسات.");
+  const supabase = createClient();
+  const { data, error } = await supabase.from("body_measurements").update({
+    weight_kg: input.weightKg, body_fat_percentage: input.bodyFatPercentage ?? null, waist_cm: input.waistCm ?? null, chest_cm: input.chestCm ?? null, hips_cm: input.hipsCm ?? null, thigh_cm: input.thighCm ?? null, upper_arm_cm: input.upperArmCm ?? null, calf_cm: input.calfCm ?? null, neck_cm: input.neckCm ?? null,
+  }).eq("id", measurementId).select("*").single();
+  if (error) throw new Error(error.message);
+  return mapMeasurement(data as MeasurementRow);
+}

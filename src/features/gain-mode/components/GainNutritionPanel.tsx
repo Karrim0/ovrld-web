@@ -65,9 +65,11 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
   }, [snapshot.calorieTargetKcal, snapshot.nutritionAvailable, snapshot.proteinTargetGrams, userId]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash === "#nutrition-targets") {
-      setTargetsOpen(true);
-    }
+    if (typeof window === "undefined") return;
+    const frame = window.requestAnimationFrame(() => {
+      if (window.location.hash === "#nutrition-targets") setTargetsOpen(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {

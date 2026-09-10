@@ -5,14 +5,14 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
-import { ArrowLeft, Dumbbell, ListChecks, Play, RotateCcw } from "lucide-react";
+import { ArrowLeft, Check, Dumbbell, ListChecks, Play, RotateCcw } from "lucide-react";
 import type { UUID, Weekday } from "@/types";
 import { WEEKDAY_LABELS_AR, translateExerciseName, translateWorkoutLabel } from "@/lib/localization";
 import type { SplitDayWithDetails, WeeklyScheduleDayWithDetails } from "@/features/splits/types";
 import { fetchEffectiveWeekSchedule, fetchPersonalSplit } from "@/features/splits/services/split.service";
 import type { WorkoutSessionWithDetails } from "../types";
 import { getPlannedWorkoutMetrics, getSessionWorkoutMetrics } from "../utils/workout-metrics";
-import { fetchActiveWorkoutSession, startWorkoutSession } from "../services/workout-session.service";
+import { fetchActiveWorkoutSession, fetchWorkoutHistory, startWorkoutSession } from "../services/workout-session.service";
 
 const DAY_BY_JS_INDEX: Record<number, Weekday> = {
   0: "sunday", 1: "monday", 2: "tuesday", 3: "wednesday", 4: "thursday", 5: "friday", 6: "saturday",
@@ -36,6 +36,7 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   const [baseDays, setBaseDays] = useState<SplitDayWithDetails[]>([]);
   const [weekDays, setWeekDays] = useState<WeeklyScheduleDayWithDetails[]>([]);
   const [activeSession, setActiveSession] = useState<WorkoutSessionWithDetails | null>(null);
+  const [completedToday, setCompletedToday] = useState<WorkoutSessionWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
   const [alternateDayId, setAlternateDayId] = useState("");
@@ -52,14 +53,16 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
     setIsLoading(true);
     setError(null);
     try {
-      const [split, week, active] = await Promise.all([
+      const [split, week, active, history] = await Promise.all([
         fetchPersonalSplit(userId),
         fetchEffectiveWeekSchedule(userId, currentDate),
         fetchActiveWorkoutSession(),
+        fetchWorkoutHistory(userId),
       ]);
       setBaseDays(split);
       setWeekDays(week);
       setActiveSession(active);
+      setCompletedToday(history.find((session) => session.scheduledDate === currentDate && session.status === "completed") ?? null);
     } catch (caught) {
       setError(getArabicErrorMessage(caught, "معرفناش نحمّل تمرينة النهارده."));
     } finally {
@@ -136,6 +139,26 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
         <p className="mt-2 text-sm text-neutral-500">{ar ? `خلصت ${completedSets} من ${totalSets} سِتات.` : `${completedSets} of ${totalSets} sets completed.`}</p>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
         <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-5 w-full sm:w-auto"><Play className="h-4 w-4" /> {ar ? "كمّل التمرينة" : "Resume workout"}</Link>
+      </section>
+    );
+  }
+
+  if (completedToday) {
+    const doneMetrics = getSessionWorkoutMetrics(completedToday.exercises);
+    return (
+      <section className="gc-home-train-card">
+        <div className="flex items-start gap-3">
+          <span className="gc-home-train-icon"><Check className="h-5 w-5" /></span>
+          <div className="min-w-0 flex-1">
+            <span className="gc-home-action-label">{ar ? "تمرين النهارده" : "Today’s workout"}</span>
+            <h2 className="mt-1 text-2xl font-black tracking-[-0.04em]">{ar ? "اتسجل بالكامل" : "Workout logged"}</h2>
+            <p className="mt-1 text-sm font-semibold text-neutral-500">{doneMetrics.completedSets} {ar ? "سِت محفوظة · تقدر تعدّل أي رقم" : "sets saved · edit any number if needed"}</p>
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <Link href={`/workout/${completedToday.id}`} className="gc-secondary-button">{ar ? "التفاصيل" : "Details"}</Link>
+          <Link href={`/workout/quick?session=${completedToday.id}&edit=1`} className="gc-primary-button"><ListChecks className="h-4 w-4" /> {ar ? "تعديل" : "Edit"}</Link>
+        </div>
       </section>
     );
   }

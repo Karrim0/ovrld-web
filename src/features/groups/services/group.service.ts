@@ -50,6 +50,7 @@ function mapProfile(row: ProfileRow): UserProfile {
     displayName: row.display_name,
     avatarUrl: row.avatar_url,
     ageYears: row.age_years,
+    sex: row.sex === "male" ? "male" : row.sex === "female" ? "female" : null,
     trainingLevel: row.training_level as UserProfile["trainingLevel"],
     weeklyTrainingDays: row.weekly_training_days,
     additionalRestDays: row.additional_rest_days,

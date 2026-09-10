@@ -12,6 +12,7 @@ const CORE_OFFLINE_ROUTES = [
   "/workout/history",
   "/split/personal",
   "/progress",
+  "/progress/history",
   "/progress/records",
   "/progress/exercises",
   "/profile",

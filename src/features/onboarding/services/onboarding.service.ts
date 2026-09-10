@@ -41,6 +41,7 @@ export async function saveOnboardingSetup(userId: UUID, input: OnboardingSetupIn
 
   await updateTrainingProfileBasics(userId, {
     ageYears: Math.round(input.ageYears),
+    sex: input.sex,
     trainingLevel: input.trainingLevel,
     weeklyTrainingDays: input.weeklyTrainingDays,
   });

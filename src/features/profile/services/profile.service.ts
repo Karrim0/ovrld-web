@@ -12,6 +12,7 @@ export function mapProfile(row: ProfileRow): UserProfile {
     displayName: row.display_name,
     avatarUrl: row.avatar_url,
     ageYears: row.age_years,
+    sex: row.sex === "male" ? "male" : row.sex === "female" ? "female" : null,
     trainingLevel: row.training_level as UserProfile["trainingLevel"],
     weeklyTrainingDays: row.weekly_training_days,
     additionalRestDays: row.additional_rest_days,
@@ -109,6 +110,7 @@ export async function updateSharingPreferences(
 
 export interface TrainingProfileBasicsInput {
   ageYears: number;
+  sex: NonNullable<UserProfile["sex"]>;
   trainingLevel: NonNullable<UserProfile["trainingLevel"]>;
   weeklyTrainingDays: number;
 }
@@ -125,6 +127,7 @@ export async function updateTrainingProfileBasics(
   const ageYears = Math.round(input.ageYears);
   const weeklyTrainingDays = Math.round(input.weeklyTrainingDays);
   if (ageYears < 13 || ageYears > 100) throw new Error("راجع السن.");
+  if (!["female", "male"].includes(input.sex)) throw new Error("راجع الجنس.");
   if (!["beginner", "intermediate", "advanced"].includes(input.trainingLevel)) throw new Error("راجع مستوى التدريب.");
   if (weeklyTrainingDays < 1 || weeklyTrainingDays > 7) throw new Error("راجع عدد أيام التمرين.");
 
@@ -143,6 +146,7 @@ export async function updateTrainingProfileBasics(
     .from("profiles")
     .update({
       age_years: ageYears,
+      sex: input.sex,
       training_level: input.trainingLevel,
       weekly_training_days: weeklyTrainingDays,
     })

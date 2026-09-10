@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/language-context";
 import type { UUID } from "@/types";
 import { getArabicErrorMessage } from "@/lib/localization";
 import { addBodyMeasurement, fetchBodyProgress, saveBodyGoal } from "@/features/body-progress/services/body-progress.service";
+import { fetchProfile } from "@/features/profile/services/profile.service";
 import { fetchGainModeProfile, saveGainModeProfile } from "../services/gain-mode.service";
 import type { GainActivityLevel, GainAppetiteLevel, GainDietPattern, GainEquationSex, GainPhysiqueFocus } from "../types";
 
@@ -39,7 +40,7 @@ export function GainModeActivationClient({ userId, compact = false }: { userId: 
 
   useEffect(() => {
     let active = true;
-    void Promise.all([fetchGainModeProfile(userId), fetchBodyProgress(userId)]).then(([profile, body]) => {
+    void Promise.all([fetchGainModeProfile(userId), fetchBodyProgress(userId), fetchProfile(userId)]).then(([profile, body, baseProfile]) => {
       if (!active) return;
       if (profile) {
         setAge(String(profile.ageYears));
@@ -51,6 +52,8 @@ export function GainModeActivationClient({ userId, compact = false }: { userId: 
         setAppetiteLevel(profile.appetiteLevel);
         setMealSizeDifficulty(profile.mealSizeDifficulty);
         setDietPattern(profile.dietPattern);
+      } else if (baseProfile?.sex) {
+        setEquationSex(baseProfile.sex);
       }
       if (body.latest) setWeight(String(body.latest.weightKg));
       if (body.goal) {

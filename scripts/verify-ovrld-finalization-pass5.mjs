@@ -35,13 +35,13 @@ add("Today card offers Quick log", today.includes("Quick log") && today.includes
 add("Quick log route exists", exists("src/app/(dashboard)/workout/quick/page.tsx") && quickPage.includes("QuickWorkoutLogClient"));
 add("Quick log has direct weight input", quick.includes('name={`weight:${set.id}`}'));
 add("Quick log has direct reps input", quick.includes('name={`reps:${set.id}`}'));
-add("Quick log can save and exit", quick.includes("Save workout") && quick.includes('value="finish"'));
-add("Quick log can finish workout", quick.includes('value="finish"') && quick.includes("finishWorkoutSession"));
-add("Quick log uses previous numbers as reference", quick.includes("usePreviousPerformances") && quick.includes("placeholder={last?.weightKg"));
-add("Quick log can fill last performance in one tap", quick.includes("fillFromLast") && quick.includes("Use last") && quick.includes("استخدم آخر أرقام"));
-add("Quick log primary save finalizes the workout", quick.includes('value="finish"') && quick.includes("finishWorkoutSession(session.id"));
-add("Quick log preserves an explicit draft path", quick.includes('value="draft"') && quick.includes("المسودة اتحفظت"));
-add("Quick log confirms progress and volume", quick.includes("Progress updated") && quick.includes("workingVolumeKg") && quick.includes("gc-quick-workout-success"));
+add("Quick log can save and exit", quick.includes("saveExercise") && quick.includes("function exit()"));
+add("Quick log can finish workout", quick.includes("finishWorkoutSession") && quick.includes("allSaved"));
+add("Quick log uses previous numbers as reference", quick.includes("usePreviousPerformances") && quick.includes("set.weightKg ?? last?.weightKg"));
+add("Quick log pre-fills last performance directly", quick.includes("defaultValue={set.weightKg ?? last?.weightKg") && quick.includes("defaultValue={set.reps ?? last?.reps"));
+add("Quick log finalizes only after all exercises are saved", quick.includes("if (!allSaved)") && quick.includes("finishWorkoutSession(session!.id"));
+add("Quick log preserves partial draft behavior", quick.includes("The rest will stay as a draft") && quick.includes("اليوم لسه جزئي"));
+add("Quick log shows exercise-level completion progress", quick.includes("savedCount") && quick.includes("totalExercises") && quick.includes("محفوظ"));
 add("Quick log uses the same set write service as Game Mode", quick.includes("updateWorkoutSet(set.id") && active.includes("updateWorkoutSet(activeSet.id"));
 add("Completed workout history remains the progress source", workoutService.includes('.eq("status", "completed")'));
 
@@ -67,7 +67,7 @@ add("Women-focused hint uses muted blush styling", css.includes(".gc-plan-women-
 
 add("Quick log hides app navigation", shell.includes("quickLogMode") && bottom.includes("/workout/quick") && desktop.includes("/workout/quick"));
 add("Quick log hides rest timer launcher", shell.includes("quickLogMode ? null : <RestTimerLauncher />"));
-add("PWA cache bumped for Pass 5", sw.includes('CACHE_VERSION = "v22"'));
+add("PWA cache is Pass 5 or newer", /CACHE_VERSION = "v(?:2[2-9]|[3-9]\d)"/.test(sw));
 add("Quick log is available offline", sw.includes('"/workout/quick"'));
 add("Quick log is warmed for offline reopening", warmer.includes('"/workout/quick"'));
 

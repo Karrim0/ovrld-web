@@ -20,7 +20,7 @@ export interface UsePreviousPerformancesResult {
   isLoading: boolean;
 }
 
-export function usePreviousPerformances(exerciseIds: UUID[]): UsePreviousPerformancesResult {
+export function usePreviousPerformances(exerciseIds: UUID[], options: { excludeSessionId?: UUID } = {}): UsePreviousPerformancesResult {
   const exerciseKey = useMemo(
     () => [...new Set(exerciseIds.filter(Boolean))].sort().join("|"),
     [exerciseIds],
@@ -29,6 +29,7 @@ export function usePreviousPerformances(exerciseIds: UUID[]): UsePreviousPerform
     () => (exerciseKey ? exerciseKey.split("|") : []),
     [exerciseKey],
   );
+  const excludeSessionId = options.excludeSessionId;
   const [state, setState] = useState<UsePreviousPerformancesResult>({
     performances: {},
     isLoading: stableExerciseIds.length > 0,
@@ -44,7 +45,7 @@ export function usePreviousPerformances(exerciseIds: UUID[]): UsePreviousPerform
     }
 
     setState((current) => ({ ...current, isLoading: true }));
-    fetchPreviousPerformances(stableExerciseIds)
+    fetchPreviousPerformances(stableExerciseIds, { excludeSessionId })
       .then((performances) => {
         if (!cancelled) setState({ performances, isLoading: false });
       })
@@ -55,7 +56,7 @@ export function usePreviousPerformances(exerciseIds: UUID[]): UsePreviousPerform
     return () => {
       cancelled = true;
     };
-  }, [stableExerciseIds]);
+  }, [excludeSessionId, stableExerciseIds]);
 
   return state;
 }

@@ -4303,3 +4303,13 @@ html[data-gc-i18n-ready="true"] body {
     background: var(--accent-soft);
   }
 }
+
+/* Pass 7 — unified journey history */
+.gc-history-filter { flex: 0 0 auto; border: 1px solid var(--border); border-radius: 999px; padding: .55rem .85rem; background: var(--surface-subtle); color: rgb(163 163 163); font-size: .75rem; font-weight: 800; }
+.gc-history-filter-active { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
+.gc-history-event { display: flex; width: 100%; align-items: center; gap: .75rem; border: 1px solid var(--border); border-inline-start-width: 3px; border-radius: 1rem; padding: .8rem .85rem; background: var(--surface-subtle); text-align: start; }
+.gc-history-event-icon { display: grid; height: 2rem; width: 2rem; flex: 0 0 auto; place-items: center; border-radius: .7rem; background: rgba(255,255,255,.045); }
+.gc-history-event-training { border-inline-start-color: var(--accent); }
+.gc-history-event-weight { border-inline-start-color: #7aa0ad; }
+.gc-history-event-measurement { border-inline-start-color: #a58ca8; }
+.gc-history-event-pr { border-inline-start-color: #b59a61; }

@@ -12,7 +12,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check": "npm run pass6:check",
+    "check": "npm run pass7:check",
     "verify:phase1": "node scripts/verify-ovrld-web-phase1.mjs",
     "phase1:check": "npm run verify:phase1 && npm run typecheck && npm run lint && npm run build",
     "verify:phase2": "node scripts/verify-ovrld-web-phase2.mjs",
@@ -54,7 +54,9 @@
     "verify:pass5": "node scripts/verify-ovrld-finalization-pass5.mjs",
     "pass5:check": "npm run phase15:check",
     "verify:pass6": "node scripts/verify-ovrld-finalization-pass6.mjs",
-    "pass6:check": "npm run phase15:check && npm run verify:pass6"
+    "pass6:check": "npm run phase15:check && npm run verify:pass6",
+    "verify:pass7": "node scripts/verify-ovrld-finalization-pass7.mjs",
+    "pass7:check": "npm run pass6:check && npm run verify:pass7"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

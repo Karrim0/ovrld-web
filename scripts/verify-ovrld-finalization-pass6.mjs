@@ -120,6 +120,7 @@ const completeness = evaluatePureTypeScript("src/features/profile/services/profi
 const now = new Date("2026-09-10T00:00:00.000Z");
 const completeBase = {
   ageYears: 23,
+  sex: "female",
   heightCm: 165,
   goalType: "muscle_gain",
   trainingLevel: "intermediate",
@@ -176,7 +177,7 @@ assert.ok(nutrition.includes('id="nutrition-targets"') && nutrition.includes('wi
 const packageJson = JSON.parse(read("package.json"));
 assert.ok(packageJson.scripts?.["verify:pass6"], "Missing verify:pass6 script.");
 assert.ok(packageJson.scripts?.["pass6:check"], "Missing pass6:check script.");
-assert.equal(packageJson.scripts?.check, "npm run pass6:check", "Default check must include Pass 6.");
+assert.ok(packageJson.scripts?.check === "npm run pass6:check" || packageJson.scripts?.["pass7:check"]?.includes("pass6:check"), "Default/current finalization chain must include Pass 6.");
 
 console.table({
   pass: "6 — Onboarding & Progressive Profile",

@@ -6,7 +6,7 @@ import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { useLanguage } from "@/contexts/language-context";
 import { useEffect, useState } from "react";
 import { Camera, Dumbbell, Save, UserRound } from "lucide-react";
-import type { TrainingLevel, UUID, UserProfile } from "@/types";
+import type { ProfileSex, TrainingLevel, UUID, UserProfile } from "@/types";
 import type { BodyGoalType, BodyProgressSnapshot } from "@/features/body-progress/types";
 import { addBodyMeasurement, fetchBodyProgress, saveBodyGoal } from "@/features/body-progress/services/body-progress.service";
 import {
@@ -41,6 +41,7 @@ export function ProfileSettingsClient({ userId }: ProfileSettingsClientProps) {
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [age, setAge] = useState("");
+  const [sex, setSex] = useState<ProfileSex | "">("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState<BodyGoalType>("track_only");
@@ -60,6 +61,7 @@ export function ProfileSettingsClient({ userId }: ProfileSettingsClientProps) {
         setDisplayName(profileValue?.displayName ?? "");
         setAvatarUrl(profileValue?.avatarUrl ?? null);
         setAge(profileValue?.ageYears ? String(profileValue.ageYears) : "");
+        setSex(profileValue?.sex ?? "");
         setTrainingLevel(profileValue?.trainingLevel ?? "");
         setWeeklyDays(profileValue?.weeklyTrainingDays ?? null);
         setHeight(bodyValue.goal?.heightCm ? String(bodyValue.goal.heightCm) : "");
@@ -114,6 +116,10 @@ export function ProfileSettingsClient({ userId }: ProfileSettingsClientProps) {
       setError(ar ? "راجع السن." : "Check your age.");
       return;
     }
+    if (!sex) {
+      setError(ar ? "حدد الجنس." : "Choose sex.");
+      return;
+    }
     if (!heightCm || heightCm < 120 || heightCm > 230) {
       setError(ar ? "راجع الطول بالسنتيمتر." : "Check your height in centimeters.");
       return;
@@ -133,6 +139,7 @@ export function ProfileSettingsClient({ userId }: ProfileSettingsClientProps) {
     try {
       const updatedProfile = await updateTrainingProfileBasics(userId, {
         ageYears,
+        sex,
         trainingLevel,
         weeklyTrainingDays: weeklyDays,
       });
@@ -202,6 +209,18 @@ export function ProfileSettingsClient({ userId }: ProfileSettingsClientProps) {
             <h2 className="mt-1 text-lg font-black">{ar ? "البيانات اللي بتخلي OVRLD يفهم سياقك" : "The basics OVRLD uses for context"}</h2>
             <p className="mt-1 text-xs leading-5 text-neutral-500">{ar ? "دي نفس مصادر الداتا المستخدمة في الـonboarding؛ مفيش نسخة تانية مخزنة." : "These are the same data sources used by onboarding; there is no duplicate profile copy."}</p>
           </div>
+        </div>
+
+        <div id="profile-sex" className="mt-4 scroll-mt-24">
+          <p className="text-xs font-bold text-neutral-500">{ar ? "الجنس" : "Sex"}</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {(["female", "male"] as ProfileSex[]).map((value) => (
+              <button key={value} type="button" onClick={() => setSex(value)} className={`gc-choice-button ${sex === value ? "gc-choice-button-active" : ""}`}>
+                <UserRound className="h-4 w-4" /> {value === "female" ? (ar ? "بنت" : "Female") : (ar ? "ولد" : "Male")}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-[10px] text-neutral-600">{ar ? "المصدر العام للحسابات ورسومات الجسم المناسبة." : "The shared source for relevant calculations and body visuals."}</p>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">

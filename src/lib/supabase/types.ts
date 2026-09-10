@@ -551,6 +551,7 @@ export type Database = {
         Row: {
           additional_rest_days: Database["public"]["Enums"]["weekday"][]
           age_years: number | null
+          sex: string | null
           avatar_url: string | null
           created_at: string
           display_name: string
@@ -568,6 +569,7 @@ export type Database = {
         Insert: {
           additional_rest_days?: Database["public"]["Enums"]["weekday"][]
           age_years?: number | null
+          sex?: string | null
           avatar_url?: string | null
           created_at?: string
           display_name: string
@@ -585,6 +587,7 @@ export type Database = {
         Update: {
           additional_rest_days?: Database["public"]["Enums"]["weekday"][]
           age_years?: number | null
+          sex?: string | null
           avatar_url?: string | null
           created_at?: string
           display_name?: string

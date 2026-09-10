@@ -2,7 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import type { BodyGoalType } from "@/features/body-progress/types";
-import type { TrainingLevel, UUID } from "@/types";
+import type { ProfileSex, TrainingLevel, UUID } from "@/types";
 import { calculateProfileCompleteness } from "./profile-completeness";
 import type { ProfileCompletenessSnapshot } from "../types";
 
@@ -29,7 +29,7 @@ export async function getProfileCompleteness(userId: UUID): Promise<ProfileCompl
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("age_years, training_level, weekly_training_days")
+      .select("age_years, sex, training_level, weekly_training_days")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -94,6 +94,7 @@ export async function getProfileCompleteness(userId: UUID): Promise<ProfileCompl
 
   return calculateProfileCompleteness({
     ageYears: profileResult.data?.age_years ?? null,
+    sex: (profileResult.data?.sex as ProfileSex | null | undefined) ?? null,
     heightCm: goalResult.data?.height_cm == null ? null : Number(goalResult.data.height_cm),
     goalType: (goalResult.data?.goal_type as BodyGoalType | undefined) ?? null,
     trainingLevel: (profileResult.data?.training_level as TrainingLevel | undefined) ?? null,

@@ -1,6 +1,6 @@
 import type { BodyGoalType } from "@/features/body-progress/types";
 import type { StarterPlanKey } from "@/features/splits/types";
-import type { TrainingLevel } from "@/types";
+import type { ProfileSex, TrainingLevel } from "@/types";
 
 export type OnboardingGoal = Extract<
   BodyGoalType,
@@ -11,6 +11,7 @@ export type TrainingSetupPath = "ready_plan" | "own_split";
 
 export interface OnboardingSetupInput {
   ageYears: number;
+  sex: ProfileSex;
   heightCm: number;
   currentWeightKg: number;
   goal: OnboardingGoal;

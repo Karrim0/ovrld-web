@@ -11,6 +11,7 @@ export type UUID = string;
 export type ISODateString = string;
 export type ISODateOnlyString = string;
 export type TrainingLevel = "beginner" | "intermediate" | "advanced";
+export type ProfileSex = "female" | "male";
 
 // ---------------------------------------------------------------------------
 // User & group
@@ -21,6 +22,7 @@ export interface UserProfile {
   displayName: string;
   avatarUrl: string | null;
   ageYears: number | null;
+  sex: ProfileSex | null;
   trainingLevel: TrainingLevel | null;
   weeklyTrainingDays: number | null;
   /** Legacy compatibility only. Rest days are defined by split_days.workoutType. */

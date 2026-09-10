@@ -1,31 +1,24 @@
 "use client";
 
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, ChevronLeft, History, Save, Sparkles } from "lucide-react";
+import { Check, ChevronLeft, Save, ShieldAlert } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { getArabicErrorMessage, translateExerciseName } from "@/lib/localization";
 import { useActiveWorkout } from "../hooks/use-active-workout";
 import { usePreviousPerformances } from "../hooks/use-previous-performance";
 import { finishWorkoutSession, updateWorkoutSet } from "../services/workout-session.service";
 import { getSafeWorkoutDurationSeconds } from "../utils/session-time";
-import { getSessionWorkoutMetrics } from "../utils/workout-metrics";
 
-function parseOptionalNumber(raw: FormDataEntryValue | null) {
-  const value = String(raw ?? "").trim();
-  if (!value) return null;
-  const parsed = Number(value);
+function parseNumber(input: HTMLInputElement | null) {
+  if (!input || !input.value.trim()) return null;
+  const parsed = Number(input.value);
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
-function sameNumber(a: number | null, b: number | null) {
-  return a === b || (a === null && b === null);
-}
-
-interface SavedSummary {
-  completedSets: number;
-  volumeKg: number;
-  finalized: boolean;
+function e1rm(weight: number | null, reps: number | null) {
+  if (weight == null || reps == null || weight <= 0 || reps <= 0) return null;
+  return weight * (1 + reps / 30);
 }
 
 export function QuickWorkoutLogClient() {
@@ -34,210 +27,137 @@ export function QuickWorkoutLogClient() {
   const { language, t } = useLanguage();
   const ar = language === "ar";
   const sessionId = searchParams.get("session");
+  const requestedEdit = searchParams.get("edit") === "1";
   const formRef = useRef<HTMLFormElement | null>(null);
   const { session, isLoading, error: loadError } = useActiveWorkout(sessionId);
   const exerciseIds = useMemo(() => session?.exercises.map((item) => item.exerciseId) ?? [], [session]);
-  const { performances } = usePreviousPerformances(exerciseIds);
-  const [busy, setBusy] = useState(false);
+  const { performances } = usePreviousPerformances(exerciseIds, { excludeSessionId: session?.id });
+  const [locallySavedExerciseIds, setLocallySavedExerciseIds] = useState<Set<string>>(new Set());
+  const [busyExerciseId, setBusyExerciseId] = useState<string | null>(null);
+  const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedSummary, setSavedSummary] = useState<SavedSummary | null>(null);
 
-  if (isLoading) {
-    return <div className="h-72 animate-pulse rounded-[20px] border border-[var(--border)] bg-[var(--surface-subtle)]" />;
-  }
+  const editingCompleted = session?.status === "completed" || requestedEdit;
 
-  if (loadError || !session) {
-    return <p className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300">{loadError?.message ?? (ar ? "مفيش تمرينة شغالة." : "No active workout.")}</p>;
-  }
-
-  const metrics = getSessionWorkoutMetrics(session.exercises);
-
-  function fillFromLast(setId: string, weightKg: number | null | undefined, reps: number | null | undefined) {
-    const form = formRef.current;
-    if (!form) return;
-    const weightInput = form.elements.namedItem(`weight:${setId}`);
-    const repsInput = form.elements.namedItem(`reps:${setId}`);
-    if (weightInput instanceof HTMLInputElement && weightKg !== null && weightKg !== undefined) {
-      weightInput.value = String(weightKg);
+  const savedExerciseIds = useMemo(() => {
+    const saved = new Set(locallySavedExerciseIds);
+    for (const exercise of session?.exercises ?? []) {
+      if (exercise.sets.some((set) => set.isCompleted)) saved.add(exercise.id);
     }
-    if (repsInput instanceof HTMLInputElement && reps !== null && reps !== undefined) {
-      repsInput.value = String(reps);
-    }
+    return saved;
+  }, [locallySavedExerciseIds, session]);
+
+  if (isLoading) return <div className="h-72 animate-pulse rounded-[20px] border border-[var(--border)] bg-[var(--surface-subtle)]" />;
+  if (loadError || !session) return <p className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300">{loadError?.message ?? (ar ? "التمرينة مش متاحة." : "Workout is not available.")}</p>;
+
+  const savedCount = savedExerciseIds.size;
+  const totalExercises = session.exercises.length;
+  const allSaved = totalExercises > 0 && savedCount === totalExercises;
+
+  function input(name: string) {
+    const element = formRef.current?.elements.namedItem(name);
+    return element instanceof HTMLInputElement ? element : null;
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!session) return;
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const action = String(data.get("action") ?? "finish");
-    setBusy(true);
+  function hasSuspiciousDrop(exerciseIndex: number) {
+    if (editingCompleted) return false;
+    const exercise = session!.exercises[exerciseIndex];
+    const previous = performances[exercise.exerciseId];
+    if (!previous?.sets.length) return false;
+    const previousAt = previous.completedAt ? new Date(previous.completedAt).getTime() : null;
+    const currentSessionAt = new Date(session!.startedAt).getTime();
+    if (previousAt && Number.isFinite(currentSessionAt) && currentSessionAt - previousAt > 21 * 86_400_000) return false;
+
+    const currentScores = exercise.sets.map((set) => e1rm(parseNumber(input(`weight:${set.id}`)), parseNumber(input(`reps:${set.id}`))));
+    const previousScores = previous.sets.map((set) => e1rm(set.weightKg, set.reps));
+    const currentBest = Math.max(0, ...currentScores.filter((value): value is number => value != null));
+    const previousBest = Math.max(0, ...previousScores.filter((value): value is number => value != null));
+    return previousBest > 0 && currentBest > 0 && currentBest < previousBest * 0.68;
+  }
+
+  async function saveExercise(exerciseIndex: number) {
+    const exercise = session!.exercises[exerciseIndex];
     setError(null);
-    setSavedSummary(null);
-
-    try {
-      let completedSets = 0;
-      let workingVolumeKg = 0;
-
-      for (const exercise of session.exercises) {
-        for (const set of exercise.sets) {
-          const nextWeight = parseOptionalNumber(data.get(`weight:${set.id}`));
-          const nextRepsRaw = parseOptionalNumber(data.get(`reps:${set.id}`));
-          if (Number.isNaN(nextWeight) || Number.isNaN(nextRepsRaw)) {
-            throw new Error(ar ? "راجع الأرقام المدخلة." : "Check the numbers you entered.");
-          }
-          const nextReps = nextRepsRaw === null ? null : Math.round(nextRepsRaw);
-          const nextCompleted = nextReps !== null && nextReps > 0;
-
-          if (nextCompleted) {
-            completedSets += 1;
-            if (!set.isWarmup) workingVolumeKg += (nextWeight ?? 0) * (nextReps ?? 0);
-          }
-
-          const touched =
-            !sameNumber(nextWeight, set.weightKg) ||
-            !sameNumber(nextReps, set.reps) ||
-            nextCompleted !== set.isCompleted;
-          if (!touched) continue;
-
-          // Quick Log writes through the exact same workout-set service as Game Mode.
-          // Once the primary action finalizes the session, Progress, PRs, Last Time,
-          // adherence and Gain reviews all read this data from the same completed history.
-          await updateWorkoutSet(set.id, {
-            weightKg: nextWeight,
-            reps: nextReps,
-            isCompleted: nextCompleted,
-            isWarmup: set.isWarmup,
-            notes: set.notes,
-          });
-        }
-      }
-
-      if (action === "draft") {
-        setSavedSummary({ completedSets, volumeKg: workingVolumeKg, finalized: false });
-        window.setTimeout(() => {
-          router.replace("/dashboard");
-          router.refresh();
-        }, 650);
-        return;
-      }
-
-      if (completedSets === 0) {
-        throw new Error(ar ? "سجّل سِت واحدة على الأقل قبل ما تحفظ التمرينة." : "Log at least one set before saving the workout.");
-      }
-
-      const duration = getSafeWorkoutDurationSeconds(session.startedAt, Date.now(), session.durationSeconds);
-      await finishWorkoutSession(session.id, duration, session.notes);
-      setSavedSummary({ completedSets, volumeKg: workingVolumeKg, finalized: true });
-
-      window.setTimeout(() => {
-        router.replace("/dashboard");
-        router.refresh();
-      }, 850);
-    } catch (caught) {
-      setError(t(getArabicErrorMessage(caught, ar ? "معرفناش نحفظ الأرقام." : "Could not save your numbers.")));
-      setBusy(false);
+    if (hasSuspiciousDrop(exerciseIndex)) {
+      const okay = window.confirm(ar ? "الأداء أقل بوضوح من آخر مرة من غير فجوة طويلة. لو ده مقصود احفظه عادي؛ لو رقم غلط ارجع راجعه." : "This performance is much lower than last time without a long gap. Save it if intentional, or review the numbers if it is a mistake.");
+      if (!okay) return;
     }
+
+    setBusyExerciseId(exercise.id);
+    try {
+      let completed = 0;
+      for (const set of exercise.sets) {
+        const weight = parseNumber(input(`weight:${set.id}`));
+        const repsRaw = parseNumber(input(`reps:${set.id}`));
+        if (Number.isNaN(weight) || Number.isNaN(repsRaw)) throw new Error(ar ? "راجع الأرقام المدخلة." : "Check the numbers you entered.");
+        const reps = repsRaw == null ? null : Math.round(repsRaw);
+        const isCompleted = reps != null && reps > 0;
+        if (isCompleted) completed += 1;
+        await updateWorkoutSet(set.id, { weightKg: weight, reps, isCompleted, isWarmup: set.isWarmup, notes: set.notes });
+      }
+      if (completed === 0) throw new Error(ar ? "سجّل سِت واحدة على الأقل في التمرين." : "Log at least one set for this exercise.");
+      setLocallySavedExerciseIds((current) => new Set(current).add(exercise.id));
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(12);
+    } catch (caught) {
+      setError(t(getArabicErrorMessage(caught, ar ? "معرفناش نحفظ التمرين." : "Could not save this exercise.")));
+    } finally {
+      setBusyExerciseId(null);
+    }
+  }
+
+  async function finish(eventTimestamp: number) {
+    setError(null);
+    if (editingCompleted) { router.replace(`/workout/${session!.id}`); router.refresh(); return; }
+    if (!allSaved) {
+      setError(ar ? `لسه ${totalExercises - savedCount} تمرين مش محفوظ. احفظهم أو اخرج كمسودة.` : `${totalExercises - savedCount} exercises are still unsaved. Save them or leave as a draft.`);
+      return;
+    }
+    setFinishing(true);
+    try {
+      const completedAtMs = eventTimestamp > 1_000_000_000_000 ? eventTimestamp : performance.timeOrigin + eventTimestamp;
+      const duration = getSafeWorkoutDurationSeconds(session!.startedAt, completedAtMs, session!.durationSeconds);
+      await finishWorkoutSession(session!.id, duration, session!.notes);
+      router.replace("/dashboard"); router.refresh();
+    } catch (caught) {
+      setError(t(getArabicErrorMessage(caught, ar ? "معرفناش نقفل تمرينة النهارده." : "Could not finish today’s workout.")));
+      setFinishing(false);
+    }
+  }
+
+  function exit() {
+    if (!editingCompleted && !allSaved && savedCount > 0) {
+      const okay = window.confirm(ar ? `اتحفظ ${savedCount} من ${totalExercises} تمارين. الباقي هيفضل Draft. تخرج؟` : `${savedCount} of ${totalExercises} exercises are saved. The rest will stay as a draft. Leave?`);
+      if (!okay) return;
+    }
+    router.push(editingCompleted ? `/workout/${session!.id}` : "/dashboard");
   }
 
   return (
-    <form ref={formRef} onSubmit={submit} className="gc-quick-workout mx-auto w-full min-w-0 space-y-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-2">
+    <form ref={formRef} className="gc-quick-workout mx-auto w-full min-w-0 space-y-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-2" onSubmit={(event) => event.preventDefault()}>
       <header className="gc-quick-workout-header sticky top-0 z-20 -mx-1 flex items-center gap-3 px-1 py-2">
-        <button type="button" onClick={() => router.push("/dashboard")} className="gc-gym-back-button" aria-label={ar ? "رجوع للرئيسية" : "Back home"}><ChevronLeft className="h-5 w-5 rtl:rotate-180" /></button>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-neutral-500">{ar ? "تسجيل سريع" : "Quick log"}</p>
-          <h1 className="truncate text-lg font-black">{ar ? "الأرقام بس" : "Numbers only"}</h1>
-        </div>
-        <span className="text-xs font-bold text-neutral-500">{metrics.completedSets}/{metrics.totalSets}</span>
+        <button type="button" onClick={exit} className="gc-gym-back-button" aria-label={ar ? "رجوع" : "Back"}><ChevronLeft className="h-5 w-5 rtl:rotate-180" /></button>
+        <div className="min-w-0 flex-1"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-neutral-500">{editingCompleted ? (ar ? "تعديل التمرينة" : "Edit workout") : (ar ? "تسجيل سريع" : "Quick log")}</p><h1 className="truncate text-lg font-black">{ar ? "الوزن والعدات" : "Weight & reps"}</h1></div>
+        <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${allSaved ? "bg-emerald-300/10 text-emerald-300" : "bg-white/[0.05] text-neutral-400"}`}>{savedCount}/{totalExercises}</span>
       </header>
 
-      <section className="gc-quick-workout-intro">
-        <div>
-          <strong>{ar ? "سجّل الوزن والعدات واطلع" : "Log weight and reps, then leave"}</strong>
-          <p>{ar ? "الحفظ الأساسي بيقفل جلسة النهارده ويحدّث الـProgress وLast Time والـGain Process بالكامل. لو لسه هتكمل بعدين احفظها كمسودة." : "The main save finishes today’s session and updates Progress, Last Time and the Gain Process. Save a draft only if you plan to continue later."}</p>
-        </div>
-      </section>
-
+      <section className="gc-quick-workout-intro"><div><strong>{editingCompleted ? (ar ? "عدّل أرقام اليوم المحفوظ" : "Edit saved workout numbers") : (ar ? "آخر أرقامك موجودة قدامك تلقائيًا" : "Your last numbers are pre-filled")}</strong><p>{ar ? "الأرقام المقترحة لا تتحسب تسجيل إلا لما تحفظ التمرين نفسه." : "Suggested values do not count as logged until you save that exercise."}</p></div></section>
       {error ? <p className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm font-semibold text-red-300" role="alert">{error}</p> : null}
-      {savedSummary ? (
-        <div className="gc-quick-workout-success" role="status" aria-live="polite">
-          <span><Sparkles className="h-4 w-4" /></span>
-          <div className="min-w-0 flex-1">
-            <strong>{savedSummary.finalized ? (ar ? "التقدم اتحدّث" : "Progress updated") : (ar ? "المسودة اتحفظت" : "Draft saved")}</strong>
-            <p>{savedSummary.completedSets} {ar ? "سِت" : "sets"} · {Math.round(savedSummary.volumeKg).toLocaleString("en-US")} {ar ? "كجم volume" : "kg volume"}</p>
-          </div>
-        </div>
-      ) : null}
 
       <div className="space-y-3">
         {session.exercises.map((exercise, exerciseIndex) => {
           const previous = performances[exercise.exerciseId]?.sets ?? [];
-          return (
-            <section key={exercise.id} className="gc-quick-workout-exercise">
-              <div className="flex items-start gap-3">
-                <span className="gc-quick-workout-index">{exerciseIndex + 1}</span>
-                <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-sm font-black">{t(translateExerciseName(exercise.exercise.name))}</h2>
-                  <p className="mt-0.5 text-[11px] font-semibold text-neutral-500">{exercise.targetRepsMin}–{exercise.targetRepsMax} {ar ? "عدات" : "reps"}</p>
-                </div>
-                {previous.length > 0 ? <span className="gc-quick-last-label"><History className="h-3 w-3" /> {ar ? "آخر مرة" : "Last"}</span> : null}
-              </div>
-
-              <div className="mt-3 space-y-1.5">
-                {exercise.sets.map((set, setIndex) => {
-                  const last = previous[setIndex];
-                  const hasLast = last && (last.weightKg !== null || last.reps !== null);
-                  return (
-                    <div key={set.id} className={`gc-quick-workout-set ${set.isCompleted ? "gc-quick-workout-set-done" : ""}`}>
-                      <span className="gc-quick-workout-set-number">{set.setNumber}</span>
-                      <label className="min-w-0 flex-1">
-                        <span>{ar ? "كجم" : "kg"}</span>
-                        <input
-                          name={`weight:${set.id}`}
-                          type="number"
-                          inputMode="decimal"
-                          min="0"
-                          step="any"
-                          defaultValue={set.weightKg ?? ""}
-                          placeholder={last?.weightKg?.toString() ?? "—"}
-                          className="gc-quick-workout-input"
-                        />
-                      </label>
-                      <label className="min-w-0 flex-1">
-                        <span>{ar ? "عدات" : "reps"}</span>
-                        <input
-                          name={`reps:${set.id}`}
-                          type="number"
-                          inputMode="numeric"
-                          min="0"
-                          step="1"
-                          defaultValue={set.reps ?? ""}
-                          placeholder={last?.reps?.toString() ?? "—"}
-                          className="gc-quick-workout-input"
-                        />
-                      </label>
-                      <span className="gc-quick-workout-set-state">{set.isCompleted ? <Check className="h-4 w-4" /> : null}</span>
-                      {hasLast ? (
-                        <button type="button" className="gc-quick-use-last" onClick={() => fillFromLast(set.id, last?.weightKg, last?.reps)}>
-                          <History className="h-3 w-3" /> {ar ? "استخدم آخر أرقام" : "Use last"}
-                          <span>{last?.weightKg ?? "—"} × {last?.reps ?? "—"}</span>
-                        </button>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          );
+          const saved = savedExerciseIds.has(exercise.id);
+          return <section key={exercise.id} className={`gc-quick-workout-exercise ${saved ? "ring-1 ring-emerald-300/15" : ""}`}>
+            <div className="flex items-start gap-3"><span className="gc-quick-workout-index">{exerciseIndex + 1}</span><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-black">{t(translateExerciseName(exercise.exercise.name))}</h2><p className="mt-0.5 text-[11px] font-semibold text-neutral-500">{exercise.targetRepsMin}–{exercise.targetRepsMax} {ar ? "عدات" : "reps"}</p></div>{saved ? <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-300"><Check className="h-3.5 w-3.5" /> {ar ? "محفوظ" : "Saved"}</span> : null}</div>
+            <div className="mt-3 space-y-1.5">{exercise.sets.map((set, setIndex) => { const last = previous[setIndex]; return <div key={set.id} className="gc-quick-workout-set"><span className="gc-quick-workout-set-number">{set.setNumber}</span><label className="min-w-0 flex-1"><span>{ar ? "كجم" : "kg"}</span><input name={`weight:${set.id}`} type="number" inputMode="decimal" min="0" step="any" defaultValue={set.weightKg ?? last?.weightKg ?? ""} className="gc-quick-workout-input" /></label><label className="min-w-0 flex-1"><span>{ar ? "عدات" : "reps"}</span><input name={`reps:${set.id}`} type="number" inputMode="numeric" min="0" step="1" defaultValue={set.reps ?? last?.reps ?? ""} className="gc-quick-workout-input" /></label></div>; })}</div>
+            <button type="button" disabled={busyExerciseId === exercise.id || finishing} onClick={() => void saveExercise(exerciseIndex)} className={`mt-3 w-full min-h-10 ${saved ? "gc-secondary-button" : "gc-primary-button"} disabled:opacity-50`}><Save className="h-4 w-4" />{busyExerciseId === exercise.id ? (ar ? "بنحفظ…" : "Saving…") : saved ? (ar ? "حدّث التمرين" : "Update exercise") : (ar ? "احفظ التمرين" : "Save exercise")}</button>
+          </section>;
         })}
       </div>
 
-      <div className="gc-quick-workout-actions fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-lg px-3 pb-[max(.75rem,env(safe-area-inset-bottom,0px))] pt-2 sm:px-4">
-        <div className="grid grid-cols-[1fr_auto] gap-2 rounded-[20px] border border-[var(--border)] bg-[var(--surface-glass)] p-2 shadow-[var(--shadow-float)] backdrop-blur-xl">
-          <button type="submit" name="action" value="finish" disabled={busy} className="gc-primary-button min-h-12 min-w-0 disabled:opacity-50"><Save className="h-4 w-4" /> {busy ? (ar ? "بنحفظ…" : "Saving…") : (ar ? "احفظ التمرينة" : "Save workout")}</button>
-          <button type="submit" name="action" value="draft" disabled={busy} className="gc-secondary-button min-h-12 px-3 disabled:opacity-50">{ar ? "مسودة" : "Draft"}</button>
-        </div>
-      </div>
+      {!editingCompleted && !allSaved && savedCount > 0 ? <div className="flex items-start gap-2 rounded-xl border border-amber-300/15 bg-amber-300/[0.05] p-3 text-xs leading-5 text-neutral-400"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" />{ar ? `اليوم لسه جزئي: ${savedCount} من ${totalExercises} تمارين محفوظة.` : `Today is partial: ${savedCount} of ${totalExercises} exercises saved.`}</div> : null}
+
+      <div className="gc-quick-workout-actions fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-lg px-3 pb-[max(.75rem,env(safe-area-inset-bottom,0px))] pt-2 sm:px-4"><div className="grid grid-cols-[1fr_auto] gap-2 rounded-[20px] border border-[var(--border)] bg-[var(--surface-glass)] p-2 shadow-[var(--shadow-float)] backdrop-blur-xl"><button type="button" onClick={(event) => void finish(event.timeStamp)} disabled={finishing || busyExerciseId !== null} className="gc-primary-button min-h-12 min-w-0 disabled:opacity-50"><Check className="h-4 w-4" />{editingCompleted ? (ar ? "تم التعديل" : "Done editing") : finishing ? (ar ? "بنقفل اليوم…" : "Finishing…") : allSaved ? (ar ? "احفظ اليوم" : "Save day") : (ar ? `احفظ باقي ${totalExercises - savedCount}` : `Save ${totalExercises - savedCount} more`)}</button><button type="button" onClick={exit} disabled={finishing} className="gc-secondary-button min-h-12 px-3 disabled:opacity-50">{editingCompleted ? (ar ? "إلغاء" : "Cancel") : (ar ? "اخرج" : "Exit")}</button></div></div>
     </form>
   );
 }

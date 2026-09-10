@@ -18,7 +18,8 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import type { UUID } from "@/types";
+import type { ProfileSex, UUID } from "@/types";
+import { fetchProfile } from "@/features/profile/services/profile.service";
 import { getArabicErrorMessage } from "@/lib/localization";
 import { addBodyMeasurement, fetchBodyProgress, saveBodyGoal } from "../services/body-progress.service";
 import type { BodyProgressSnapshot } from "../types";
@@ -106,6 +107,7 @@ function WeightSparkline({ snapshot }: { snapshot: BodyProgressSnapshot }) {
 
 export function BodyProgressClient({ userId }: { userId: UUID }) {
   const [snapshot, setSnapshot] = useState<BodyProgressSnapshot | null>(null);
+  const [profileSex, setProfileSex] = useState<ProfileSex | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +124,8 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
     setLoading(true);
     setError(null);
     try {
-      const next = await fetchBodyProgress(userId);
+      const [next, profile] = await Promise.all([fetchBodyProgress(userId), fetchProfile(userId)]);
+      setProfileSex(profile?.sex ?? null);
       setSnapshot(next);
       if (next.goal) {
         setIntervalDays(next.goal.weighInIntervalDays.toString());
@@ -137,13 +140,13 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
 
   useEffect(() => {
     let active = true;
-    void fetchBodyProgress(userId)
-      .then((next) => {
+    void Promise.all([fetchBodyProgress(userId), fetchProfile(userId)])
+      .then(([next, profile]) => {
         if (!active) return;
+        setProfileSex(profile?.sex ?? null);
         setSnapshot(next);
         if (next.goal) setIntervalDays(next.goal.weighInIntervalDays.toString());
         setWeight(next.latest?.weightKg.toString() ?? "");
-        setError(null);
       })
       .catch((caught) => {
         if (active) setError(getBodyProgressLoadMessage(caught));
@@ -316,7 +319,7 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
       </div>
 
       {activeView === "overview" ? (
-        <BodyShapeOverview snapshot={snapshot} />
+        <BodyShapeOverview snapshot={snapshot} sex={profileSex} />
       ) : activeView === "measurements" ? (
         <BodyMeasurementsPanel userId={userId} snapshot={snapshot} onSaved={load} />
       ) : (

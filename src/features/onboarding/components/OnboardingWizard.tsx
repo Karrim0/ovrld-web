@@ -18,7 +18,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { createSoloWorkspace } from "@/features/groups/services/group.service";
 import { STARTER_PLANS, isGainPlanCompatibleGoal } from "@/features/splits/constants/starter-plans";
 import type { StarterPlanKey } from "@/features/splits/types";
-import type { TrainingLevel, UUID } from "@/types";
+import type { ProfileSex, TrainingLevel, UUID } from "@/types";
 import { getArabicErrorMessage } from "@/lib/localization";
 import { completeOnboarding, saveOnboardingSetup } from "../services/onboarding.service";
 import type { OnboardingGoal, TrainingSetupPath } from "../types";
@@ -60,6 +60,7 @@ export function OnboardingWizard({
   const [step, setStep] = useState<Step>("welcome");
   const [hasWorkspace, setHasWorkspace] = useState(initialHasWorkspace);
   const [age, setAge] = useState("");
+  const [sex, setSex] = useState<ProfileSex | null>(null);
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState<OnboardingGoal | null>(null);
@@ -112,6 +113,10 @@ export function OnboardingWizard({
       setError(ar ? "اكتب سن صحيح بين 13 و100." : "Enter a valid age between 13 and 100.");
       return;
     }
+    if (!sex) {
+      setError(ar ? "اختار الجنس عشان نعرض الحسابات ورسومات الجسم المناسبة." : "Choose sex so OVRLD can use the relevant calculations and body visuals.");
+      return;
+    }
     if (!heightCm || heightCm < 120 || heightCm > 230) {
       setError(ar ? "اكتب طول صحيح بالسنتيمتر." : "Enter a valid height in centimeters.");
       return;
@@ -137,7 +142,7 @@ export function OnboardingWizard({
     const ageYears = numberOrNull(age);
     const heightCm = numberOrNull(height);
     const currentWeightKg = numberOrNull(weight);
-    if (!ageYears || !heightCm || !currentWeightKg || !goal || !trainingLevel || !weeklyDays || !setupPath) {
+    if (!ageYears || !sex || !heightCm || !currentWeightKg || !goal || !trainingLevel || !weeklyDays || !setupPath) {
       setError(ar ? "كمّل بيانات البداية المطلوبة." : "Complete the required setup details.");
       return;
     }
@@ -151,6 +156,7 @@ export function OnboardingWizard({
     try {
       await saveOnboardingSetup(userId, {
         ageYears,
+        sex,
         heightCm,
         currentWeightKg,
         goal,
@@ -233,10 +239,23 @@ export function OnboardingWizard({
             <p className="mt-2 text-sm leading-6 text-neutral-400">{ar ? "السن والطول والوزن بيساعدونا نخلي المتابعة مفهومة من أول يوم." : "Age, height, and current weight give your progress a useful baseline."}</p>
           </section>
 
-          <div className="gc-card grid gap-3 p-4 sm:grid-cols-3">
+          <div className="gc-card space-y-3 p-4">
+            <div>
+              <p className="mb-2 text-xs font-black text-neutral-500">{ar ? "الجنس" : "Sex"}</p>
+              <div className="grid grid-cols-2 gap-2">
+                {([["female", ar ? "بنت" : "Female"], ["male", ar ? "ولد" : "Male"]] as Array<[ProfileSex, string]>).map(([value, label]) => (
+                  <button key={value} type="button" onClick={() => { setSex(value); setError(null); }} className={`gc-choice-button ${sex === value ? "gc-choice-button-active" : ""}`}>
+                    <UserRound className="h-4 w-4" /> {label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[10px] leading-4 text-neutral-600">{ar ? "بنستخدمها فقط للحسابات ورسومات الجسم اللي تحتاجها." : "Used only for relevant calculations and body visuals."}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
             <label className="text-xs font-bold text-neutral-500">{ar ? "السن" : "Age"}<input value={age} onChange={(e) => setAge(e.target.value)} inputMode="numeric" className="gc-input mt-1" placeholder="23" /></label>
             <label className="text-xs font-bold text-neutral-500">{ar ? "الطول" : "Height"}<div className="relative mt-1"><input value={height} onChange={(e) => setHeight(e.target.value)} inputMode="decimal" className="gc-input pe-10" placeholder="165" /><span className="absolute inset-y-0 end-3 grid place-items-center text-xs text-neutral-500">cm</span></div></label>
             <label className="text-xs font-bold text-neutral-500">{ar ? "الوزن الحالي" : "Current weight"}<div className="relative mt-1"><input value={weight} onChange={(e) => setWeight(e.target.value)} inputMode="decimal" className="gc-input pe-10" placeholder="60" /><span className="absolute inset-y-0 end-3 grid place-items-center text-xs text-neutral-500">kg</span></div></label>
+            </div>
           </div>
         </>
       ) : null}
