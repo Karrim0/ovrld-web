@@ -3,17 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Clock3 } from "lucide-react";
 import { formatDuration } from "@/lib/utils/format";
-import { getSessionElapsedSeconds, isStaleActiveWorkout } from "../utils/session-time";
+import { getSessionElapsedSeconds, isStaleActiveWorkout, isStaleWorkoutSession } from "../utils/session-time";
 
 interface SessionElapsedTimeProps {
   startedAt: string;
+  scheduledDate?: string;
   completedAt?: string | null;
   compact?: boolean;
 }
 
-export function SessionElapsedTime({ startedAt, completedAt, compact = false }: SessionElapsedTimeProps) {
+export function SessionElapsedTime({ startedAt, scheduledDate, completedAt, compact = false }: SessionElapsedTimeProps) {
   const fixedEnd = useMemo(() => completedAt ? new Date(completedAt).getTime() : null, [completedAt]);
-  const stale = fixedEnd === null && isStaleActiveWorkout(startedAt);
+  const stale = fixedEnd === null && (scheduledDate
+    ? isStaleWorkoutSession(startedAt, scheduledDate)
+    : isStaleActiveWorkout(startedAt));
   const [seconds, setSeconds] = useState(() => fixedEnd === null ? 0 : getSessionElapsedSeconds(startedAt, fixedEnd));
 
   useEffect(() => {

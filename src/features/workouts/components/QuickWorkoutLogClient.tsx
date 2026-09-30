@@ -8,7 +8,7 @@ import { getArabicErrorMessage, translateExerciseName } from "@/lib/localization
 import { useActiveWorkout } from "../hooks/use-active-workout";
 import { usePreviousPerformances } from "../hooks/use-previous-performance";
 import { finishWorkoutSession, updateWorkoutSet } from "../services/workout-session.service";
-import { getSafeWorkoutDurationSeconds } from "../utils/session-time";
+import { getSafeWorkoutDurationSeconds, isHistoricalWorkoutDate, isStaleWorkoutSession } from "../utils/session-time";
 
 function parseNumber(input: HTMLInputElement | null) {
   if (!input || !input.value.trim()) return null;
@@ -38,6 +38,8 @@ export function QuickWorkoutLogClient() {
   const [error, setError] = useState<string | null>(null);
 
   const editingCompleted = session?.status === "completed" || requestedEdit;
+  const staleSession = session ? isStaleWorkoutSession(session.startedAt, session.scheduledDate) : false;
+  const historicalSession = session ? isHistoricalWorkoutDate(session.scheduledDate) : false;
 
   const savedExerciseIds = useMemo(() => {
     const saved = new Set(locallySavedExerciseIds);
@@ -115,9 +117,11 @@ export function QuickWorkoutLogClient() {
     setFinishing(true);
     try {
       const completedAtMs = eventTimestamp > 1_000_000_000_000 ? eventTimestamp : performance.timeOrigin + eventTimestamp;
-      const duration = getSafeWorkoutDurationSeconds(session!.startedAt, completedAtMs, session!.durationSeconds);
+      const duration = staleSession
+        ? Math.max(0, Math.floor(session!.durationSeconds))
+        : getSafeWorkoutDurationSeconds(session!.startedAt, completedAtMs, session!.durationSeconds);
       await finishWorkoutSession(session!.id, duration, session!.notes);
-      router.replace("/dashboard"); router.refresh();
+      router.replace(historicalSession ? "/workout/today" : "/dashboard"); router.refresh();
     } catch (caught) {
       setError(t(getArabicErrorMessage(caught, ar ? "معرفناش نقفل تمرينة النهارده." : "Could not finish today’s workout.")));
       setFinishing(false);
@@ -141,6 +145,7 @@ export function QuickWorkoutLogClient() {
       </header>
 
       <section className="gc-quick-workout-intro"><div><strong>{editingCompleted ? (ar ? "عدّل أرقام اليوم المحفوظ" : "Edit saved workout numbers") : (ar ? "آخر أرقامك موجودة قدامك تلقائيًا" : "Your last numbers are pre-filled")}</strong><p>{ar ? "الأرقام المقترحة لا تتحسب تسجيل إلا لما تحفظ التمرين نفسه." : "Suggested values do not count as logged until you save that exercise."}</p></div></section>
+      {!editingCompleted && staleSession ? <p className="rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-xs font-semibold text-amber-200">{ar ? "دي تمرينة قديمة مفتوحة. تسجيلك هنا هيفضل على تاريخها الأصلي، والوقت اللي فات مش هيتحسب كوقت تمرين." : "This is an older unfinished workout. Anything saved here stays on its original date, and old idle time will not count as workout time."}</p> : null}
       {error ? <p className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm font-semibold text-red-300" role="alert">{error}</p> : null}
 
       <div className="space-y-3">

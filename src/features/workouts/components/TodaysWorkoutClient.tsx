@@ -12,6 +12,7 @@ import type { SplitDayWithDetails, WeeklyScheduleDayWithDetails } from "@/featur
 import { fetchEffectiveWeekSchedule, fetchPersonalSplit } from "@/features/splits/services/split.service";
 import type { WorkoutSessionWithDetails } from "../types";
 import { getPlannedWorkoutMetrics, getSessionWorkoutMetrics } from "../utils/workout-metrics";
+import { isStaleWorkoutSession } from "../utils/session-time";
 import { fetchActiveWorkoutSession, fetchWorkoutHistory, startWorkoutSession } from "../services/workout-session.service";
 
 const DAY_BY_JS_INDEX: Record<number, Weekday> = {
@@ -25,6 +26,14 @@ function getLocalDateValue(date: Date): string {
 
 function getDayTitle(day: Pick<SplitDayWithDetails, "displayName" | "workoutType">) {
   return translateWorkoutLabel(day.displayName?.trim()) || (day.workoutType === "rest" ? "راحة" : "يوم تمرين");
+}
+
+function formatSessionDate(date: string, language: "ar" | "en"): string {
+  return new Intl.DateTimeFormat(language === "ar" ? "ar-EG" : "en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(`${date}T12:00:00`));
 }
 
 interface TodaysWorkoutClientProps { userId: UUID; compact?: boolean }
@@ -113,20 +122,22 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   if (activeSession) {
     const activeMetrics = getSessionWorkoutMetrics(activeSession.exercises);
     const { totalSets, completedSets } = activeMetrics;
+    const staleActiveSession = isStaleWorkoutSession(activeSession.startedAt, activeSession.scheduledDate);
+    const activeDateLabel = formatSessionDate(activeSession.scheduledDate, language);
     if (compact) {
       return (
         <section className="gc-home-train-card gc-home-train-card-active">
           <div className="flex items-start gap-3">
             <span className="gc-home-train-icon"><Play className="h-5 w-5" /></span>
             <div className="min-w-0 flex-1">
-              <span className="gc-home-action-label">{ar ? "تدرّب" : "Train"}</span>
-              <h2 className="mt-1 truncate text-2xl font-black tracking-[-0.04em]">{ar ? "كمّل تمرينتك" : "Resume workout"}</h2>
-              <p className="mt-1 text-sm font-semibold text-neutral-500">{completedSets}/{totalSets} {ar ? "سِتات مكتملة" : "sets completed"}</p>
+              <span className="gc-home-action-label">{staleActiveSession ? (ar ? "تمرينة قديمة مفتوحة" : "Older workout open") : (ar ? "تدرّب" : "Train")}</span>
+              <h2 className="mt-1 truncate text-2xl font-black tracking-[-0.04em]">{staleActiveSession ? (ar ? `حل تمرينة ${activeDateLabel}` : `Resolve ${activeDateLabel}`) : (ar ? "كمّل تمرينتك" : "Resume workout")}</h2>
+              <p className="mt-1 text-sm font-semibold text-neutral-500">{staleActiveSession ? (ar ? "لازم تكمّلها أو تنهيها قبل تمرينة النهارده." : "Resume or end it before starting today’s workout.") : `${completedSets}/${totalSets} ${ar ? "سِتات مكتملة" : "sets completed"}`}</p>
             </div>
           </div>
           <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.07]"><div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
           <div className="gc-home-train-actions mt-4">
-            <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button min-h-12 min-w-0 flex-1"><Play className="h-4 w-4" /> {ar ? "كمّل التمرينة" : "Resume workout"}</Link>
+            <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button min-h-12 min-w-0 flex-1"><Play className="h-4 w-4" /> {staleActiveSession ? (ar ? "حل التمرينة القديمة" : "Resolve old workout") : (ar ? "كمّل التمرينة" : "Resume workout")}</Link>
             <Link href={`/workout/quick?session=${activeSession.id}`} className="gc-secondary-button gc-home-quick-log-button min-h-12"><ListChecks className="h-4 w-4" /> <span>{ar ? "تسجيل سريع" : "Quick log"}</span></Link>
           </div>
         </section>
@@ -134,11 +145,11 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
     }
     return (
       <section className="gc-card border-[color:color-mix(in_srgb,var(--accent)_22%,var(--border))] p-5 sm:p-6">
-        <p className="gc-eyebrow">{ar ? "فيه تمرينة شغالة" : "Workout in progress"}</p>
-        <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">{ar ? "كمّل تمرينتك" : "Resume workout"}</h2>
-        <p className="mt-2 text-sm text-neutral-500">{ar ? `خلصت ${completedSets} من ${totalSets} سِتات.` : `${completedSets} of ${totalSets} sets completed.`}</p>
+        <p className="gc-eyebrow">{staleActiveSession ? (ar ? "تمرينة قديمة مفتوحة" : "Older workout still open") : (ar ? "فيه تمرينة شغالة" : "Workout in progress")}</p>
+        <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">{staleActiveSession ? (ar ? `تمرينة ${activeDateLabel} محتاجة تتحل` : `${activeDateLabel} workout needs resolution`) : (ar ? "كمّل تمرينتك" : "Resume workout")}</h2>
+        <p className="mt-2 text-sm text-neutral-500">{staleActiveSession ? (ar ? "تاريخها الأصلي هيفضل محفوظ. افتحها وكمّل من دلوقتي أو انهي الجلسة، وبعدها تمرينة النهارده هتظهر." : "Its original date will stay preserved. Resume it from now or end the session, then today’s workout will become available.") : (ar ? `خلصت ${completedSets} من ${totalSets} سِتات.` : `${completedSets} of ${totalSets} sets completed.`)}</p>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` }} /></div>
-        <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-5 w-full sm:w-auto"><Play className="h-4 w-4" /> {ar ? "كمّل التمرينة" : "Resume workout"}</Link>
+        <Link href={`/workout/active?session=${activeSession.id}`} className="gc-primary-button mt-5 w-full sm:w-auto"><Play className="h-4 w-4" /> {staleActiveSession ? (ar ? "حل التمرينة القديمة" : "Resolve old workout") : (ar ? "كمّل التمرينة" : "Resume workout")}</Link>
       </section>
     );
   }

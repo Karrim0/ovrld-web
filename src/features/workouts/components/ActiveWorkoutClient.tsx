@@ -59,7 +59,7 @@ import {
   updateWorkoutSet,
 } from "../services/workout-session.service";
 import { SessionElapsedTime } from "./SessionElapsedTime";
-import { getSafeWorkoutDurationSeconds, isStaleActiveWorkout } from "../utils/session-time";
+import { getSafeWorkoutDurationSeconds, isHistoricalWorkoutDate, isStaleWorkoutSession } from "../utils/session-time";
 import { getSessionWorkoutMetrics } from "../utils/workout-metrics";
 
 type GymPhase = "overview" | "ready" | "logging" | "post";
@@ -328,7 +328,8 @@ export function ActiveWorkoutClient() {
     ? currentExercise?.sets.findIndex((set) => set.id === activeSet.id) ?? 0
     : Math.max(0, (currentExercise?.sets.length ?? 1) - 1);
   const previousSet = previousSets[activeSetIndex];
-  const staleSession = session ? isStaleActiveWorkout(session.startedAt) : false;
+  const staleSession = session ? isStaleWorkoutSession(session.startedAt, session.scheduledDate) : false;
+  const historicalSession = session ? isHistoricalWorkoutDate(session.scheduledDate) : false;
   const progressionSuggestion = currentExercise
     ? buildProgressionSuggestion(previousSet, currentExercise.targetRepsMin, currentExercise.targetRepsMax, weightStep, language)
     : null;
@@ -707,15 +708,17 @@ export function ActiveWorkoutClient() {
     setError(null);
     try {
       await updateWorkoutSessionNotes(session.id, sessionNotes);
-      const durationSeconds = getSafeWorkoutDurationSeconds(
-        session.startedAt,
-        Date.now(),
-        session.durationSeconds,
-      );
+      const durationSeconds = staleSession
+        ? Math.max(0, Math.floor(session.durationSeconds))
+        : getSafeWorkoutDurationSeconds(
+            session.startedAt,
+            Date.now(),
+            session.durationSeconds,
+          );
       await finishWorkoutSession(session.id, durationSeconds, sessionNotes);
       restTimer.clear();
       restTimer.setScope(null);
-      router.replace(`/workout/${session.id}`);
+      router.replace(historicalSession ? "/workout/today" : `/workout/${session.id}`);
       router.refresh();
     } catch (caught) {
       setError(t(getArabicErrorMessage(caught, "معرفناش نخلّص التمرينة.")));
@@ -738,7 +741,7 @@ export function ActiveWorkoutClient() {
       await cancelWorkoutSession(session.id);
       restTimer.clear();
       restTimer.setScope(null);
-      router.replace("/dashboard");
+      router.replace(historicalSession ? "/workout/today" : "/dashboard");
       router.refresh();
     } catch (caught) {
       setError(t(getArabicErrorMessage(caught, "معرفناش نمسح التمرينة.")));
@@ -776,7 +779,7 @@ export function ActiveWorkoutClient() {
             <span className="block truncate text-[10px] font-bold text-neutral-500">{ar ? `تمرين ${currentIndex + 1}/${session.exercises.length} · ${totals.completedSets}/${totals.totalSets} سِت` : `Exercise ${currentIndex + 1} of ${session.exercises.length} · ${totals.completedSets}/${totals.totalSets} sets`}</span>
           </button>
           <span className="hidden rounded-lg bg-white/[0.04] px-2 py-1.5 text-[11px] font-bold text-neutral-400 min-[375px]:block">
-            <SessionElapsedTime startedAt={session.startedAt} compact />
+            <SessionElapsedTime startedAt={session.startedAt} scheduledDate={session.scheduledDate} compact />
           </span>
           <button
             type="button"
@@ -795,7 +798,7 @@ export function ActiveWorkoutClient() {
       {staleSession ? (
         <section className="gc-stale-session-alert" role="status">
           <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" />
-          <span className="min-w-0 flex-1 text-xs font-semibold text-neutral-400">{ar ? "الجلسة قديمة؛ الوقت القديم مش هيتحسب." : "This session is stale; old idle time will not count."}</span>
+          <span className="min-w-0 flex-1 text-xs font-semibold text-neutral-400">{ar ? "دي تمرينة قديمة لسه مفتوحة. تاريخها الأصلي هيفضل محفوظ؛ كمّل من دلوقتي أو انهيها من خيارات التمرينة." : "This is an older unfinished workout. Its original date stays preserved; resume from now or resolve it from Workout options."}</span>
           <button type="button" disabled={resumingStale} onClick={() => void resumeStaleSession()} className="gc-stale-session-resume disabled:opacity-50">
             <RefreshCcw className="h-3.5 w-3.5" /> {resumingStale ? (ar ? "بنعيد…" : "Resuming…") : (ar ? "كمّل من دلوقتي" : "Resume now")}
           </button>

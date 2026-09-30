@@ -17,11 +17,11 @@ import {
   workoutSetMutation,
 } from "@/lib/offline";
 import { generateClientId } from "@/lib/utils/id";
-import { getTodayISODate } from "@/lib/dates";
 import type { UUID, WorkoutExercise, WorkoutSession, WorkoutSet } from "@/types";
 import { fetchExerciseById, mapExercise } from "@/features/exercises/services/exercise.service";
 import type { SplitDayWithDetails } from "@/features/splits/types";
 import type { PreviousExercisePerformance, PreviousPerformanceMap, WorkoutSessionWithDetails } from "../types";
+import { shouldProtectLocalTerminalWorkout } from "../utils/session-lifecycle";
 
 type SessionRow = Tables<"workout_sessions">;
 type WorkoutExerciseRow = Tables<"workout_exercises">;
@@ -169,6 +169,13 @@ export async function fetchActiveWorkoutSession(): Promise<WorkoutSessionWithDet
     if (error) throw new Error(error.message);
     if (data) {
       const session = mapSession(data as unknown as WorkoutSessionQueryRow);
+      const localVersion = await getLocalWorkoutSession(session.id);
+      const protectTerminalLocalState = shouldProtectLocalTerminalWorkout(
+        localVersion,
+        session.id,
+        localVersion ? await hasPendingMutationsForWorkoutSession(session.id) : false,
+      );
+      if (protectTerminalLocalState) return null;
       if (local && local.id !== session.id) await removeLocalWorkoutSession(local.id);
       await cacheExercises(session.exercises.map((exercise) => exercise.exercise));
       await saveWorkoutLocally(session);
@@ -395,9 +402,9 @@ export async function resumeStaleWorkoutSession(sessionId: UUID): Promise<Workou
   const now = new Date().toISOString();
   const resumed: WorkoutSessionWithDetails = {
     ...session,
-    scheduledDate: getTodayISODate(),
+    // `scheduledDate` is workout identity/history and must never move when a
+    // stale session is resumed. `startedAt` is the resumed timer anchor.
     startedAt: now,
-    durationSeconds: 0,
     updatedAt: now,
   };
   await saveWorkoutLocally(resumed);

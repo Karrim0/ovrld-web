@@ -66,7 +66,8 @@ assert.match(gym, /getSafeWorkoutDurationSeconds/);
 
 const service = read("src/features/workouts/services/workout-session.service.ts");
 assert.match(service, /resumeStaleWorkoutSession/);
-assert.match(service, /scheduledDate: getTodayISODate\(\)/);
+const resumeBody = service.match(/export async function resumeStaleWorkoutSession[\s\S]*?\n}\n/)?.[0] ?? "";
+assert.doesNotMatch(resumeBody, /scheduledDate\s*:/, "Resuming a stale workout must preserve its original scheduledDate.");
 assert.match(service, /startedAt: now/);
 
 const packageJson = JSON.parse(read("package.json"));

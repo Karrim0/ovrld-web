@@ -104,9 +104,13 @@ async function syncMutation(mutation: OfflineMutation): Promise<void> {
 }
 
 let currentSync: Promise<SyncResult> | null = null;
+let syncRequestedWhileRunning = false;
 
 export async function processSyncQueue(): Promise<SyncResult> {
-  if (currentSync) return currentSync;
+  if (currentSync) {
+    syncRequestedWhileRunning = true;
+    return currentSync;
+  }
 
   currentSync = (async () => {
     if (!getCurrentNetworkStatus()) {
@@ -181,6 +185,12 @@ export async function processSyncQueue(): Promise<SyncResult> {
     return await currentSync;
   } finally {
     currentSync = null;
+    if (syncRequestedWhileRunning && getCurrentNetworkStatus()) {
+      syncRequestedWhileRunning = false;
+      queueMicrotask(() => void processSyncQueue());
+    } else {
+      syncRequestedWhileRunning = false;
+    }
   }
 }
 
@@ -191,5 +201,6 @@ export async function retryFailedSyncItems(): Promise<SyncResult> {
 
 export function requestSync(): void {
   if (typeof window === "undefined" || !getCurrentNetworkStatus()) return;
+  if (currentSync) syncRequestedWhileRunning = true;
   void processSyncQueue();
 }

@@ -93,10 +93,11 @@ for (const legacy of [
   "src/features/workouts/components/WorkoutSessionHeader.tsx",
   "src/features/workouts/components/WorkoutSetRow.tsx",
   "src/features/splits/components/EditSplitDayDialog.tsx",
-  "tsconfig.tsbuildinfo",
 ]) {
   assert.equal(exists(legacy), false, `Legacy/dead artifact still exists: ${legacy}`);
 }
+const gitignore = read(".gitignore");
+assert.match(gitignore, /^\*\.tsbuildinfo$/mu, "Generated TypeScript build info must remain ignored instead of being treated as a forbidden local artifact.");
 assert.equal(fs.readdirSync(root).some((name) => /^gym-crew-v1\..*\.patch$/u.test(name)), false, "Legacy root patch files must be removed.");
 
 const css = read("src/app/globals.css");
