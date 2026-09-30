@@ -144,6 +144,44 @@ export async function getLocalActiveWorkout(
   return session ? getLocalWorkoutSession(session.id) : null;
 }
 
+export interface LocalCompletedWorkoutForDateSummary {
+  id: UUID;
+  scheduledDate: string;
+  completedSets: number;
+  totalSets: number;
+}
+
+export async function getLocalCompletedWorkoutForDate(
+  userId: UUID,
+  scheduledDate: string,
+): Promise<LocalCompletedWorkoutForDateSummary | null> {
+  const db = getOfflineDatabase();
+  const sessions = await db.workoutSessions
+    .where("scheduledDate")
+    .equals(scheduledDate)
+    .filter((session) => session.userId === userId && session.status === "completed")
+    .toArray();
+  sessions.sort((a, b) => (b.completedAt ?? b.updatedAt).localeCompare(a.completedAt ?? a.updatedAt));
+  const session = sessions[0];
+  if (!session) return null;
+
+  const exerciseRows = await db.workoutExercises
+    .where("workoutSessionId")
+    .equals(session.id)
+    .toArray();
+  const setGroups = await Promise.all(
+    exerciseRows.map((exercise) => db.workoutSets.where("workoutExerciseId").equals(exercise.id).toArray()),
+  );
+  const sets = setGroups.flat();
+
+  return {
+    id: session.id,
+    scheduledDate: session.scheduledDate,
+    completedSets: sets.filter((set) => set.isCompleted).length,
+    totalSets: sets.length,
+  };
+}
+
 export async function getLocalWorkoutHistory(
   userId: UUID,
   limit = 100,

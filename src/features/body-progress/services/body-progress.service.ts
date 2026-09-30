@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { getTodayISODate } from "@/lib/dates";
 import type { UUID } from "@/types";
 import type { BodyGoal, BodyGoalType, BodyMeasurement, BodyProgressSnapshot } from "../types";
 
@@ -171,6 +172,8 @@ export interface AddBodyMeasurementInput {
 }
 
 export async function addBodyMeasurement(userId: UUID, input: AddBodyMeasurementInput): Promise<BodyMeasurement> {
+  const measuredAt = input.measuredAt ?? new Date().toISOString();
+  if (measuredAt.slice(0, 10) > getTodayISODate()) throw new Error("مينفعش تسجّل قياس جسم في تاريخ مستقبلي.");
   const supabase = createClient();
   const { data, error } = await supabase
     .from("body_measurements")
@@ -186,7 +189,7 @@ export async function addBodyMeasurement(userId: UUID, input: AddBodyMeasurement
       calf_cm: input.calfCm ?? null,
       neck_cm: input.neckCm ?? null,
       note: input.note?.trim() ?? "",
-      measured_at: input.measuredAt ?? new Date().toISOString(),
+      measured_at: measuredAt,
     })
     .select("*")
     .single();

@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { CalendarClock, Check, ChevronDown, Info, Ruler, Save } from "lucide-react";
-import type { UUID } from "@/types";
+import type { ISODateOnlyString, UUID } from "@/types";
+import { getTodayISODate } from "@/lib/dates";
 import { getArabicErrorMessage } from "@/lib/localization";
 import { addBodyMeasurement, saveBodyGoal } from "../services/body-progress.service";
 import type { BodyMeasurement, BodyProgressSnapshot } from "../types";
@@ -69,6 +70,7 @@ export function BodyMeasurementsPanel({
   const dueInDays = daysUntil(snapshot.nextBodyMeasurementAt);
   const [cadence, setCadence] = useState(String(snapshot.goal?.bodyMeasurementIntervalDays ?? 28));
   const [weight, setWeight] = useState(snapshot.latest?.weightKg ? String(snapshot.latest.weightKg) : "");
+  const [measurementDate, setMeasurementDate] = useState<ISODateOnlyString>(getTodayISODate());
   const [waist, setWaist] = useState("");
   const [hips, setHips] = useState("");
   const [chest, setChest] = useState("");
@@ -78,6 +80,7 @@ export function BodyMeasurementsPanel({
   const [neck, setNeck] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [note, setNote] = useState("");
+  const selectedDateMeasurement = snapshot.measurements.find((item) => item.measuredAt.slice(0, 10) === measurementDate) ?? null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -125,6 +128,8 @@ export function BodyMeasurementsPanel({
       return;
     }
 
+    if (measurementDate > getTodayISODate()) { setError("مينفعش تسجّل قياسات في تاريخ مستقبلي."); return; }
+
     setBusy(true);
     try {
       await addBodyMeasurement(userId, {
@@ -138,6 +143,7 @@ export function BodyMeasurementsPanel({
         calfCm: values.calf,
         neckCm: values.neck,
         note,
+        measuredAt: new Date(`${measurementDate}T12:00:00`).toISOString(),
       });
       setWaist(""); setHips(""); setChest(""); setThigh(""); setArm(""); setCalf(""); setNeck(""); setBodyFat(""); setNote("");
       setMessage("اتسجلت قياسات الجسم.");
@@ -219,9 +225,15 @@ export function BodyMeasurementsPanel({
             <ChevronDown className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" />
           </summary>
           <div className="border-t border-[var(--border)] p-3">
-            <label className="text-[10px] font-black text-neutral-500">الوزن وقت القياس · كجم
-              <input value={weight} onChange={(event) => setWeight(event.target.value)} inputMode="decimal" className="gc-input mt-1" placeholder="52.0" />
-            </label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="text-[10px] font-black text-neutral-500">الوزن وقت القياس · كجم
+                <input value={weight} onChange={(event) => setWeight(event.target.value)} inputMode="decimal" className="gc-input mt-1" placeholder="52.0" />
+              </label>
+              <label className="text-[10px] font-black text-neutral-500">تاريخ القياس
+                <input type="date" value={measurementDate} max={getTodayISODate()} onChange={(event) => setMeasurementDate(event.target.value as ISODateOnlyString)} className="gc-input mt-1" />
+              </label>
+            </div>
+            {selectedDateMeasurement ? <p className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)] px-3 py-2 text-[10px] font-semibold text-neutral-500">في قراءة محفوظة لليوم ده: <strong className="text-neutral-200">{selectedDateMeasurement.weightKg} كجم</strong></p> : null}
 
             <div className="mt-3 grid grid-cols-2 gap-2">
               {METRICS.slice(0, 5).map((metric) => (

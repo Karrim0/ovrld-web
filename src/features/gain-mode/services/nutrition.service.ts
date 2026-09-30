@@ -115,6 +115,7 @@ export async function fetchGainNutritionDay(
   calorieTargetKcal: number | null = null,
   proteinTargetGrams: number | null = null,
 ): Promise<GainNutritionDaySummary> {
+  if (date > getTodayISODate()) throw new Error("مينفعش تختار تاريخ في المستقبل.");
   const entries = await fetchGainNutritionRange(userId, date, date);
   return summarizeNutritionDay(date, entries, calorieTargetKcal, proteinTargetGrams);
 }
@@ -123,11 +124,12 @@ export async function fetchGainNutritionWeek(
   userId: UUID,
   calorieTargetKcal: number | null,
   proteinTargetGrams: number | null,
+  endDate: ISODateOnlyString = getTodayISODate(),
 ): Promise<GainNutritionDaySummary[]> {
-  const today = new Date();
-  const start = addDaysToDate(today, -6);
+  if (endDate > getTodayISODate()) throw new Error("مينفعش تختار تاريخ في المستقبل.");
+  const end = new Date(`${endDate}T12:00:00`);
+  const start = addDaysToDate(end, -6);
   const startDate = toISODateOnly(start);
-  const endDate = getTodayISODate();
   const entries = await fetchGainNutritionRange(userId, startDate, endDate);
 
   return Array.from({ length: 7 }, (_, index) => {
@@ -166,9 +168,12 @@ export async function addGainNutritionEntry(
   }
 
   const supabase = createClient();
+  const loggedOn = input.loggedOn ?? getTodayISODate();
+  if (loggedOn > getTodayISODate()) throw new Error("مينفعش تسجّل أكل في تاريخ مستقبلي.");
+
   const basePayload = {
     user_id: userId,
-    logged_on: input.loggedOn ?? getTodayISODate(),
+    logged_on: loggedOn,
     label: input.label?.trim().slice(0, 80) ?? "",
     calories_kcal: caloriesKcal,
     protein_grams: proteinGrams,
@@ -206,16 +211,42 @@ export async function deleteGainNutritionEntry(userId: UUID, entryId: UUID): Pro
 
 export async function fetchGainSavedMeals(userId: UUID): Promise<GainSavedMeal[]> {
   const supabase = createClient();
+  const pageSize = 200;
+  const rows: SavedMealRow[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("gain_saved_meals")
+      .select("*")
+      .eq("user_id", userId)
+      .order("use_count", { ascending: false })
+      .order("last_used_at", { ascending: false })
+      .order("created_at", { ascending: false })
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    const page = (data ?? []) as SavedMealRow[];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+  }
+
+  return rows.map(mapSavedMeal);
+}
+
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
+async function findSavedMealByLabel(userId: UUID, label: string): Promise<GainSavedMeal | null> {
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("gain_saved_meals")
     .select("*")
     .eq("user_id", userId)
-    .order("use_count", { ascending: false })
-    .order("last_used_at", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(30);
+    .ilike("label", escapeLikePattern(label))
+    .limit(1)
+    .maybeSingle();
   if (error) throw new Error(error.message);
-  return (data ?? []).map((row: unknown) => mapSavedMeal(row as SavedMealRow));
+  return data ? mapSavedMeal(data as SavedMealRow) : null;
 }
 
 export interface SaveGainMealInput {
@@ -233,8 +264,7 @@ export async function saveGainMeal(userId: UUID, input: SaveGainMealInput): Prom
   if (!Number.isFinite(proteinGrams) || proteinGrams < 0 || proteinGrams > 300) throw new Error("راجع بروتين الوجبة.");
   if (caloriesKcal === 0 && proteinGrams === 0) throw new Error("سجّل سعرات أو بروتين على الأقل.");
 
-  const existing = await fetchGainSavedMeals(userId);
-  const match = existing.find((meal) => meal.label.trim().toLocaleLowerCase("ar-EG") === label.toLocaleLowerCase("ar-EG"));
+  const match = await findSavedMealByLabel(userId, label);
   const supabase = createClient();
   if (match) {
     const { data, error } = await supabase
@@ -268,6 +298,7 @@ export async function deleteGainSavedMeal(userId: UUID, mealId: UUID): Promise<v
 }
 
 export async function logGainSavedMeal(mealId: UUID, loggedOn: ISODateOnlyString = getTodayISODate()): Promise<UUID> {
+  if (loggedOn > getTodayISODate()) throw new Error("مينفعش تسجّل وجبة في تاريخ مستقبلي.");
   const supabase = createClient();
   const { data, error } = await supabase.rpc("log_gain_saved_meal", {
     target_saved_meal_id: mealId,

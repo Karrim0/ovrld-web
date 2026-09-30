@@ -41,7 +41,14 @@ import { useRestTimer } from "@/contexts/rest-timer-context";
 import { useLanguage } from "@/contexts/language-context";
 import { fetchExerciseLibrary } from "@/features/exercises/services/exercise.service";
 import { CustomExerciseForm } from "@/features/exercises/components/CustomExerciseForm";
-import { addSplitExercise, fetchPersonalSplit } from "@/features/splits/services/split.service";
+import {
+  addSplitExercise,
+  fetchPersonalSplit,
+  removeSplitExercise,
+  replaceSplitExercise,
+  updateSplitExerciseTargets,
+} from "@/features/splits/services/split.service";
+import type { SplitDayWithDetails } from "@/features/splits/types";
 import type { Exercise, WorkoutSet } from "@/types";
 import { formatDuration } from "@/lib/utils/format";
 import { muscleLabelAr, translateExerciseName, translateWorkoutLabel } from "@/lib/localization";
@@ -50,11 +57,13 @@ import { usePreviousPerformances } from "../hooks/use-previous-performance";
 import {
   addExerciseToWorkout,
   cancelWorkoutSession,
-  deleteWorkoutExercise,
   finishWorkoutSession,
+  removeRemainingWorkoutExercise,
+  replaceWorkoutExerciseRemaining,
   resumeStaleWorkoutSession,
   reorderWorkoutExercises,
   updateWorkoutExerciseNotes,
+  updateWorkoutExercisePlan,
   updateWorkoutSessionNotes,
   updateWorkoutSet,
 } from "../services/workout-session.service";
@@ -225,6 +234,13 @@ export function ActiveWorkoutClient() {
   const [showCustomExercise, setShowCustomExercise] = useState(false);
   const [queueEditing, setQueueEditing] = useState(false);
   const [showWorkoutOptions, setShowWorkoutOptions] = useState(false);
+  const [showCurrentExerciseEditor, setShowCurrentExerciseEditor] = useState(false);
+  const [exerciseEditScope, setExerciseEditScope] = useState<"session" | "plan">("session");
+  const [editTargetSets, setEditTargetSets] = useState(2);
+  const [editTargetRepsMin, setEditTargetRepsMin] = useState(8);
+  const [editTargetRepsMax, setEditTargetRepsMax] = useState(12);
+  const [replacementExerciseId, setReplacementExerciseId] = useState("");
+  const [basePlanDay, setBasePlanDay] = useState<SplitDayWithDetails | null>(null);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [workoutTitle, setWorkoutTitle] = useState<string>(language === "ar" ? "التمرين" : "Workout");
   const [keepAwake, setKeepAwake] = useState(false);
@@ -270,10 +286,11 @@ export function ActiveWorkoutClient() {
     if (!session?.userId || !session.splitDayId) return;
     void fetchPersonalSplit(session.userId)
       .then((days) => {
-        const source = days.find((day) => day.id === session.splitDayId);
+        const source = days.find((day) => day.id === session.splitDayId) ?? null;
+        setBasePlanDay(source);
         if (source) setWorkoutTitle(t(translateWorkoutLabel(source.displayName)) || (ar ? "التمرين" : "Workout"));
       })
-      .catch(() => undefined);
+      .catch(() => setBasePlanDay(null));
   }, [ar, session?.splitDayId, session?.userId, t]);
 
   useEffect(() => {
@@ -319,6 +336,10 @@ export function ActiveWorkoutClient() {
   const previousPerformance = currentExercise
     ? performances[currentExercise.exerciseId]
     : undefined;
+  const basePlanExercise = currentExercise
+    ? basePlanDay?.exercises.find((item) => item.exerciseId === currentExercise.exerciseId) ?? null
+    : null;
+  const canUpdateRepeatingPlan = Boolean(isOnline && basePlanDay && basePlanExercise);
   const previousSets = useMemo(
     () => previousPerformance?.sets ?? [],
     [previousPerformance?.sets],
@@ -632,6 +653,69 @@ export function ActiveWorkoutClient() {
     }
   }
 
+  async function refreshBasePlanDay() {
+    if (!session?.userId || !session.splitDayId) return;
+    const days = await fetchPersonalSplit(session.userId);
+    setBasePlanDay(days.find((day) => day.id === session.splitDayId) ?? null);
+  }
+
+  async function saveCurrentExerciseTargets() {
+    if (!currentExercise) return;
+    if (exerciseEditScope === "plan" && (!canUpdateRepeatingPlan || !basePlanExercise)) {
+      setError(ar ? "تعديل الخطة المتكررة محتاج نت وتمرين مرتبط بالخطة." : "Updating the repeating plan requires connectivity and a linked plan exercise.");
+      return;
+    }
+    if (!Number.isInteger(editTargetSets) || !Number.isInteger(editTargetRepsMin) || !Number.isInteger(editTargetRepsMax)) {
+      setError(ar ? "راجع عدد السِتات ونطاق العدات." : "Check sets and rep targets.");
+      return;
+    }
+    const completedSetCount = currentExercise.sets.filter((set) => set.isCompleted).length;
+    setBusy(true);
+    setError(null);
+    try {
+      await updateWorkoutExercisePlan(currentExercise.id, { targetSets: editTargetSets, targetRepsMin: editTargetRepsMin, targetRepsMax: editTargetRepsMax });
+      if (exerciseEditScope === "plan") {
+        if (!canUpdateRepeatingPlan || !basePlanExercise) throw new Error(ar ? "تعديل الخطة المتكررة محتاج اتصال وتمرينة مرتبطة بالخطة." : "Updating the repeating plan requires a connected plan exercise.");
+        await updateSplitExerciseTargets(basePlanExercise.id, { targetSets: editTargetSets, targetRepsMin: editTargetRepsMin, targetRepsMax: editTargetRepsMax });
+        await refreshBasePlanDay();
+      }
+      await reload();
+      preparedSet.current = null;
+      if (completedSetCount >= editTargetSets) setPhase("overview");
+      setShowCurrentExerciseEditor(false);
+    } catch (caught) {
+      setError(t(getArabicErrorMessage(caught, ar ? "معرفناش نعدّل هدف التمرين." : "Could not update exercise targets.")));
+    } finally { setBusy(false); }
+  }
+
+  async function replaceCurrentExercise() {
+    if (!currentExercise) return;
+    if (exerciseEditScope === "plan" && (!canUpdateRepeatingPlan || !basePlanExercise)) {
+      setError(ar ? "تعديل الخطة المتكررة محتاج نت وتمرين مرتبط بالخطة." : "Updating the repeating plan requires connectivity and a linked plan exercise.");
+      return;
+    }
+    const replacement = library.find((item) => item.id === replacementExerciseId);
+    if (!replacement) { setError(ar ? "اختار التمرين البديل الأول." : "Choose a replacement exercise first."); return; }
+    setBusy(true);
+    setError(null);
+    try {
+      const planExercise = basePlanExercise;
+      await replaceWorkoutExerciseRemaining(currentExercise.id, replacement);
+      if (exerciseEditScope === "plan") {
+        if (!canUpdateRepeatingPlan || !planExercise) throw new Error(ar ? "تعديل الخطة المتكررة محتاج اتصال وتمرينة مرتبطة بالخطة." : "Updating the repeating plan requires a connected plan exercise.");
+        await replaceSplitExercise(planExercise.id, replacement.id);
+        await refreshBasePlanDay();
+      }
+      await reload();
+      preparedSet.current = null;
+      setShowCurrentExerciseEditor(false);
+      setShowWorkoutOptions(false);
+      setPhase("overview");
+    } catch (caught) {
+      setError(t(getArabicErrorMessage(caught, ar ? "معرفناش نستبدل التمرين." : "Could not replace the exercise.")));
+    } finally { setBusy(false); }
+  }
+
   async function addExercise(exercise = library.find((item) => item.id === selectedExercise)) {
     if (!session || !exercise) return;
     setBusy(true);
@@ -648,6 +732,7 @@ export function ActiveWorkoutClient() {
             targetSets: 2,
             isPersonalAddition: true,
           });
+          await refreshBasePlanDay();
         }
       }
       setSelectedExercise("");
@@ -666,15 +751,32 @@ export function ActiveWorkoutClient() {
 
   async function removeCurrentExercise() {
     if (!session || !currentExercise) return;
-    if (!window.confirm("تشيل التمرين ده من التمرينة الحالية؟")) return;
+    if (exerciseEditScope === "plan" && (!canUpdateRepeatingPlan || !basePlanExercise)) {
+      setError(ar ? "تعديل الخطة المتكررة محتاج نت وتمرين مرتبط بالخطة." : "Updating the repeating plan requires connectivity and a linked plan exercise.");
+      return;
+    }
+    const completedCount = currentExercise.sets.filter((set) => set.isCompleted).length;
+    const prompt = completedCount > 0
+      ? (ar ? `تشيل السِتات المتبقية من ${t(translateExerciseName(currentExercise.exercise.name))}؟ السِتات الـ${completedCount} المكتملة هتفضل محفوظة.` : `Remove the remaining sets from ${t(translateExerciseName(currentExercise.exercise.name))}? The ${completedCount} completed sets will stay in history.`)
+      : (ar ? `تشيل ${t(translateExerciseName(currentExercise.exercise.name))} من التمرينة الحالية؟` : `Remove ${t(translateExerciseName(currentExercise.exercise.name))} from this workout?`);
+    if (!window.confirm(prompt)) return;
     setBusy(true);
+    setError(null);
     try {
-      await deleteWorkoutExercise(currentExercise.id);
+      const planExercise = basePlanExercise;
+      await removeRemainingWorkoutExercise(currentExercise.id);
+      if (exerciseEditScope === "plan") {
+        if (!canUpdateRepeatingPlan || !planExercise) throw new Error(ar ? "تعديل الخطة المتكررة محتاج اتصال وتمرينة مرتبطة بالخطة." : "Updating the repeating plan requires a connected plan exercise.");
+        await removeSplitExercise(planExercise.id);
+        await refreshBasePlanDay();
+      }
       await reload();
       setCurrentIndex((index) => Math.max(0, Math.min(index, session.exercises.length - 2)));
+      setShowCurrentExerciseEditor(false);
+      setShowWorkoutOptions(false);
       setPhase("overview");
     } catch (caught) {
-      setError(t(getArabicErrorMessage(caught, "معرفناش نشيل التمرين.")));
+      setError(t(getArabicErrorMessage(caught, ar ? "معرفناش نشيل التمرين." : "Could not remove the exercise.")));
     } finally {
       setBusy(false);
     }
@@ -863,9 +965,12 @@ export function ActiveWorkoutClient() {
           </div>
 
           {queueEditing ? (
-            <button type="button" onClick={() => { setShowWorkoutOptions(true); setShowExercisePicker(true); }} className="gc-secondary-button w-full">
-              <ListPlus className="h-4 w-4" /> {ar ? "ضيف تمرين" : "Add exercise"}
-            </button>
+            <div className="space-y-2">
+              <p className="text-center text-[10px] font-black text-neutral-500">THIS WORKOUT ONLY · {ar ? "ترتيب القائمة هنا يغيّر الجلسة الحالية فقط" : "Queue ordering here changes only this workout"}</p>
+              <button type="button" onClick={() => { setShowWorkoutOptions(true); setShowExercisePicker(true); }} className="gc-secondary-button w-full">
+                <ListPlus className="h-4 w-4" /> {ar ? "ضيف تمرين" : "Add exercise"}
+              </button>
+            </div>
           ) : null}
 
           {workoutComplete ? (
@@ -1092,12 +1197,62 @@ export function ActiveWorkoutClient() {
 
 
               {phase !== "overview" ? (
-                <button type="button" disabled={busy} onClick={() => { setShowWorkoutOptions(false); void removeCurrentExercise(); }} className="gc-workout-option-row">
-                  <span className="gc-workout-option-icon"><Trash2 className="h-4 w-4" /></span>
-                  <span className="min-w-0 flex-1 text-start"><strong>{ar ? "شيل التمرين الحالي" : "Remove current exercise"}</strong><small>{ar ? "من الجلسة الحالية" : "From this session"}</small></span>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    if (!showCurrentExerciseEditor && currentExercise) {
+                      setEditTargetSets(currentExercise.sets.length);
+                      setEditTargetRepsMin(currentExercise.targetRepsMin);
+                      setEditTargetRepsMax(currentExercise.targetRepsMax);
+                      setReplacementExerciseId("");
+                      setExerciseEditScope("session");
+                    }
+                    setShowCurrentExerciseEditor((value) => !value);
+                  }}
+                  className="gc-workout-option-row"
+                >
+                  <span className="gc-workout-option-icon"><SlidersHorizontal className="h-4 w-4" /></span>
+                  <span className="min-w-0 flex-1 text-start"><strong>{ar ? "عدّل التمرين الحالي" : "Edit current exercise"}</strong><small>{ar ? "السِتات والعدات والاستبدال أو الحذف" : "Sets, reps, replacement, or removal"}</small></span>
+                  <ChevronLeft className={`h-4 w-4 text-neutral-600 transition-transform ${showCurrentExerciseEditor ? "-rotate-90" : ""}`} />
                 </button>
               ) : null}
             </div>
+
+            {phase !== "overview" && showCurrentExerciseEditor ? (
+              <div className="mt-3 space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-3">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.08em] text-neutral-500">{ar ? "تعديل مباشر" : "Live edit"}</p>
+                  <p className="mt-1 text-sm font-bold">{t(translateExerciseName(currentExercise.exercise.name))}</p>
+                  <p className="mt-1 text-[11px] font-semibold text-neutral-500">{ar ? "أي سِت مكتملة هتفضل محفوظة مهما غيّرت الباقي." : "Completed sets stay preserved while you change the remaining workout."}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2" aria-label={ar ? "نطاق التعديل" : "Edit scope"}>
+                  <button type="button" onClick={() => setExerciseEditScope("session")} className={`gc-secondary-button min-h-10 text-xs ${exerciseEditScope === "session" ? "ring-1 ring-[var(--accent)]" : ""}`}>THIS WORKOUT ONLY</button>
+                  <button type="button" disabled={!canUpdateRepeatingPlan} onClick={() => setExerciseEditScope("plan")} className={`gc-secondary-button min-h-10 text-xs disabled:opacity-40 ${exerciseEditScope === "plan" ? "ring-1 ring-[var(--accent)]" : ""}`}>ALSO UPDATE REPEATING PLAN</button>
+                </div>
+                {!canUpdateRepeatingPlan ? <p className="text-[11px] font-semibold text-neutral-500">{!isOnline ? (ar ? "وصّل النت لو عايز نفس التعديل يتحفظ في الخطة المتكررة." : "Go online to persist the same change to the repeating plan.") : (ar ? "التمرين ده مش مرتبط بتمرين مطابق في الخطة المتكررة؛ التعديل للجلسة الحالية فقط." : "This exercise is not linked to a matching repeating-plan exercise, so changes are session-only.")}</p> : null}
+
+                <div className="grid grid-cols-3 gap-2">
+                  <label className="text-[11px] font-bold text-neutral-500">{ar ? "السِتات" : "Sets"}<input type="number" min={1} max={20} value={editTargetSets} onChange={(event) => setEditTargetSets(Number(event.target.value))} className="gc-input mt-1" /></label>
+                  <label className="text-[11px] font-bold text-neutral-500">{ar ? "أقل عدات" : "Min reps"}<input type="number" min={1} max={100} value={editTargetRepsMin} onChange={(event) => setEditTargetRepsMin(Number(event.target.value))} className="gc-input mt-1" /></label>
+                  <label className="text-[11px] font-bold text-neutral-500">{ar ? "أعلى عدات" : "Max reps"}<input type="number" min={1} max={100} value={editTargetRepsMax} onChange={(event) => setEditTargetRepsMax(Number(event.target.value))} className="gc-input mt-1" /></label>
+                </div>
+                <button type="button" disabled={busy} onClick={() => void saveCurrentExerciseTargets()} className="gc-primary-button w-full disabled:opacity-40"><Check className="h-4 w-4" /> {ar ? "حفظ الهدف" : "Save targets"}</button>
+
+                <div className="border-t border-[var(--border)] pt-3">
+                  <label className="text-[11px] font-bold text-neutral-500">{ar ? "استبدال التمرين" : "Replace exercise"}
+                    <select value={replacementExerciseId} onChange={(event) => setReplacementExerciseId(event.target.value)} className="gc-input mt-1 text-sm">
+                      <option value="">{ar ? "اختار البديل…" : "Choose replacement…"}</option>
+                      {availableExercises.map((exercise) => <option key={exercise.id} value={exercise.id}>{t(translateExerciseName(exercise.name))}</option>)}
+                    </select>
+                  </label>
+                  <button type="button" disabled={!replacementExerciseId || busy} onClick={() => void replaceCurrentExercise()} className="gc-secondary-button mt-2 w-full disabled:opacity-40"><RefreshCcw className="h-4 w-4" /> {ar ? "استبدال الباقي" : "Replace remaining"}</button>
+                </div>
+
+                <button type="button" disabled={busy} onClick={() => void removeCurrentExercise()} className="gc-secondary-button w-full border-red-400/20 text-red-300 disabled:opacity-40"><Trash2 className="h-4 w-4" /> {ar ? "حذف الباقي من التمرين" : "Remove remaining exercise"}</button>
+              </div>
+            ) : null}
 
             {showExercisePicker ? (
               <div className="mt-3 space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-3">
@@ -1105,7 +1260,8 @@ export function ActiveWorkoutClient() {
                   <option value="">{ar ? "اختار تمرين…" : "Choose an exercise…"}</option>
                   {availableExercises.map((exercise) => <option key={exercise.id} value={exercise.id}>{t(translateExerciseName(exercise.name))}</option>)}
                 </select>
-                <label className="flex items-center gap-2 text-xs font-semibold text-neutral-400"><input type="checkbox" checked={permanent} onChange={(event) => setPermanent(event.target.checked)} /> {ar ? "ضيفه كمان للجدول" : "Also add to base plan"}</label>
+                <p className="text-[11px] font-bold text-neutral-500">{permanent ? "ALSO UPDATE REPEATING PLAN" : "THIS WORKOUT ONLY"}</p>
+                <label className="flex items-center gap-2 text-xs font-semibold text-neutral-400"><input type="checkbox" checked={permanent} onChange={(event) => setPermanent(event.target.checked)} /> {ar ? "ضيفه كمان للخطة المتكررة" : "Also add to repeating plan"}</label>
                 {!isOnline && permanent ? <p className="text-xs font-semibold text-amber-300">{ar ? "تعديل الجدول محتاج نت؛ هيتحفظ في الجلسة الحالية بس." : "Editing the base plan needs internet; it will only be saved to this session for now."}</p> : null}
                 <button type="button" disabled={!selectedExercise || busy} onClick={() => void addExercise()} className="gc-primary-button w-full disabled:opacity-40"><Plus className="h-4 w-4" /> {ar ? "إضافة" : "Add"}</button>
                 <button type="button" onClick={() => setShowCustomExercise((value) => !value)} className="gc-gym-text-action w-full">{ar ? "تمرين مخصص" : "Custom exercise"}</button>

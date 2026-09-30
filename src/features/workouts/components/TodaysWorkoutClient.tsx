@@ -13,7 +13,7 @@ import { fetchEffectiveWeekSchedule, fetchPersonalSplit } from "@/features/split
 import type { WorkoutSessionWithDetails } from "../types";
 import { getPlannedWorkoutMetrics, getSessionWorkoutMetrics } from "../utils/workout-metrics";
 import { isStaleWorkoutSession } from "../utils/session-time";
-import { fetchActiveWorkoutSession, fetchWorkoutHistory, startWorkoutSession } from "../services/workout-session.service";
+import { fetchActiveWorkoutSession, fetchCompletedWorkoutForDate, startWorkoutSession, type CompletedWorkoutForDateSummary } from "../services/workout-session.service";
 
 const DAY_BY_JS_INDEX: Record<number, Weekday> = {
   0: "sunday", 1: "monday", 2: "tuesday", 3: "wednesday", 4: "thursday", 5: "friday", 6: "saturday",
@@ -45,7 +45,7 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   const [baseDays, setBaseDays] = useState<SplitDayWithDetails[]>([]);
   const [weekDays, setWeekDays] = useState<WeeklyScheduleDayWithDetails[]>([]);
   const [activeSession, setActiveSession] = useState<WorkoutSessionWithDetails | null>(null);
-  const [completedToday, setCompletedToday] = useState<WorkoutSessionWithDetails | null>(null);
+  const [completedToday, setCompletedToday] = useState<CompletedWorkoutForDateSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
   const [alternateDayId, setAlternateDayId] = useState("");
@@ -62,22 +62,22 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
     setIsLoading(true);
     setError(null);
     try {
-      const [split, week, active, history] = await Promise.all([
-        fetchPersonalSplit(userId),
+      const [split, week, active, completed] = await Promise.all([
+        compact ? Promise.resolve([] as SplitDayWithDetails[]) : fetchPersonalSplit(userId),
         fetchEffectiveWeekSchedule(userId, currentDate),
         fetchActiveWorkoutSession(),
-        fetchWorkoutHistory(userId),
+        fetchCompletedWorkoutForDate(userId, currentDate),
       ]);
       setBaseDays(split);
       setWeekDays(week);
       setActiveSession(active);
-      setCompletedToday(history.find((session) => session.scheduledDate === currentDate && session.status === "completed") ?? null);
+      setCompletedToday(completed);
     } catch (caught) {
       setError(getArabicErrorMessage(caught, "معرفناش نحمّل تمرينة النهارده."));
     } finally {
       setIsLoading(false);
     }
-  }, [currentDate, userId]);
+  }, [compact, currentDate, userId]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void load(), 0);
@@ -155,7 +155,6 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
   }
 
   if (completedToday) {
-    const doneMetrics = getSessionWorkoutMetrics(completedToday.exercises);
     return (
       <section className="gc-home-train-card">
         <div className="flex items-start gap-3">
@@ -163,7 +162,7 @@ export function TodaysWorkoutClient({ userId, compact = false }: TodaysWorkoutCl
           <div className="min-w-0 flex-1">
             <span className="gc-home-action-label">{ar ? "تمرين النهارده" : "Today’s workout"}</span>
             <h2 className="mt-1 text-2xl font-black tracking-[-0.04em]">{ar ? "التمرين مكتمل" : "Workout complete"}</h2>
-            <p className="mt-1 text-sm font-semibold text-neutral-500">{doneMetrics.completedSets} {ar ? "سِت محفوظة · تقدر تعدّل أي رقم" : "sets saved · edit any number if needed"}</p>
+            <p className="mt-1 text-sm font-semibold text-neutral-500">{completedToday.completedSets} {ar ? "سِت محفوظة · تقدر تعدّل أي رقم" : "sets saved · edit any number if needed"}</p>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">

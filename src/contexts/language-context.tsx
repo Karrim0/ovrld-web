@@ -28,6 +28,17 @@ interface LanguageContextValue {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
+type LocalizationRuntimeProfile = {
+  callbacks: number;
+  records: number;
+  lastDurationMs: number;
+  maxDurationMs: number;
+};
+
+type ProfiledWindow = Window & {
+  __OVRLD_LOCALIZATION_PROFILE__?: LocalizationRuntimeProfile;
+};
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<AppLanguage>("ar");
   const languageRef = useRef<AppLanguage>("ar");
@@ -44,6 +55,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     localizeDom(document.documentElement, language);
 
     const observer = new MutationObserver((records) => {
+      const shouldProfile = process.env.NODE_ENV === "development";
+      const startedAt = shouldProfile ? performance.now() : 0;
       for (const record of records) {
         if (record.type === "characterData") {
           localizeDom(record.target, languageRef.current);
@@ -54,6 +67,21 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           continue;
         }
         for (const node of record.addedNodes) localizeDom(node, languageRef.current);
+      }
+
+      // Instrument the current runtime approach before changing it. In dev,
+      // inspect window.__OVRLD_LOCALIZATION_PROFILE__ during Gym Mode to see
+      // whether mutation-driven localization is actually a hot path.
+      if (shouldProfile) {
+        const profiledWindow = window as ProfiledWindow;
+        const durationMs = performance.now() - startedAt;
+        const previous = profiledWindow.__OVRLD_LOCALIZATION_PROFILE__ ?? { callbacks: 0, records: 0, lastDurationMs: 0, maxDurationMs: 0 };
+        profiledWindow.__OVRLD_LOCALIZATION_PROFILE__ = {
+          callbacks: previous.callbacks + 1,
+          records: previous.records + records.length,
+          lastDurationMs: durationMs,
+          maxDurationMs: Math.max(previous.maxDurationMs, durationMs),
+        };
       }
     });
 

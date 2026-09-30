@@ -246,7 +246,6 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
   const requestedWeekday = searchParams.get("day") as Weekday | null;
   const [view, setView] = useState<"week" | "base">(mode === "personal" ? "week" : "base");
   const [editingDay, setEditingDay] = useState(false);
-  const [editingExercises, setEditingExercises] = useState(false);
   const [days, setDays] = useState<SplitDayWithDetails[]>([]);
   const [weekDays, setWeekDays] = useState<WeeklyScheduleDayWithDetails[]>([]);
   const [library, setLibrary] = useState<Exercise[]>([]);
@@ -521,8 +520,8 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
       {mode === "personal" ? (
         <section className="gc-card p-2">
           <div className="grid grid-cols-2 gap-1 rounded-2xl bg-black/20 p-1">
-            <button type="button" onClick={() => { setView("week"); setEditingDay(false); setEditingExercises(false); }} className={`min-h-14 rounded-xl text-sm font-bold transition ${view === "week" ? "bg-emerald-300 text-[#11131a]" : "text-neutral-400"}`}>{ar ? "الأسبوع ده" : "This Week"}<span className="mt-0.5 block text-[9px] font-semibold opacity-65">{ar ? "تغييرات الأسبوع الحالي فقط" : "Changes only this week"}</span></button>
-            <button type="button" onClick={() => { setView("base"); setEditingDay(false); setEditingExercises(false); }} className={`min-h-14 rounded-xl text-sm font-bold transition ${view === "base" ? "bg-emerald-300 text-[#11131a]" : "text-neutral-400"}`}>{ar ? "الخطة المتكررة" : "Repeating Plan"}<span className="mt-0.5 block text-[9px] font-semibold opacity-65">{ar ? "جدولك الافتراضي كل أسبوع" : "Your default weekly schedule"}</span></button>
+            <button type="button" onClick={() => { setView("week"); setEditingDay(false); }} className={`min-h-14 rounded-xl text-sm font-bold transition ${view === "week" ? "bg-emerald-300 text-[#11131a]" : "text-neutral-400"}`}>{ar ? "الأسبوع ده" : "This Week"}<span className="mt-0.5 block text-[9px] font-semibold opacity-65">{ar ? "تغييرات الأسبوع الحالي فقط" : "Changes only this week"}</span></button>
+            <button type="button" onClick={() => { setView("base"); setEditingDay(false); }} className={`min-h-14 rounded-xl text-sm font-bold transition ${view === "base" ? "bg-emerald-300 text-[#11131a]" : "text-neutral-400"}`}>{ar ? "الخطة المتكررة" : "Repeating Plan"}<span className="mt-0.5 block text-[9px] font-semibold opacity-65">{ar ? "جدولك الافتراضي كل أسبوع" : "Your default weekly schedule"}</span></button>
           </div>
         </section>
       ) : null}
@@ -554,7 +553,6 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
               <button key={isWeekDay ? day.scheduleDate : day.id} type="button" role="tab" aria-selected={active} onClick={() => {
                 if (isWeekDay) setSelectedWeekDate(day.scheduleDate); else selectBase(day);
                 setEditingDay(false);
-                setEditingExercises(false);
                 setMessage(null);
               }} className={`gc-week-day-card ${active ? "gc-week-day-card-active gc-week-day-card-selected" : ""}`}>
                 <span className={`block text-[10px] font-black uppercase ${active ? "text-emerald-200" : "text-neutral-500"}`}>{t(SHORT_DAY[weekday])}</span>
@@ -578,7 +576,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                 <h3 className="mt-1 truncate text-xl font-black">{formType === "rest" ? (ar ? "راحة" : "Rest") : formName}</h3>
                 <p className="mt-1 text-xs font-semibold text-neutral-500">{formType === "rest" ? (ar ? "يوم راحة" : "Rest day") : `${metrics.exerciseCount} ${ar ? "تمارين" : "exercises"} · ${setCount} ${ar ? "سِتات" : "sets"} · ~${minutes} min`}</p>
               </div>
-              {canEdit ? <button type="button" onClick={() => { setEditingDay(true); setEditingExercises(false); }} className="gc-secondary-button shrink-0">{ar ? "عدّل اليوم" : "Edit day"}</button> : null}
+              {canEdit ? <button type="button" onClick={() => { setEditingDay(true); }} className="gc-secondary-button shrink-0">{ar ? "عدّل التمرين" : "Edit workout"}</button> : null}
             </div>
           );
         })() : null}
@@ -610,8 +608,8 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
       {selected && editingDay ? (
         <section className="gc-card overflow-visible">
           <div className="flex items-center gap-3 border-b border-[var(--border)] p-3 sm:px-5">
-            <button type="button" onClick={() => { setEditingDay(false); setEditingExercises(false); }} className="gc-icon-button" aria-label={ar ? "ارجع" : "Back"}><ChevronLeft className="h-4 w-4 rtl:rotate-180" /></button>
-            <div><p className="gc-eyebrow">{ar ? "تعديل اليوم" : "Edit Day"}</p><strong className="text-sm">{t(view === "week" && selectedWeekday ? LONG_DAY[selectedWeekday] : LONG_DAY[selectedBase.weekday])}</strong></div>
+            <button type="button" onClick={() => { setEditingDay(false); }} className="gc-icon-button" aria-label={ar ? "ارجع" : "Back"}><ChevronLeft className="h-4 w-4 rtl:rotate-180" /></button>
+            <div><p className="gc-eyebrow">{ar ? "تعديل التمرين" : "Edit Workout"}</p><strong className="text-sm">{t(view === "week" && selectedWeekday ? LONG_DAY[selectedWeekday] : LONG_DAY[selectedBase.weekday])}</strong></div>
           </div>
           <div className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
@@ -653,7 +651,7 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                         const Icon = ICONS[day.iconKey];
                         return <button key={day.id} type="button" onClick={() => chooseWeekSource(day.id)} className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 text-start ${active ? "border-emerald-300/45 bg-emerald-300/[0.1]" : "border-white/[0.08] bg-white/[0.025]"}`}><Icon className="h-4 w-4 text-emerald-200" /><span className="min-w-0"><strong className="block truncate text-sm">{titleFor(day)}</strong><span className="block truncate text-[11px] text-neutral-500">{day.focusLabel ?? (ar ? "مخصص" : "Custom")}</span></span>{active ? <Check className="ms-auto h-4 w-4 text-emerald-200" /> : null}</button>;
                       })}
-                      <button type="button" onClick={() => { setView("base"); setEditingDay(true); setEditingExercises(true); }} className="gc-secondary-button sm:col-span-2"><Plus className="h-4 w-4" /> {ar ? "أنشئ تمرين جديد" : "Create new workout"}</button>
+                      <button type="button" onClick={() => { setView("base"); setEditingDay(true); }} className="gc-secondary-button sm:col-span-2"><Plus className="h-4 w-4" /> {ar ? "أنشئ تمرين جديد" : "Create new workout"}</button>
                     </div>
                   </details>
                 ) : null}
@@ -696,16 +694,15 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
 
           {view === "week" ? (
             <div className="border-t border-white/[0.06] p-4 sm:p-5">
-              <p className="text-sm leading-6 text-neutral-500">{ar ? "التمارين جاية من" : "Exercises come from"} <strong className="text-neutral-300">{selectedWeek?.sourceDay ? t(titleFor(selectedWeek.sourceDay)) : (ar ? "جدولك الأساسي" : "your repeating plan")}</strong>. {ar ? "عشان تغيّر قائمة التمارين، افتح تبويب الجدول الأساسي." : "To change the exercise list, edit the repeating workout."}</p>
-              <button type="button" onClick={() => { setView("base"); if (selectedWeek?.sourceSplitDayId) setSelectedBaseId(selectedWeek.sourceSplitDayId); setEditingDay(true); }} className="gc-secondary-button mt-3">{ar ? "عدّل تمارينه" : "Edit workout exercises"}</button>
+              <p className="text-sm leading-6 text-neutral-500">{ar ? "التمارين جاية من" : "Exercises come from"} <strong className="text-neutral-300">{selectedWeek?.sourceDay ? t(titleFor(selectedWeek.sourceDay)) : (ar ? "جدولك الأساسي" : "your repeating plan")}</strong>. {ar ? "تعديلات الأسبوع هنا لا تغيّر قائمة التمارين الدائمة." : "This-week changes do not rewrite the repeating exercise list."}</p>
+              <button type="button" onClick={() => { setView("base"); if (selectedWeek?.sourceSplitDayId) setSelectedBaseId(selectedWeek.sourceSplitDayId); setEditingDay(true); }} className="gc-secondary-button mt-3">{ar ? "افتح Edit Workout للخطة المتكررة" : "Open repeating Edit Workout"}</button>
             </div>
-          ) : selectedBase.workoutType === "rest" ? (
+          ) : formType === "rest" ? (
             <div className="border-t border-white/[0.06] p-4 sm:p-5"><div className="rounded-2xl border border-dashed border-white/[0.1] p-5 text-center"><Moon className="mx-auto h-5 w-5 text-sky-200" /><p className="mt-2 font-bold">{ar ? "يوم راحة" : "Rest day"}</p><p className="mt-1 text-sm text-neutral-500">{ar ? "التمارين المحفوظة هتفضل موجودة وترجع لو اليوم بقى تمرين تاني." : "Saved exercises stay attached and return if this becomes a training day again."}</p></div></div>
-          ) : editingExercises ? (
+          ) : (
             <div className="border-t border-white/[0.06] p-4 sm:p-5">
               <div className="mb-3 flex items-center gap-3">
-                <button type="button" onClick={() => setEditingExercises(false)} className="gc-icon-button" aria-label={ar ? "ارجع" : "Back"}><ChevronLeft className="h-4 w-4 rtl:rotate-180" /></button>
-                <div className="min-w-0 flex-1"><p className="gc-eyebrow">{formName}</p><h3 className="text-lg font-black">{ar ? "التمارين" : "Exercises"}</h3></div>
+                <div className="min-w-0 flex-1"><p className="gc-eyebrow">{ar ? "قائمة التمرين" : "Workout exercises"}</p><h3 className="text-lg font-black">{formName}</h3><p className="mt-1 text-[11px] font-semibold text-neutral-500">{ar ? "الترتيب · الاستبدال · السِتات والعدات في نفس شاشة التعديل" : "Order · replacement · sets and reps in the same editor"}</p></div>
                 <span className="gc-chip">{selectedBase.exercises.length}</span>
               </div>
               <ul className="space-y-2">{selectedBase.exercises.map((item, index) => <ExerciseEditor key={`${item.id}:${item.targetSets}:${item.targetRepsMin}:${item.targetRepsMax}`} item={item} index={index} count={selectedBase.exercises.length} canEdit={canEdit} alternatives={library.filter((exercise) => exercise.primaryMuscle === item.exercise.primaryMuscle && exercise.id !== item.exerciseId && !selectedBase.exercises.some((saved) => saved.exerciseId === exercise.id))} onReload={loadAll} onError={setError} />)}</ul>
@@ -714,16 +711,9 @@ export function SplitManager({ mode, groupId, userId, role }: SplitManagerProps)
                 <div className="mt-4 space-y-3">
                   <div className="flex gap-2"><select value={selectedExercise} onChange={(event) => setSelectedExercise(event.target.value)} className="gc-input min-w-0 flex-1 text-sm"><option value="">{ar ? "اختار تمرين…" : "Choose an exercise…"}</option>{availableExercises.map((exercise) => <option key={exercise.id} value={exercise.id}>{t(translateExerciseName(exercise.name))}</option>)}</select><button type="button" disabled={!selectedExercise || busy} onClick={() => void addExercise()} className="gc-primary-button min-h-12 px-4 disabled:opacity-40"><Plus className="h-4 w-4" /> {ar ? "ضيف" : "Add"}</button></div>
                   <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setShowCustomExercise((value) => !value)} className="gc-secondary-button"><Plus className="h-4 w-4" /> {ar ? "تمرين مخصص" : "Custom exercise"}</button><button type="button" disabled={selectedBase.exercises.length === 0 || busy} onClick={() => void clearDay()} className="gc-secondary-button text-red-300 disabled:opacity-40"><Trash2 className="h-4 w-4" /> {ar ? "فضّي اليوم" : "Clear day"}</button></div>
-                  {showCustomExercise ? <CustomExerciseForm defaultWorkoutType={selectedBase.workoutType} onCreated={addExercise} onCancel={() => setShowCustomExercise(false)} /> : null}
+                  {showCustomExercise ? <CustomExerciseForm defaultWorkoutType={selectedBase.workoutType === "rest" ? "custom" : selectedBase.workoutType} onCreated={addExercise} onCancel={() => setShowCustomExercise(false)} /> : null}
                 </div>
               ) : null}
-            </div>
-          ) : (
-            <div className="border-t border-white/[0.06] p-4 sm:p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div><p className="gc-eyebrow">{ar ? "التمرين" : "Workout"}</p><h3 className="mt-1 text-lg font-black">{t(formName)}</h3><p className="mt-1 text-xs font-semibold text-neutral-500">{getPlannedWorkoutMetrics(selectedBase.exercises).exerciseCount} {ar ? "تمارين" : "exercises"} · {getPlannedWorkoutMetrics(selectedBase.exercises).totalSets} {ar ? "سِتات" : "sets"}</p></div>
-                <button type="button" onClick={() => setEditingExercises(true)} className="gc-secondary-button">{ar ? "عدّل التمارين" : "Edit exercises"}</button>
-              </div>
             </div>
           )}
         </section>

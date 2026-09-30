@@ -23,6 +23,9 @@ type SplitExerciseQueryRow = SplitExerciseRow & { exercises: ExerciseRow };
 type SplitDayQueryRow = SplitDayRow & { split_exercises: SplitExerciseQueryRow[] };
 type WeeklyScheduleQueryRow = WeeklyScheduleRow & { split_days: SplitDayQueryRow | null };
 
+const personalSplitRequests = new Map<UUID, Promise<SplitDayWithDetails[]>>();
+const effectiveWeekRequests = new Map<string, Promise<WeeklyScheduleDayWithDetails[]>>();
+
 function mapSplitExercise(row: SplitExerciseQueryRow): SplitExerciseWithDetails {
   return {
     id: row.id,
@@ -99,17 +102,29 @@ export async function fetchGroupSplit(groupId: UUID): Promise<SplitDayWithDetail
 }
 
 export async function fetchPersonalSplit(userId: UUID): Promise<SplitDayWithDetails[]> {
-  const supabase = createClient();
+  const existing = personalSplitRequests.get(userId);
+  if (existing) return existing;
+
+  const request = (async () => {
+    const supabase = createClient();
+    try {
+      const { error } = await supabase.rpc("ensure_personal_split");
+      if (error) throw new Error(error.message);
+      const days = await fetchSplitRows("personal", userId);
+      await cachePersonalSplit(days);
+      return days;
+    } catch (caught) {
+      const cached = await getCachedPersonalSplit(userId);
+      if (cached.length > 0) return cached;
+      throw caught;
+    }
+  })();
+
+  personalSplitRequests.set(userId, request);
   try {
-    const { error } = await supabase.rpc("ensure_personal_split");
-    if (error) throw new Error(error.message);
-    const days = await fetchSplitRows("personal", userId);
-    await cachePersonalSplit(days);
-    return days;
-  } catch (caught) {
-    const cached = await getCachedPersonalSplit(userId);
-    if (cached.length > 0) return cached;
-    throw caught;
+    return await request;
+  } finally {
+    if (personalSplitRequests.get(userId) === request) personalSplitRequests.delete(userId);
   }
 }
 
@@ -117,24 +132,38 @@ export async function fetchEffectiveWeekSchedule(
   userId: UUID,
   anchorDate: ISODateOnlyString = toISODateOnly(new Date()),
 ): Promise<WeeklyScheduleDayWithDetails[]> {
-  const supabase = createClient();
-  const { error: ensureError } = await supabase.rpc("ensure_week_schedule", {
-    target_anchor_date: anchorDate,
-  });
-  if (ensureError) throw new Error(ensureError.message);
-
   const weekStart = getTrainingWeekStart(parseISODateOnly(anchorDate));
-  const weekEnd = addDaysToDate(weekStart, 6);
-  const { data, error } = await supabase
-    .from("weekly_schedule_days")
-    .select("*, split_days:source_split_day_id(*, split_exercises(*, exercises(*)))")
-    .eq("user_id", userId)
-    .gte("schedule_date", toISODateOnly(weekStart))
-    .lte("schedule_date", toISODateOnly(weekEnd))
-    .order("schedule_date", { ascending: true });
+  const weekStartValue = toISODateOnly(weekStart);
+  const requestKey = `${userId}:${weekStartValue}`;
+  const existing = effectiveWeekRequests.get(requestKey);
+  if (existing) return existing;
 
-  if (error) throw new Error(error.message);
-  return (data as unknown as WeeklyScheduleQueryRow[]).map(mapWeeklyScheduleDay);
+  const request = (async () => {
+    const supabase = createClient();
+    const { error: ensureError } = await supabase.rpc("ensure_week_schedule", {
+      target_anchor_date: anchorDate,
+    });
+    if (ensureError) throw new Error(ensureError.message);
+
+    const weekEnd = addDaysToDate(weekStart, 6);
+    const { data, error } = await supabase
+      .from("weekly_schedule_days")
+      .select("*, split_days:source_split_day_id(*, split_exercises(*, exercises(*)))")
+      .eq("user_id", userId)
+      .gte("schedule_date", weekStartValue)
+      .lte("schedule_date", toISODateOnly(weekEnd))
+      .order("schedule_date", { ascending: true });
+
+    if (error) throw new Error(error.message);
+    return (data as unknown as WeeklyScheduleQueryRow[]).map(mapWeeklyScheduleDay);
+  })();
+
+  effectiveWeekRequests.set(requestKey, request);
+  try {
+    return await request;
+  } finally {
+    if (effectiveWeekRequests.get(requestKey) === request) effectiveWeekRequests.delete(requestKey);
+  }
 }
 
 export async function resetPersonalSplitToGroup(userId: UUID): Promise<SplitDayWithDetails[]> {

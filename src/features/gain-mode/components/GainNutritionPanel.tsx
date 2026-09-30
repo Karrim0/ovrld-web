@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, Flame, Hash, Save, SlidersHorizontal, Trash2, Utensils } from "lucide-react";
-import type { UUID } from "@/types";
+import { CalendarDays, ChevronDown, Flame, Hash, Save, SlidersHorizontal, Trash2, Utensils } from "lucide-react";
+import type { ISODateOnlyString, UUID } from "@/types";
+import { getTodayISODate } from "@/lib/dates";
 import { getArabicErrorMessage } from "@/lib/localization";
 import {
   addGainNutritionEntry,
@@ -41,7 +42,9 @@ function dayState(day: GainNutritionDaySummary) {
 }
 
 export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapshot: GainModeSnapshot }) {
-  const [today, setToday] = useState(snapshot.todayNutrition);
+  const actualToday = getTodayISODate();
+  const [selectedDate, setSelectedDate] = useState<ISODateOnlyString>(actualToday);
+  const [selectedDay, setSelectedDay] = useState(snapshot.todayNutrition);
   const [week, setWeek] = useState<GainNutritionDaySummary[]>([]);
   const [label, setLabel] = useState("");
   const [calories, setCalories] = useState("");
@@ -56,13 +59,13 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
 
   const refresh = useCallback(async () => {
     if (!snapshot.nutritionAvailable) return;
-    const [nextToday, nextWeek] = await Promise.all([
-      fetchGainNutritionDay(userId, undefined, snapshot.calorieTargetKcal, snapshot.proteinTargetGrams),
-      fetchGainNutritionWeek(userId, snapshot.calorieTargetKcal, snapshot.proteinTargetGrams),
+    const [nextDay, nextWeek] = await Promise.all([
+      fetchGainNutritionDay(userId, selectedDate, snapshot.calorieTargetKcal, snapshot.proteinTargetGrams),
+      fetchGainNutritionWeek(userId, snapshot.calorieTargetKcal, snapshot.proteinTargetGrams, selectedDate),
     ]);
-    setToday(nextToday);
+    setSelectedDay(nextDay);
     setWeek(nextWeek);
-  }, [snapshot.calorieTargetKcal, snapshot.nutritionAvailable, snapshot.proteinTargetGrams, userId]);
+  }, [selectedDate, snapshot.calorieTargetKcal, snapshot.nutritionAvailable, snapshot.proteinTargetGrams, userId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -76,21 +79,22 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
     if (!snapshot.nutritionAvailable) return;
     let active = true;
     void Promise.all([
-      fetchGainNutritionDay(userId, undefined, snapshot.calorieTargetKcal, snapshot.proteinTargetGrams),
-      fetchGainNutritionWeek(userId, snapshot.calorieTargetKcal, snapshot.proteinTargetGrams),
+      fetchGainNutritionDay(userId, selectedDate, snapshot.calorieTargetKcal, snapshot.proteinTargetGrams),
+      fetchGainNutritionWeek(userId, snapshot.calorieTargetKcal, snapshot.proteinTargetGrams, selectedDate),
     ])
-      .then(([nextToday, nextWeek]) => {
+      .then(([nextDay, nextWeek]) => {
         if (!active) return;
-        setToday(nextToday);
+        setSelectedDay(nextDay);
         setWeek(nextWeek);
       })
       .catch(() => undefined);
     return () => { active = false; };
-  }, [snapshot.calorieTargetKcal, snapshot.nutritionAvailable, snapshot.proteinTargetGrams, userId]);
+  }, [selectedDate, snapshot.calorieTargetKcal, snapshot.nutritionAvailable, snapshot.proteinTargetGrams, userId]);
 
-  const calorieLeft = useMemo(() => today.calorieTargetKcal === null ? null : Math.max(0, today.calorieTargetKcal - today.caloriesKcal), [today]);
-  const proteinLeft = useMemo(() => today.proteinTargetGrams === null ? null : Math.max(0, Math.round(today.proteinTargetGrams - today.proteinGrams)), [today]);
-  const closeToPlan = (today.calorieProgress ?? 0) >= 0.95 && (today.proteinProgress ?? 0) >= 0.9;
+  const calorieLeft = useMemo(() => selectedDay.calorieTargetKcal === null ? null : Math.max(0, selectedDay.calorieTargetKcal - selectedDay.caloriesKcal), [selectedDay]);
+  const proteinLeft = useMemo(() => selectedDay.proteinTargetGrams === null ? null : Math.max(0, Math.round(selectedDay.proteinTargetGrams - selectedDay.proteinGrams)), [selectedDay]);
+  const closeToPlan = (selectedDay.calorieProgress ?? 0) >= 0.95 && (selectedDay.proteinProgress ?? 0) >= 0.9;
+  const isTodaySelected = selectedDate === actualToday;
 
   async function addEntry() {
     setError(null); setSaved(null);
@@ -102,8 +106,8 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
     }
     setBusy(true);
     try {
-      await addGainNutritionEntry(userId, { label, caloriesKcal, proteinGrams });
-      setLabel(""); setCalories(""); setProtein(""); setSaved("اتسجلت.");
+      await addGainNutritionEntry(userId, { loggedOn: selectedDate, label, caloriesKcal, proteinGrams });
+      setLabel(""); setCalories(""); setProtein(""); setSaved("اتسجلت في اليوم المختار.");
       await refresh();
     } catch (caught) {
       setError(getArabicErrorMessage(caught, "معرفناش نسجّل الأكل."));
@@ -137,8 +141,11 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
       await saveGainNutritionTargets(userId, nextCalories, nextProtein);
       const refreshed = await fetchGainModeSnapshot(userId);
       if (refreshed) {
-        const nextWeek = await fetchGainNutritionWeek(userId, refreshed.calorieTargetKcal, refreshed.proteinTargetGrams);
-        setToday(refreshed.todayNutrition);
+        const [nextSelectedDay, nextWeek] = await Promise.all([
+          fetchGainNutritionDay(userId, selectedDate, refreshed.calorieTargetKcal, refreshed.proteinTargetGrams),
+          fetchGainNutritionWeek(userId, refreshed.calorieTargetKcal, refreshed.proteinTargetGrams, selectedDate),
+        ]);
+        setSelectedDay(nextSelectedDay);
         setWeek(nextWeek);
         setTargetCalories(refreshed.calorieTargetKcal ? String(refreshed.calorieTargetKcal) : "");
         setTargetProtein(refreshed.proteinTargetGrams ? String(refreshed.proteinTargetGrams) : "");
@@ -169,26 +176,47 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
       <div className="flex items-center gap-3">
         <span className="gc-nutrition-icon"><Utensils className="h-4 w-4" /></span>
         <div className="min-w-0 flex-1">
-          <p className="gc-eyebrow">النهارده</p>
+          <p className="gc-eyebrow">{isTodaySelected ? "النهارده" : "يوم سابق"}</p>
           <h3 className="mt-0.5 text-lg font-black">الأكل</h3>
         </div>
-        <span className={`gc-day-status ${closeToPlan ? "gc-day-status-good" : ""}`}>{closeToPlan ? "قريب من الخطة" : today.entries.length ? "لسه فاضل" : "ابدأ التسجيل"}</span>
+        <span className={`gc-day-status ${closeToPlan ? "gc-day-status-good" : ""}`}>{closeToPlan ? "قريب من الخطة" : selectedDay.entries.length ? "لسه فاضل" : "ابدأ التسجيل"}</span>
+      </div>
+
+      <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface-overlay)] p-3">
+        <div className="flex items-center gap-3">
+          <CalendarDays className="h-4 w-4 shrink-0 text-emerald-400" />
+          <label className="min-w-0 flex-1 text-[10px] font-black text-neutral-500">اليوم المختار
+            <input
+              type="date"
+              value={selectedDate}
+              max={actualToday}
+              onChange={(event) => {
+                const next = event.target.value as ISODateOnlyString;
+                if (!next || next > actualToday) { setError("مينفعش تختار تاريخ في المستقبل."); return; }
+                setError(null); setSaved(null); setSelectedDate(next);
+              }}
+              className="gc-input mt-1"
+            />
+          </label>
+          {!isTodaySelected ? <button type="button" onClick={() => setSelectedDate(actualToday)} className="gc-secondary-button min-h-10 shrink-0 px-3 text-xs">النهارده</button> : null}
+        </div>
+        <p className="mt-2 text-[10px] font-semibold text-neutral-500">أي تسجيل أو وجبة محفوظة هتتضاف للتاريخ ده، والتواريخ المستقبلية مرفوضة.</p>
       </div>
 
       <div className="mt-4 space-y-3">
         <div className="gc-nutrition-metric">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2"><Flame className="h-4 w-4 text-amber-400" /><span className="text-xs font-black">السعرات</span></div>
-            <strong className="text-sm tabular-nums">{today.caloriesKcal.toLocaleString("en-US")} <span className="text-[10px] text-neutral-500">/ {today.calorieTargetKcal?.toLocaleString("en-US") ?? "—"} kcal</span></strong>
+            <strong className="text-sm tabular-nums">{selectedDay.caloriesKcal.toLocaleString("en-US")} <span className="text-[10px] text-neutral-500">/ {selectedDay.calorieTargetKcal?.toLocaleString("en-US") ?? "—"} kcal</span></strong>
           </div>
-          <div className="gc-progress-track mt-2"><span style={{ width: `${clampProgress(today.calorieProgress) * 100}%` }} /></div>
+          <div className="gc-progress-track mt-2"><span style={{ width: `${clampProgress(selectedDay.calorieProgress) * 100}%` }} /></div>
         </div>
         <div className="gc-nutrition-metric">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2"><Utensils className="h-4 w-4 text-emerald-400" /><span className="text-xs font-black">البروتين</span></div>
-            <strong className="text-sm tabular-nums">{numberText(today.proteinGrams)}g <span className="text-[10px] text-neutral-500">/ {today.proteinTargetGrams ? `${numberText(today.proteinTargetGrams)}g` : "—"}</span></strong>
+            <strong className="text-sm tabular-nums">{numberText(selectedDay.proteinGrams)}g <span className="text-[10px] text-neutral-500">/ {selectedDay.proteinTargetGrams ? `${numberText(selectedDay.proteinTargetGrams)}g` : "—"}</span></strong>
           </div>
-          <div className="gc-progress-track gc-progress-track-protein mt-2"><span style={{ width: `${clampProgress(today.proteinProgress) * 100}%` }} /></div>
+          <div className="gc-progress-track gc-progress-track-protein mt-2"><span style={{ width: `${clampProgress(selectedDay.proteinProgress) * 100}%` }} /></div>
         </div>
       </div>
 
@@ -202,7 +230,7 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
           <span className="gc-food-log-primary-icon"><Hash className="h-4 w-4" /></span>
           <div className="min-w-0 flex-1">
             <p className="gc-eyebrow">إدخال أرقام يدويًا</p>
-            <strong className="mt-0.5 block text-sm font-black">سجّل أكلك دلوقتي</strong>
+            <strong className="mt-0.5 block text-sm font-black">{isTodaySelected ? "سجّل أكلك دلوقتي" : "سجّل أكل اليوم المختار"}</strong>
             <p className="mt-0.5 text-[11px] font-semibold leading-5 text-neutral-500">اكتب السعرات أو البروتين مباشرة. الاسم اختياري.</p>
           </div>
         </div>
@@ -214,13 +242,13 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
         <button type="button" disabled={busy} onClick={() => void addEntry()} className="gc-primary-button mt-2 w-full min-h-11 disabled:opacity-50"><Save className="h-4 w-4" /> سجّل الأكل</button>
       </div>
 
-      <GainAiFoodLogger userId={userId} onLogged={refresh} />
+      <GainAiFoodLogger userId={userId} loggedOn={selectedDate} onLogged={refresh} />
 
-      {today.entries.length ? (
+      {selectedDay.entries.length ? (
         <div className="mt-4 border-t border-[var(--border)] pt-3">
-          <div className="mb-2 flex items-center justify-between"><h4 className="text-xs font-black">تسجيلات النهارده</h4><span className="text-[10px] font-bold text-neutral-500">{today.entries.length}</span></div>
+          <div className="mb-2 flex items-center justify-between"><h4 className="text-xs font-black">{isTodaySelected ? "تسجيلات النهارده" : "تسجيلات اليوم المختار"}</h4><span className="text-[10px] font-bold text-neutral-500">{selectedDay.entries.length}</span></div>
           <div className="space-y-1.5">
-            {today.entries.map((entry) => (
+            {selectedDay.entries.map((entry) => (
               <div key={entry.id} className="gc-food-entry">
                 <span className="min-w-0 flex-1"><span className="flex min-w-0 items-center gap-1.5"><strong className="block min-w-0 truncate text-xs">{entry.label || "تسجيل"}</strong>{entry.source !== "manual" ? <span className="gc-entry-source">{entry.source === "ai" ? "AI" : "محفوظة"}</span> : null}</span><span className="text-[10px] tabular-nums text-neutral-500">{entry.caloriesKcal} kcal · {numberText(entry.proteinGrams)}g protein</span></span>
                 <button type="button" disabled={busy} onClick={() => void removeEntry(entry.id)} aria-label="امسح التسجيل" className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 hover:bg-red-400/10 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
@@ -231,9 +259,9 @@ export function GainNutritionPanel({ userId, snapshot }: { userId: UUID; snapsho
       ) : null}
 
       <div className="mt-4 border-t border-[var(--border)] pt-3">
-        <div className="mb-2 flex items-center justify-between"><h4 className="text-xs font-black">آخر 7 أيام</h4><span className="text-[10px] font-bold text-neutral-500">سعرات + بروتين</span></div>
+        <div className="mb-2 flex items-center justify-between"><h4 className="text-xs font-black">آخر 7 أيام لحد التاريخ المختار</h4><span className="text-[10px] font-bold text-neutral-500">سعرات + بروتين</span></div>
         <div className="gc-nutrition-week">
-          {(week.length ? week : Array.from({ length: 7 }, (_, index) => ({ ...today, date: `${index}`, entries: [] }))).map((day, index) => {
+          {(week.length ? week : Array.from({ length: 7 }, (_, index) => ({ ...selectedDay, date: `${index}`, entries: [] }))).map((day, index) => {
             const state = week.length ? dayState(day) : "empty";
             return <div key={day.date || index} className="gc-nutrition-week-day"><span>{week.length ? dayLetter(day.date) : "•"}</span><i className={`gc-nutrition-day-dot gc-nutrition-day-dot-${state}`} /><small>{week.length && day.entries.length ? `${Math.round((day.calorieProgress ?? 0) * 100)}%` : "—"}</small></div>;
           })}

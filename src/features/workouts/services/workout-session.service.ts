@@ -4,6 +4,7 @@ import {
   cacheExercises,
   enqueueOfflineMutation,
   getLocalActiveWorkout,
+  getLocalCompletedWorkoutForDate,
   getLocalWorkoutHistory,
   getLocalWorkoutSession,
   getOfflineDatabase,
@@ -17,7 +18,7 @@ import {
   workoutSetMutation,
 } from "@/lib/offline";
 import { generateClientId } from "@/lib/utils/id";
-import type { UUID, WorkoutExercise, WorkoutSession, WorkoutSet } from "@/types";
+import type { Exercise, UUID, WorkoutExercise, WorkoutSession, WorkoutSet } from "@/types";
 import { fetchExerciseById, mapExercise } from "@/features/exercises/services/exercise.service";
 import type { SplitDayWithDetails } from "@/features/splits/types";
 import type { PreviousExercisePerformance, PreviousPerformanceMap, WorkoutSessionWithDetails } from "../types";
@@ -193,6 +194,44 @@ export async function fetchActiveWorkoutSession(): Promise<WorkoutSessionWithDet
     if (local) return local;
     throw error;
   }
+}
+
+export interface CompletedWorkoutForDateSummary {
+  id: UUID;
+  scheduledDate: string;
+  completedSets: number;
+  totalSets: number;
+}
+
+export async function fetchCompletedWorkoutForDate(
+  userId: UUID,
+  scheduledDate: string,
+): Promise<CompletedWorkoutForDateSummary | null> {
+  const local = await getLocalCompletedWorkoutForDate(userId, scheduledDate);
+  if (local) return local;
+  if (!getCurrentNetworkStatus()) return null;
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("workout_sessions")
+    .select("id, scheduled_date, workout_exercises(id, workout_sets(id, is_completed))")
+    .eq("user_id", userId)
+    .eq("scheduled_date", scheduledDate)
+    .eq("status", "completed")
+    .order("completed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  const exercises = (data.workout_exercises ?? []) as Array<{ workout_sets: Array<{ is_completed: boolean }> }>;
+  const sets = exercises.flatMap((exercise) => exercise.workout_sets ?? []);
+  return {
+    id: data.id as UUID,
+    scheduledDate: data.scheduled_date,
+    completedSets: sets.filter((set) => set.is_completed).length,
+    totalSets: sets.length,
+  };
 }
 
 export async function fetchWorkoutHistory(userId: UUID): Promise<WorkoutSessionWithDetails[]> {
@@ -411,6 +450,130 @@ export async function resumeStaleWorkoutSession(sessionId: UUID): Promise<Workou
   await enqueueOfflineMutation(workoutSessionMutation("update", resumed));
   requestSync();
   return resumed;
+}
+
+async function persistWorkoutExercise(exercise: WorkoutExercise): Promise<void> {
+  const db = getOfflineDatabase();
+  await db.workoutExercises.put({
+    id: exercise.id,
+    workoutSessionId: exercise.workoutSessionId,
+    exerciseId: exercise.exerciseId,
+    order: exercise.order,
+    isSessionOnlyAddition: exercise.isSessionOnlyAddition,
+    targetRepsMin: exercise.targetRepsMin,
+    targetRepsMax: exercise.targetRepsMax,
+    notes: exercise.notes,
+  });
+  await enqueueOfflineMutation(workoutExerciseMutation("update", exercise));
+}
+
+export async function updateWorkoutExercisePlan(
+  workoutExerciseId: UUID,
+  values: { targetSets: number; targetRepsMin: number; targetRepsMax: number },
+): Promise<void> {
+  if (!Number.isInteger(values.targetSets) || values.targetSets < 1 || values.targetSets > 20) throw new Error("عدد السِتات لازم يبقى من 1 لـ20.");
+  if (!Number.isInteger(values.targetRepsMin) || !Number.isInteger(values.targetRepsMax) || values.targetRepsMin < 1 || values.targetRepsMax < values.targetRepsMin || values.targetRepsMax > 100) throw new Error("راجع نطاق العدات المستهدف.");
+
+  const db = getOfflineDatabase();
+  const row = await db.workoutExercises.get(workoutExerciseId);
+  if (!row) throw new Error("التمرين مش موجود في الجلسة الحالية.");
+  const sets = await db.workoutSets.where("workoutExerciseId").equals(workoutExerciseId).sortBy("setNumber");
+  const completedCount = sets.filter((set) => set.isCompleted).length;
+  if (values.targetSets < completedCount) throw new Error(`مينفعش تقلّل السِتات عن ${completedCount} لأنهم اتسجلوا بالفعل.`);
+
+  const exercise: WorkoutExercise = { ...row, sets, targetRepsMin: values.targetRepsMin, targetRepsMax: values.targetRepsMax };
+  await persistWorkoutExercise(exercise);
+
+  if (values.targetSets > sets.length) {
+    const now = new Date().toISOString();
+    const usedSetNumbers = new Set(sets.map((set) => set.setNumber));
+    let candidateSetNumber = 1;
+    for (let remaining = values.targetSets - sets.length; remaining > 0; remaining -= 1) {
+      while (usedSetNumbers.has(candidateSetNumber)) candidateSetNumber += 1;
+      const set: WorkoutSet = {
+        id: generateClientId(), workoutExerciseId, setNumber: candidateSetNumber, weightKg: null, reps: null,
+        isWarmup: false, isCompleted: false, isPersonalRecord: false, notes: "", createdAt: now, updatedAt: now,
+      };
+      usedSetNumbers.add(candidateSetNumber);
+      candidateSetNumber += 1;
+      await db.workoutSets.put(set);
+      await enqueueOfflineMutation(workoutSetMutation("create", set));
+    }
+  } else if (values.targetSets < sets.length) {
+    const removable = sets.filter((set) => !set.isCompleted).sort((a, b) => b.setNumber - a.setNumber);
+    const removeCount = sets.length - values.targetSets;
+    if (removable.length < removeCount) throw new Error("فيه سِتات مكتملة لازم تفضل محفوظة.");
+    for (const set of removable.slice(0, removeCount)) {
+      await enqueueOfflineMutation(workoutSetMutation("delete", set));
+      await db.workoutSets.delete(set.id);
+    }
+  }
+
+  requestSync();
+}
+
+export async function removeRemainingWorkoutExercise(workoutExerciseId: UUID): Promise<{ keptCompletedHistory: boolean }> {
+  const db = getOfflineDatabase();
+  const row = await db.workoutExercises.get(workoutExerciseId);
+  if (!row) return { keptCompletedHistory: false };
+  const sets = await db.workoutSets.where("workoutExerciseId").equals(workoutExerciseId).sortBy("setNumber");
+  const completed = sets.filter((set) => set.isCompleted);
+  if (completed.length === 0) {
+    await deleteWorkoutExercise(workoutExerciseId);
+    return { keptCompletedHistory: false };
+  }
+
+  for (const set of sets.filter((item) => !item.isCompleted)) {
+    await enqueueOfflineMutation(workoutSetMutation("delete", set));
+    await db.workoutSets.delete(set.id);
+  }
+  requestSync();
+  return { keptCompletedHistory: true };
+}
+
+export async function replaceWorkoutExerciseRemaining(
+  workoutExerciseId: UUID,
+  replacement: Exercise,
+): Promise<UUID> {
+  const db = getOfflineDatabase();
+  const row = await db.workoutExercises.get(workoutExerciseId);
+  if (!row) throw new Error("التمرين مش موجود في الجلسة الحالية.");
+  const session = await getLocalWorkoutSession(row.workoutSessionId);
+  if (!session) throw new Error("التمرينة الشغالة مش موجودة على الجهاز.");
+  if (session.exercises.some((item) => item.exerciseId === replacement.id && item.id !== workoutExerciseId)) throw new Error("التمرين البديل موجود بالفعل في التمرينة.");
+
+  const sets = await db.workoutSets.where("workoutExerciseId").equals(workoutExerciseId).sortBy("setNumber");
+  const completed = sets.filter((set) => set.isCompleted);
+  const incomplete = sets.filter((set) => !set.isCompleted);
+  if (incomplete.length === 0) throw new Error("التمرين ده مكتمل بالفعل؛ أضف تمرين جديد بدل استبداله.");
+
+  await cacheExercises([replacement]);
+  if (completed.length === 0) {
+    const updated: WorkoutExercise = { ...row, exerciseId: replacement.id, sets };
+    await persistWorkoutExercise(updated);
+    requestSync();
+    return workoutExerciseId;
+  }
+
+  for (const set of incomplete) {
+    await enqueueOfflineMutation(workoutSetMutation("delete", set));
+    await db.workoutSets.delete(set.id);
+  }
+
+  const replacementId = await addExerciseToWorkout(row.workoutSessionId, replacement.id, incomplete.length, true);
+  const replacementRow = await db.workoutExercises.get(replacementId);
+  if (!replacementRow) throw new Error("معرفناش نجهّز التمرين البديل.");
+  await persistWorkoutExercise({ ...replacementRow, targetRepsMin: row.targetRepsMin, targetRepsMax: row.targetRepsMax, sets: await db.workoutSets.where("workoutExerciseId").equals(replacementId).sortBy("setNumber") });
+
+  const refreshed = await getLocalWorkoutSession(row.workoutSessionId);
+  if (refreshed) {
+    const ids = refreshed.exercises.map((item) => item.id).filter((id) => id !== replacementId);
+    const oldIndex = ids.indexOf(workoutExerciseId);
+    ids.splice(Math.max(0, oldIndex + 1), 0, replacementId);
+    await reorderWorkoutExercises(row.workoutSessionId, ids);
+  }
+  requestSync();
+  return replacementId;
 }
 
 export async function addExerciseToWorkout(

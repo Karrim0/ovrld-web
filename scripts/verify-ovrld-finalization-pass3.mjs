@@ -23,7 +23,7 @@ const checks = [
   ['exit protection', 'src/features/workouts/components/ActiveWorkoutClient.tsx', 'Workout still in progress'],
   ['split overview first', 'src/features/splits/components/SplitManager.tsx', 'gc-split-overview-day'],
   ['this week vs repeating plan', 'src/features/splits/components/SplitManager.tsx', 'Repeating Plan'],
-  ['separate exercises editor state', 'src/features/splits/components/SplitManager.tsx', 'editingExercises'],
+  ['coherent repeating workout editor', 'src/features/splits/components/SplitManager.tsx', 'Edit Workout'],
   ['change workout secondary flow', 'src/features/splits/components/SplitManager.tsx', 'Change workout'],
   ['bottom nav only uses active state', 'src/components/navigation/BottomNavigation.tsx', 'gc-bottom-nav-active'],
   ['service worker cache versioned', 'public/sw.js', 'CACHE_VERSION'],

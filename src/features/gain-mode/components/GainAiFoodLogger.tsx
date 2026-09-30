@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BookmarkPlus, ChevronDown, Crown, LockKeyhole, Plus, Save, Sparkles, Trash2 } from "lucide-react";
-import type { UUID } from "@/types";
+import { BookmarkPlus, ChevronDown, Crown, LockKeyhole, Plus, Save, Search, Sparkles, Trash2 } from "lucide-react";
+import type { ISODateOnlyString, UUID } from "@/types";
 import { getArabicErrorMessage } from "@/lib/localization";
 import {
   deleteGainSavedMeal,
@@ -16,9 +16,18 @@ function numberText(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-export function GainAiFoodLogger({ userId, onLogged }: { userId: UUID; onLogged: () => Promise<void> | void }) {
+export function GainAiFoodLogger({
+  userId,
+  loggedOn,
+  onLogged,
+}: {
+  userId: UUID;
+  loggedOn: ISODateOnlyString;
+  onLogged: () => Promise<void> | void;
+}) {
   const [savedMeals, setSavedMeals] = useState<GainSavedMeal[]>([]);
   const [savedMealsAvailable, setSavedMealsAvailable] = useState(true);
+  const [savedMealSearch, setSavedMealSearch] = useState("");
   const [manualMealName, setManualMealName] = useState("");
   const [manualMealCalories, setManualMealCalories] = useState("");
   const [manualMealProtein, setManualMealProtein] = useState("");
@@ -51,12 +60,17 @@ export function GainAiFoodLogger({ userId, onLogged }: { userId: UUID; onLogged:
   }, [userId]);
 
   const quickMeals = useMemo(() => savedMeals.slice(0, 6), [savedMeals]);
+  const filteredMeals = useMemo(() => {
+    const query = savedMealSearch.trim().toLocaleLowerCase("ar-EG");
+    if (!query) return savedMeals;
+    return savedMeals.filter((meal) => meal.label.toLocaleLowerCase("ar-EG").includes(query));
+  }, [savedMealSearch, savedMeals]);
 
   async function logSavedMeal(meal: GainSavedMeal) {
     setError(null); setMessage(null); setBusy(true);
     try {
-      await logGainSavedMeal(meal.id);
-      setMessage("الوجبة المحفوظة اتسجلت.");
+      await logGainSavedMeal(meal.id, loggedOn);
+      setMessage("الوجبة المحفوظة اتسجلت لليوم المختار.");
       await Promise.all([refreshSavedMeals(), Promise.resolve(onLogged())]);
     } catch (caught) {
       setError(getArabicErrorMessage(caught, "معرفناش نسجّل الوجبة المحفوظة."));
@@ -94,7 +108,7 @@ export function GainAiFoodLogger({ userId, onLogged }: { userId: UUID; onLogged:
       {savedMealsAvailable ? (
         <div className="gc-saved-meals-box">
           <div className="flex items-center justify-between gap-3">
-            <div><p className="text-xs font-black">وجبات محفوظة</p><p className="mt-0.5 text-[10px] font-semibold text-neutral-500">ضغطة واحدة للتسجيل</p></div>
+            <div><p className="text-xs font-black">وجبات محفوظة</p><p className="mt-0.5 text-[10px] font-semibold text-neutral-500">ضغطة واحدة للتسجيل في اليوم المختار</p></div>
             <span className="text-[10px] font-black tabular-nums text-neutral-500">{savedMeals.length}</span>
           </div>
 
@@ -118,12 +132,23 @@ export function GainAiFoodLogger({ userId, onLogged }: { userId: UUID; onLogged:
                 <label className="text-[9px] font-black text-neutral-500">بروتين g<input value={manualMealProtein} onChange={(event) => setManualMealProtein(event.target.value)} inputMode="decimal" className="gc-input mt-1 text-center" /></label>
                 <button type="button" disabled={busy} onClick={() => void createManualSavedMeal()} className="gc-secondary-button col-span-2 min-h-9 disabled:opacity-50"><Save className="h-3.5 w-3.5" /> احفظ الوجبة</button>
               </div>
-              {savedMeals.map((meal) => (
-                <div key={meal.id} className="gc-food-entry">
+
+              {savedMeals.length > 6 ? (
+                <label className="relative block">
+                  <span className="sr-only">ابحث في الوجبات المحفوظة</span>
+                  <Search className="pointer-events-none absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-500" />
+                  <input value={savedMealSearch} onChange={(event) => setSavedMealSearch(event.target.value)} className="gc-input ps-9 text-xs" placeholder="ابحث باسم الوجبة…" />
+                </label>
+              ) : null}
+
+              {filteredMeals.map((meal) => (
+                <div key={meal.id} className="gc-food-entry gap-2">
                   <span className="min-w-0 flex-1"><strong className="block truncate text-xs">{meal.label}</strong><span className="text-[10px] tabular-nums text-neutral-500">{meal.caloriesKcal} kcal · {numberText(meal.proteinGrams)}g · استُخدمت {meal.useCount}</span></span>
-                  <button type="button" disabled={busy} onClick={() => void removeSavedMeal(meal.id)} aria-label="امسح الوجبة المحفوظة" className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 hover:bg-red-400/10 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
+                  <button type="button" disabled={busy} onClick={() => void logSavedMeal(meal)} className="gc-secondary-button min-h-8 shrink-0 px-2.5 text-[10px] disabled:opacity-50"><Plus className="h-3.5 w-3.5" /> سجّل</button>
+                  <button type="button" disabled={busy} onClick={() => void removeSavedMeal(meal.id)} aria-label="امسح الوجبة المحفوظة" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-neutral-500 hover:bg-red-400/10 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
                 </div>
               ))}
+              {savedMeals.length > 0 && filteredMeals.length === 0 ? <p className="rounded-xl border border-dashed border-[var(--border)] p-3 text-center text-[10px] font-semibold text-neutral-500">مفيش وجبة بالاسم ده.</p> : null}
             </div>
           </details>
         </div>

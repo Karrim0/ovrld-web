@@ -18,7 +18,8 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import type { ProfileSex, UUID } from "@/types";
+import type { ISODateOnlyString, ProfileSex, UUID } from "@/types";
+import { getTodayISODate } from "@/lib/dates";
 import { fetchProfile } from "@/features/profile/services/profile.service";
 import { getArabicErrorMessage } from "@/lib/localization";
 import { addBodyMeasurement, fetchBodyProgress, saveBodyGoal } from "../services/body-progress.service";
@@ -117,8 +118,10 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
   const [activeView, setActiveView] = useState<"overview" | "weight" | "measurements">("overview");
 
   const [weight, setWeight] = useState("");
+  const [measurementDate, setMeasurementDate] = useState<ISODateOnlyString>(getTodayISODate());
   const [bodyFat, setBodyFat] = useState("");
   const [note, setNote] = useState("");
+  const selectedDateMeasurement = snapshot?.measurements.find((item) => item.measuredAt.slice(0, 10) === measurementDate) ?? null;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -250,10 +253,12 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
     }
     setBusy(true); setError(null); setMessage(null);
     try {
+      if (measurementDate > getTodayISODate()) { setError("مينفعش تسجّل وزن في تاريخ مستقبلي."); return; }
       await addBodyMeasurement(userId, {
         weightKg: value,
         bodyFatPercentage: fat,
         note,
+        measuredAt: new Date(`${measurementDate}T12:00:00`).toISOString(),
       });
       setBodyFat(""); setNote("");
       setMessage("اتسجلت القراءة. هنستخدم الاتجاه، مش رقم يوم واحد.");
@@ -370,6 +375,13 @@ export function BodyProgressClient({ userId }: { userId: UUID }) {
             {[-0.5, -0.2, 0.2, 0.5].map((delta) => <button key={delta} type="button" onClick={() => nudgeWeight(delta)} className="gc-quick-chip">{delta > 0 ? "+" : ""}{delta}</button>)}
           </div>
         </div>
+
+        <label className="mt-3 block text-xs font-bold text-neutral-500">تاريخ القراءة
+          <input type="date" value={measurementDate} max={getTodayISODate()} onChange={(event) => setMeasurementDate(event.target.value as ISODateOnlyString)} className="gc-input mt-1" />
+        </label>
+        {selectedDateMeasurement ? (
+          <p className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-semibold text-neutral-500">مسجّل في اليوم ده: <strong className="text-neutral-200">{formatWeight(selectedDateMeasurement.weightKg)}</strong>{selectedDateMeasurement.bodyFatPercentage !== null ? ` · ${selectedDateMeasurement.bodyFatPercentage}% دهون` : ""}</p>
+        ) : null}
 
         <details className="mt-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3">
           <summary className="flex items-center justify-between gap-3 text-sm font-bold"><span>تفاصيل اختيارية</span><ChevronDown className="h-4 w-4 text-neutral-500" /></summary>
